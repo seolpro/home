@@ -10035,4 +10035,8 @@ a.text-dark:hover, a.text-dark:focus {
     border-color: #dee2e6;
   }
 }
+.msg {
+  height: 150px;
+  width: 400px;
+}
 /*# sourceMappingURL=bootstrap.css.map */

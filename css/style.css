@@ -927,4 +927,8 @@ a:focus {
 .footer_section p a {
   color: inherit;
 }
+.msg {
+  height: 150px;
+  width: 400px;
+}
 /*# sourceMappingURL=style.css.map */
