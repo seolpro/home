@@ -10,6 +10,10 @@ document.addEventListener("DOMContentLoaded", () => {
       const email = form.querySelector("[name='email']").value.trim();
       const message = form.querySelector("[name='message']").value.trim();
   
+      if (navigator.vibrate) {
+        navigator.vibrate(100); // 100ms 동안 진동
+      }
+
       if (!name || !phone || !message) {
         alert("필수 항목을 모두 입력해주세요.");
         return;
