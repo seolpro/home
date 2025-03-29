@@ -36,7 +36,10 @@ document.addEventListener("DOMContentLoaded", () => {
           },
           body: JSON.stringify({ name, phone, email, message }),
         });
-  
+        //전송완료시 진동알림.
+        if (navigator.vibrate) {
+          navigator.vibrate(100); // 100ms 동안 진동
+        } 
         // no-cors는 응답을 못 받으므로 성공 여부를 알 수 없음
         // 그냥 성공했다고 가정하고 안내
         alert("🚀상담 요청이 전송되었습니다. 담당자 확인 후 연락드리겠습니다");
