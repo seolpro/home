@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>자주 묻는 질문 - FAQ</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <style>
+    body {
+      background-color: #f9f9f9;
+      font-family: 'Segoe UI', sans-serif;
+    }
+    .faq-header {
+      padding: 60px 0 30px;
+      background-color: #ffffff;
+      text-align: center;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    .faq-header h1 {
+      font-size: 2.5rem;
+      font-weight: bold;
+    }
+    .accordion-button {
+      font-weight: 500;
+    }
+    .container {
+      max-width: 720px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="faq-header">
+    <h2>📌Q&A</h2>
+    <p class="text-muted">📝아래에 자주 물어보시는 질문을 정리했습니다.</p>
+  </div>
+
+  <div class="container py-5">
+    <div class="accordion" id="faqAccordion">
+
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="headingOne">
+          <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true">
+            Q. Biz 카카오톡 신청은 어떻게 하고 꼭 해야 하나요?
+          </button>
+        </h2>
+        <div id="collapseOne" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+          <div class="accordion-body">
+            A. <a href="kakao.html" target="_blank"><strong>kakao비즈페이지</strong></a> 에서 자세히 보실 수 있으며, 비즈채널로 등록되어야 알림톡 템플릿 등록 및 전송, 
+            카카오씽크(카카오로그인)등의 비즈니스(마케팅) 서비스를 이용하실 수 있습니다.
+          </div>
+        </div>
+      </div>
+
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="headingTwo">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo">
+            Q. 알림톡은 카카오 친구가 아닌 모든 사람에게 발송 가능한가요?
+          </button>
+        </h2>
+        <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+          <div class="accordion-body">
+            A. 네, 맞습니다. 알림톡은 친구톡과는 달리 카카오톡 친구가 아니여도 발송이 가능합니다. 단, 정보성 메세지만 발송이 가능하며
+            사전, 템플릿(메세지 세트)를 만들어 승인을 득한 후 전송가능합니다. <a href="infoms.html" target="_blank"><strong>알림톡 활용법</strong></a>메뉴에서 자세히 확인하실 수 있습니다. 
+          </div>
+        </div>
+      </div>
+
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="headingThree">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree">
+            Q. 온라인 특판몰은 운영시 비용이 많이 드나요?
+          </button>
+        </h2>
+        <div id="collapseThree" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+          <div class="accordion-body">
+            A. 온라인 쇼핑몰(특판몰)의 개설 및 운영은 비용이 거의 들지 않습니다. 카페24와 같은 무료호스트를 이용하고, 
+            신용카드 결제 시스템도 호스트사에서 기본적으로 제공하고 있습니다. 단, 쇼핑몰 운영과 관련한 메세지 또는 알림톡 자동발송(구매확인,배송안내 등)은
+            사용한 만큼 수익자 부담원칙에 의거 부과 될 수 있습니다. (메세지 단문 20원, 장문60원, 알림톡 8원) 여기에 카카오로그인 및 저렴한 알림톡사용을 권장드립니다.  
+            보다 자세한 내용은 <a href="onshop.html" target="_blank">"온라인공동구매(특판몰)"</a>을 참조해 주세요  
+        </div>
+        </div>
+      </div>
+
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="headingfour">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapsefour">
+            Q. 홈페이지, 설문지 만들기에 코딩을 해야 하는데 어떻게 하나요?
+          </button>
+        </h2>
+        <div id="collapsefour" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+          <div class="accordion-body">
+            A. 물론, 코딩에 익숙하지 않은 분들은 처음에 조금 어려워 하실 수 있으나, 기본적으로 사용되는 언어는 html과 자바스크립으로
+            코딩작업은 chat Gpt등 생성형 AI를 활용하여 완성도 높은 웹페이지를 구축할 수 있으며, 특히, 구글시트의 "App Scrpt"를 활용하면 
+            일반인들도 쉽게 서버를 만들어 사용자(조합원)가 입력한 자료를 구글시트에 수집하여 활용할 수 있습니다.   
+            보다 자세한 내용은 <a href="https://ajou9770.github.io/edu/googleform.html" target="_blank">"구글폼만들기"</a>를 참조해 주세요  
+        </div>
+        </div>
+      </div>
+
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="headingfive">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapsefive">
+            Q. 이러한 작업을위해 IT(디지털)에 능숙하거나 전공인 직원이 필요한가요?
+          </button>
+        </h2>
+        <div id="collapsefive" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+          <div class="accordion-body">
+            A. 물론, 전공자면 좀더 쉽게 접근할 수 있으나, 일반인도 PC나 IT에 조금만 관심이 있고, 다룰 수 있다면 전혀 문제 없습니다. 
+            유튜버 등 관련 정보를 쉽게 찾고 응용할 수 있기 때문에 이러한 작업을 하고 조합에 도입하는데 어려움이 없다고 봅니다. 
+            디지털조합원관리 관련 컨퍼런스 자료 <a href="https://ajou9770.github.io/edu/confer_2023" target="_blank">"디지털채널을 활용한 조합원관리"</a>를 참조해 주세요  
+        </div>
+        </div>
+      </div>
+      <hr>
+      <!--추가 질의 하기-->
+      <div class="col-md-12 col-sm-7 info_col">
+        <span class="mb-3">
+          🤷더 궁금한 것이 있으시면 아래에 남겨 주세요.
+        </span>
+        <br><br>
+        <form id="consult-form">
+          <div class="mb-2">
+            <input type="text" class="form-control" name="name" placeholder="🤵 이름" required>
+          </div>
+          <div class="mb-2">
+            <input type="tel" class="form-control" name="phone" placeholder="☎ 연락처" required>
+          </div>
+          <div class="mb-2">
+            <input type="email" class="form-control" name="email" placeholder="📧 이메일">
+          </div>
+          <div class="mb-3">
+            <textarea class="form-control" name="message" rows="3" placeholder="💬 궁금하신 내용을 입력하세요" required></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary w-100">🚀전송하기</button>
+        </form>
+      </div>
+      
+    </div>
+  </div>
+    <!-- 상담요청=> 외부 JS 파일 연결 -->
+    <script src="js/book.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
