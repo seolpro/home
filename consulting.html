@@ -75,9 +75,16 @@
             <li class="nav-item">
               <a class="nav-link" href="consulting.html">디지털 컨설팅</a>
             </li>
-            <!-- <li class="nav-item">
-              <a class="nav-link" href="#"> <i class="fa fa-user" aria-hidden="true"></i> Login</a>
-            </li> -->
+            <li class="nav-item d-flex align-items-center">
+              <select class="custom-select custom-select-sm ml-3" 
+              onchange="if (this.value) window.open(this.value, '_blank');" 
+              style="width: auto; font-size: 0.9rem; padding: 1.5px 12px;">
+        <option value="">Q&A+꿀팁</option>
+        <option value="q&a.html">자주 묻는 질문</option>
+        <option value="qrmake&shorturl.html">QR코드생성&Url단축기</option>
+        <!-- <option value="resources.html">자료실</option> -->
+      </select>
+            </li>
             <form class="form-inline">
               <button class="btn  my-2 my-sm-0 nav_search-btn" type="submit">
                 <i class="fa fa-search" aria-hidden="true"></i>
