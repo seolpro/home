@@ -54,4 +54,33 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   });
+
+// 주소클릭시 위치 보여주는 것
+document.addEventListener("DOMContentLoaded", function() {
+  const locationDiv = document.getElementById("location");
   
+  locationDiv.addEventListener("click", function(event) {
+    // confirm 창을 띄워 사용자가 확인할 경우에만 실행
+    if (confirm("🚩지도에서 위치를 보여 드릴까요?")) {
+      const address = "대한민국 경기도 수원시 영통구 월드컵로164";
+      const mapUrl = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(address);
+      window.open(mapUrl, "_blank");
+    }
+  });
+});
+  
+// 다른 사이트 링크 이동시  confirm함수 
+/* document.addEventListener("DOMContentLoaded", function() {
+  // 모든 <a> 태그 선택
+  const links = document.querySelectorAll("a");
+  
+  links.forEach(function(link) {
+    link.addEventListener("click", function(event) {
+      // confirm 창을 띄워 사용자가 이동을 허용할 경우에만 이동
+      if (!confirm("💁🏻‍♀️해당 사이트를 열어 보실까요?")) {
+        event.preventDefault(); // 취소 시 링크 이동 차단
+      }
+    });
+  });
+}); */
+
