@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>🏡설프로 시골집 예약페이지지</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .loading-spinner {
+      display: none;
+    }
+    .input-group-text {
+        width: 130px;
+    }
+  </style>
+</head>
+<body class="bg-light">
+  <div class="container mt-5">
+    <h5 class="mb-4 text-center">🏡설프로 시골집 사용 예약신청</h5>
+    <span>🚩주소: 경북 문경시 마성면 하내2길 7 (마을회관 옆)</span>
+    <form id="reservationForm" class="card p-4 shadow-sm bg-white">
+        <div class="mb-3 input-group">
+          <span class="input-group-text">📌 사용자명 *</span>
+          <input type="text" id="name" class="form-control" required>
+        </div>
+      
+        <div class="mb-3 input-group">
+          <span class="input-group-text">🧑‍🤝‍🧑 관계 *</span>
+          <select id="relation" class="form-select" required>
+            <option value="">✔ 선택</option>
+            <option>가족</option>
+            <option>지인</option>
+            <option>직장동료</option>
+            <option>기타</option>
+          </select>
+        </div>
+      
+        <div class="mb-3 input-group">
+          <span class="input-group-text">📞 연락처 *</span>
+          <input type="text" id="contact" class="form-control" required>
+        </div>
+      
+        <div class="mb-3 input-group">
+          <span class="input-group-text">📅 입실일자 *</span>
+          <input type="date" id="checkin" class="form-control" required>
+        </div>
+      
+        <div class="mb-3 input-group">
+          <span class="input-group-text">📅 퇴실일자 *</span>
+          <input type="date" id="checkout" class="form-control" required>
+        </div>
+      
+        <div class="mb-3 input-group">
+          <span class="input-group-text">📝 참고사항</span>
+          <textarea id="note" class="form-control" rows="2"></textarea>
+        </div>
+      
+        <button type="submit" class="btn btn-primary w-100">📩 예약 신청</button>
+        <div class="text-center mt-2 loading-spinner" id="loadingSpinner">
+          <div class="spinner-border text-primary" role="status"></div>
+        </div>
+      </form>
+     
+
+    <hr class="my-5">
+
+    <h4 class="mb-3">📋 예약 현황</h4>
+    <div id="reservationList" class="table-responsive"></div>
+  </div>
+
+  <script>
+    const scriptURL = "https://script.google.com/macros/s/AKfycbzrmq1Y0yXJQkACUSWNskH7YL3T3TkqVipQSY-8NVi3dKxVZyDkTx_blbzEN_9MBamkKA/exec"; // 실제 Web App URL로 교체
+
+    document.getElementById("reservationForm").addEventListener("submit", async function (e) {
+  e.preventDefault();
+
+  const name = document.getElementById("name").value.trim();
+  const relation = document.getElementById("relation").value;
+  const contact = document.getElementById("contact").value.trim();
+  const checkin = document.getElementById("checkin").value;
+  const checkout = document.getElementById("checkout").value;
+  const note = document.getElementById("note").value;
+  alert("💁🏻‍♀️ 예약가능여부를 확인 중입니다. 잠기 기다려 주세요");
+  const days = Math.ceil((new Date(checkout) - new Date(checkin)) / (1000 * 60 * 60 * 24));
+  if (isNaN(days) || days < 1) {
+    alert("❌ 입실일자와 퇴실일자를 올바르게 선택해 주세요.");
+    return;
+  }
+
+  // ✅ 1. 기존 예약 목록 불러오기 (동기 fetch)
+  const reservations = await fetch(`${scriptURL}?action=get`).then(res => res.json());
+
+  // ✅ 2. 중복 날짜 검사
+  const newStart = new Date(checkin);
+  const newEnd = new Date(checkout);
+
+  const isOverlap = reservations.some(r => {
+    const existingStart = new Date(r.checkin);
+    const existingEnd = new Date(r.checkout);
+    return newStart < existingEnd && newEnd > existingStart;
+  });
+
+  if (isOverlap) {
+    alert("❌ 선택한 날짜는 이미 예약된 일정과 겹칩니다. 다른 날짜를 선택해 주세요.");
+    return;
+  }
+
+  // ✅ 3. 사용자 확인
+  const confirmMsg = `📝예약 가능합니다. ⬇️아래 정보로 예약하시겠어요?
+
+📌 이름: ${name}
+📅 입실일자: ${checkin}
+📅 퇴실일자: ${checkout}
+🛌 숙박일수: ${days}일`;
+
+  if (!confirm(confirmMsg)) return;
+
+  // 🔄 로딩 표시
+  const submitBtn = e.target.querySelector('button');
+  const loading = document.getElementById("loadingSpinner");
+  submitBtn.disabled = true;
+  loading.style.display = "block";
+
+  const data = { name, relation, contact, checkin, checkout, note };
+
+  try {
+    await fetch(scriptURL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    alert("✅ 예약이 완료되었습니다.");
+    e.target.reset();
+    loadReservations();
+  } catch (err) {
+    alert("❌ 예약 중 오류가 발생했습니다.");
+  } finally {
+    submitBtn.disabled = false;
+    loading.style.display = "none";
+  }
+});
+
+    function formatDateKorean(dateStr) {
+  const date = new Date(dateStr);
+  return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`;
+}
+
+function loadReservations() {
+  fetch(`${scriptURL}?action=get`)
+    .then(res => res.json())
+    .then(data => {
+      const list = data.map((row, index) => {
+        const days = Math.ceil((new Date(row.checkout) - new Date(row.checkin)) / (1000 * 60 * 60 * 24));
+        return `
+          <tr>
+            <td>${row.name}</td>
+            <td>${formatDateKorean(row.checkin)}</td>
+            <td>${formatDateKorean(row.checkout)}</td>
+            <td>${days}일</td>
+            <td><button class="btn btn-sm btn-dark" onclick="cancelReservation('${row.timestamp}', '${row.name}')">❌</button></td>
+          </tr>`;
+      }).join("");
+
+      document.getElementById("reservationList").innerHTML = `
+        <table class="table table-bordered table-hover text-center">
+  <thead class="table-light">
+    <tr>
+      <th>사용자</th>
+      <th>입실일</th>
+      <th>퇴실일</th>
+      <th>일수</th>
+      <th>취소</th>
+    </tr>
+  </thead>
+  <tbody>${list}</tbody>
+</table>
+
+      `;
+    });
+}
+function cancelReservation(timestamp, name) {
+  if (!confirm(`${name}님의 예약을 취소하시겠습니까?`)) return;
+
+  const btn = event.target; // 클릭된 버튼 객체
+  const originalText = btn.innerHTML;
+
+  btn.disabled = true;
+  btn.innerHTML = '⏳ 취소중...';
+
+  fetch(`${scriptURL}?action=delete&timestamp=${encodeURIComponent(timestamp)}`)
+    .then(() => {
+      alert("✅ 예약이 취소되었습니다.");
+      loadReservations();
+    })
+    .catch(() => {
+      alert("❌ 취소 처리 중 오류가 발생했습니다.");
+    })
+    .finally(() => {
+      btn.disabled = false;
+      btn.innerHTML = originalText;
+    });
+}
+
+    window.onload = loadReservations;
+  </script>
+</body>
+</html>
