@@ -19,7 +19,7 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
   
-      if (!confirm(`이대로 상담 요청을 전송할까요?\n\n이름: ${name}\n연락처: ${phone}\n이메일: ${email}\n내용: ${message}`)) {
+      if (!confirm(`이대로 메세지를 전송할까요?\n\n이름: ${name}\n연락처: ${phone}\n이메일: ${email}\n내용: ${message}`)) {
         return;
       }
   
@@ -43,7 +43,7 @@ document.addEventListener("DOMContentLoaded", () => {
           navigator.vibrate(100); // 100ms 동안 진동
         } 
         // 그냥 성공했다고 가정하고 안내
-        alert("🚀상담 요청이 전송되었습니다. 담당자 확인 후 연락드리겠습니다");
+        alert("🚀메세지가 전송되었습니다. 담당자 확인 후 연락드리겠습니다");
         form.reset();
       } catch (error) {
         console.error(error);
