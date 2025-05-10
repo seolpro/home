@@ -43,8 +43,8 @@
               <a href="#" class="btn btn-outline-success btn-sm" target="_blank">📝 업무앱(4종)</a>
               <a href="#" class="btn btn-outline-success btn-sm" target="_blank">💖 광고게시물등록</a>
               <a href="#" class="btn btn-outline-warning btn-sm" target="_blank">📘 조합 규정집</a>
-              <a href="https://ajou9770.github.io/workform/lawlist" class="btn btn-outline-warning btn-sm" target="_blank">📤 제규정 등록</a>
-              <a href="https://docs.google.com/spreadsheets/d/1-d9yGU0aFjptZpRJzIZzndR8xgjm6-r7fM5YoHlH3HI/edit?usp=sharing" class="btn btn-outline-warning btn-sm" target="_blank">📑 규정 목록 보기</a>
+              <a href="#" class="btn btn-outline-warning btn-sm" target="_blank">📤 제규정 등록</a>
+              <a href="#" class="btn btn-outline-warning btn-sm" target="_blank">📑 규정 목록 보기</a>
               <a href="https://dpaper.kr/ewp/login.do" class="btn btn-outline-info btn-sm" target="_blank" onclick="alert('💁🏻‍♀️프로세스: 사업자등록번호입력=>법인공인인증 로그인=>전자문서조회(내려받기)')">📑전자문서지갑(기관)</a>
               
               <a href="#" class="btn btn-outline-info btn-sm" target="_blank">👤 조합원 정보 조회</a>
@@ -74,7 +74,8 @@
             <a href="http://ajou9770.github.io/notice/loanrate.html" class="btn btn-outline-info btn-sm" target="_blank">🔎대출원리금(이자)계산기</a>
             <a href="http://ajou9770.github.io/notice/loaninsu.html" class="btn btn-outline-info btn-sm" target="_blank">🔎보증대출 보험료계산기</a>
             <a href="http://ajou9770.github.io/notice/sgicsign.html" class="btn btn-outline-info btn-sm" target="_blank">🔎보증보험개인정보동의방법</a>
-
+            <a href="https://dpaper.kr/deepLinkList.do" class="btn btn-outline-info btn-sm" target="_blank">🔗전자(지갑)증명서제출</a>
+            
           </div>
           </div>
         </div>
@@ -98,5 +99,16 @@
   </div> <!-- container -->
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+  document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll('a[href="#"]').forEach(function (link) {
+      link.addEventListener("click", function (e) {
+        e.preventDefault(); // 실제 링크 이동 방지
+        alert("⛔민감 정보로 접근이 제한됩니다. 향후 샘플자료로 대체 예정입니다.");
+      });
+    });
+  });
+</script>
+
 </body>
 </html>
