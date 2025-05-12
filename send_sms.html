@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📢문자 안내 보내기</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
+ <style>
+ .ppurio {
+    box-shadow: 0px 3px 6px 0px grey;
+    padding: 10px;
+    width: 100px;
+    height: 50px;
+    margin-left: 5px;
+ }
+ #imgppurio {
+    position: fixed;
+    bottom: 30%;
+    right: 15%;
+    border: 1px solid;
+ }
+ </style>
+</head>
+<body>
+    <br>
+    <div class="container">
+        <h5>🚀 조합원의 핸드폰번호 입력후 관련내용을 선택 후 메세지를 보내세요.</h5>
+        <br>
+        <form id="phoneNumberForm">
+            <div class="form-group">
+                <label for="phoneNumber">📞보내실 (조합원) 핸드폰 번호(#숫자11자리만)</label>
+                <input type="tel" class="form-control" id="phoneNumber" pattern="[0-9]{11}\s*" value="010" required>
+            </div>
+            <div class="form-group">
+                <label for="messageSelect">💬보내실 내용 선택</label>
+                <select class="form-control" id="messageSelect" required>
+                    <option value="">🤷‍♂️보내실 내용을 선택하세요</option> 
+                    <option value="#소노호텔앤리조트 실시간 예약(이용)안내">#소노호텔앤리조트 실시간 예약(이용)안내</option>
+                    <option value="#서울보증보험 사전동의(전자서명)방법">#서울보증보험 사전동의(전자서명)안내</option>
+                    <option value="#조합 카카오톡홈으로 가기">#조합 카카오톡홈 안내</option>
+                    <option value="#조합 경조금 신청안내">#조합 경조금 신청안내</option>
+                    <option value="#신협 알뜰폰 가입안내">#신협 알뜰폰 가입안내</option>
+                    <option value="#조합 이용꿀팁(홈)안내">#조합 이용팁(홈)안내</option>
+                    <option value="#진행중 이벤트 안내">#진행중 이벤트 안내</option>
+                    <br>
+                </select>
+                <small>✨추가 안내가 필요한 사항이 있으면 책임자에게 요청바랍니다.</small>
+                <br><br>
+                <label for="messageSelect">🤵보내는 직원 선택</label>
+                <select class="form-control" id="senderSelect" required>
+                    <option value="">🤷‍♂️보내시는 분을 선택하세요</option> 
+                    <option value="아주대의료원신협 김매니저">김매니저</option>
+                    <option value="아주대의료원신협 이매니저">이매니저</option>
+                    <option value="아주대의료원신협 한매니저">한매너저</option>
+                    <option value="아주대의료원신협 박매니저">박매니저</option>
+                    <option value="아주대의료원신협 김상무">김상무</option>
+                </select> 
+                <br>
+            <button type="submit" class="btn btn-primary btn-block">💬SMS 보내기</button>
+        </form>
+    </div>
+   
+   
+    <script>
+      function showppurio() {
+        document.getElementById("imgppurio").style.display ="block";
+      }
+    </script>  
+    <script>
+        document.getElementById('phoneNumberForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            var phoneNumber = document.getElementById('phoneNumber').value;
+            var messageSelect = document.getElementById('messageSelect').value;
+            var sender = document.getElementById('senderSelect').value;
+
+            var messages = {
+            '#소노호텔앤리조트 실시간 예약(이용)안내': '✔소노호텔앨 리조트 실시간 예약안내는 아래 링크를 참조해 주세요 \n https://ajou9770.github.io/usertip/dm.html \n 더 궁금하신 사항은 카카오 상담톡(http://pf.kakao.com/_dfhkK/chat) 또는 유선으로 문의하여 주세요.',
+            '#서울보증보험 사전동의(전자서명)방법': '✔서울보증보험 사전동의(전자서명)방법 안내 보기 \n https://ajou9770.github.io/notice/sgicsign.html \n 더 궁금하신 사항은 카카오 상담톡(http://pf.kakao.com/_dfhkK/chat) 또는 유선으로 문의하여 주세요.',
+            '#조합 카카오톡홈으로 가기': '✔조합 카카오톡 채널홈으로 가기 \n http://pf.kakao.com/_dfhkK \n 더 궁금하신 사항은 카카오 상담톡(http://pf.kakao.com/_dfhkK/chat) 또는 유선으로 문의하여 주세요.',
+            '#조합 경조금 신청안내': '✔조합 경조금신청 안내 \n https://ajou9770.github.io/usertip/congrat.html \n 더 궁금하신 사항은 카카오 상담톡(http://pf.kakao.com/_dfhkK/chat) 또는 유선으로 문의하여 주세요.',
+            '#신협 알뜰폰 가입안내': '✔신협 알뜰폰 가입안내 \n https://ajou9770.github.io/usertip/mobile.html \n 더 궁금하신 사항은 카카오 상담톡(http://pf.kakao.com/_dfhkK/chat) 또는 유선으로 문의하여 주세요.',
+            '#조합 이용꿀팁(홈)안내': '✔조합 이용꿀팁(홈) \n https://ajou9770.github.io/usertip \n 더 궁금하신 사항은 카카오 상담톡(http://pf.kakao.com/_dfhkK/chat) 또는 유선으로 문의하여 주세요.',
+            '#진행중 이벤트 안내': '✔조합 진행중 이벤트 바로가기 \n https://ajou9770.github.io/usertip/event.html \n 더 궁금하신 사항은 카카오 상담톡(http://pf.kakao.com/_dfhkK/chat) 또는 유선으로 문의하여 주세요.'        
+        };
+
+            if (!phoneNumber || !messageSelect || !sender) {
+                // If any of the fields are empty, stop the function.
+                return;
+            }
+
+            var selectedMessage = messages[messageSelect];
+
+            if (selectedMessage) {
+                var message = `${selectedMessage} \n ▣보내는분: ${sender}`;
+                var encodedMessage = encodeURIComponent(message);
+                alert(`🤷‍♀️${phoneNumber}으로 [ ${messageSelect} ]의 내용을 전송합니다`);
+                console.log(message);
+                location.href = 'sms:' + phoneNumber + '?body=' + encodedMessage;
+               } 
+        });
+    </script> 
+</body>
+</html>
+
