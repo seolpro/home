@@ -92,41 +92,47 @@
     clearBtn.addEventListener('click', () => signaturePad.clear());
 
     form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-      
-        if (signaturePad.isEmpty()) {
-          alert("서명을 해주세요.");
-          return;
-        }
-      
-        const name = document.getElementById('name').value.trim();
-        const signature = signaturePad.toDataURL();
-      
-        const payload = { name, signature };
-      
-        try {
-          await fetch('https://script.google.com/macros/s/AKfycbx3cwOs_uP4LlvpT6kBKsHmTi1Y_rh9vKaSOxgulOeDoMdrW2EEMQAJUhcIgdohFfVK/exec', {
-            method: 'POST',
-            mode: 'no-cors',
-            body: JSON.stringify(payload),
-            headers: {
-              'Content-Type': 'application/json'
-            }
-          });
-      
-          // no-cors 모드로 인해 응답을 받을 수 없으므로 성공 가정 처리
-          alert('🚀서약서가 정상 제출 되었습니다');
-          resultBox.textContent = "✅ 서약서가 정상적으로 제출되었습니다.";
-          resultBox.classList.add('text-success');
-      
-          form.reset();
-          signaturePad.clear();
-        } catch (error) {
-          resultBox.textContent = "❌ 제출 중 문제가 발생했습니다. 다시 시도해주세요.";
-          resultBox.classList.add('text-danger');
-        }
-      });
-      
+  e.preventDefault();
+
+  if (signaturePad.isEmpty()) {
+    alert("서명을 해주세요.");
+    return;
+  }
+
+  const name = document.getElementById('name').value.trim();
+  const signature = signaturePad.toDataURL();
+  const payload = { name, signature };
+
+  const submitBtn = document.querySelector('button[type="submit"]');
+  const originalBtnText = submitBtn.textContent;
+  submitBtn.textContent = "🔄제출중...";
+  submitBtn.disabled = true;
+
+  try {
+    await fetch('https://script.google.com/macros/s/AKfycbx3cwOs_uP4LlvpT6kBKsHmTi1Y_rh9vKaSOxgulOeDoMdrW2EEMQAJUhcIgdohFfVK/exec', {
+      method: 'POST',
+      mode: 'no-cors',
+      body: JSON.stringify(payload),
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    alert('🚀서약서가 정상 제출 되었습니다');
+    resultBox.textContent = "✅ 서약서가 정상적으로 제출되었습니다.";
+    resultBox.classList.add('text-success');
+
+    form.reset();
+    signaturePad.clear();
+  } catch (error) {
+    resultBox.textContent = "❌ 제출 중 문제가 발생했습니다. 다시 시도해주세요.";
+    resultBox.classList.add('text-danger');
+  } finally {
+    submitBtn.textContent = originalBtnText;
+    submitBtn.disabled = false;
+  }
+});
+     
   </script>
 </body>
 </html>
