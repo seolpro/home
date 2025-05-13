@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>✨행사차량 주차등록 서비스</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+  <div class="container py-5">
+    <h3 class="text-center mb-4">🚕행사차량 주차 등록 서비스</h3>
+
+    <div class="card shadow p-4">
+      <div class="mb-3">
+        <label class="form-label">✨이용기관(예약번호)</label>
+        <input type="text" class="form-control" id="reservationNumber" readonly value="아주대의료원신협">
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">📅행사시작일</label>
+        <input type="date" class="form-control" id="startDate">
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">🚩행사종료일</label>
+        <input type="date" class="form-control" id="endDate">
+      </div>
+
+      <div class="mb-3">
+        <mark><label class="form-label">🔢차량 번호</label></mark>
+        <input type="text" class="form-control" id="carNumber" placeholder="입력 예) 12가1234" style="background-color: beige;">
+      </div>
+
+      <button type="button" class="btn btn-primary w-100" id="registerButton" onclick="registerCar(event)">📤등록하기</button>
+    </div>
+    <!-- <h5 class="mt-5">🚗등록된 차량 리스트</h5> -->
+    <table class="table table-striped table-bordered mt-2 text-center">
+      <thead class="table-dark" style="font-size:medium;">
+        <tr>
+          <th>등록일시</th>
+          <th>차량번호</th>
+          <th>삭제</th>
+        </tr>
+      </thead>
+      <tbody id="carList"></tbody>
+    </table>
+  </div>
+
+  <script>
+  // 오늘 날짜를 YYYY-MM-DD 형식으로 변환
+  const today = new Date().toISOString().split('T')[0];
+  
+  // 시작일과 종료일 기본값 설정
+  document.getElementById('startDate').value = today;
+  document.getElementById('endDate').value = today;
+</script>
+
+  <script>
+    const carList = document.getElementById('carList');
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwna9qs92sMb6zMbrlNIwD79UmXZjFN_CMjNkIA8RcOWMm58-LFbCkbSxw-SNQcXPWm/exec";
+
+    // 차량 목록 불러오기 함수
+    function loadCarList() {
+      fetch(WEB_APP_URL)
+        .then(response => response.json())
+        .then(data => {
+          carList.innerHTML = '';
+          // 최신순 정렬 (역순)
+          data.reverse().forEach(car => {
+            addCarToList(car.time, car.carNumber);
+          });
+        })
+        .catch(err => console.error("불러오기 실패:", err));
+    }
+
+    // 페이지 로드시 차량 목록 불러오기
+    window.onload = loadCarList;
+
+    // 차량 등록 함수
+    function registerCar(event) {
+      event.preventDefault();
+
+      const registerButton = document.getElementById('registerButton');
+      registerButton.disabled = true;
+      const originalText = registerButton.innerHTML;
+      registerButton.innerHTML = '📤등록중...잠시 기다려주세요';
+
+      const reservationNumber = document.getElementById('reservationNumber').value;
+      const startDate = document.getElementById('startDate').value;
+      const endDate = document.getElementById('endDate').value;
+      const carNumber = document.getElementById('carNumber').value.trim();
+
+      if (!carNumber) {
+        alert("⚠차량 번호를 입력하세요.");
+        resetRegisterButton();
+        return;
+      }
+
+      const payload = { reservationNumber, carNumber, startDate, endDate };
+
+      fetch(WEB_APP_URL, {
+        method: "POST",
+        mode: "no-cors",
+        body: JSON.stringify(payload),
+        headers: { "Content-Type": "application/json" },
+      })
+      .then(() => {
+        alert("차량이 등록되었습니다!");
+        document.getElementById('carNumber').value = '';
+        loadCarList();  // 목록 새로 불러오기
+      })
+      .catch(err => alert("등록 실패: " + err))
+      .finally(resetRegisterButton);
+
+      function resetRegisterButton() {
+        registerButton.disabled = false;
+        registerButton.innerHTML = originalText;
+      }
+    }
+
+    // 등록 시 엔터키 입력으로 실행 추가 (기존 스크립트 내 적절한 위치에 추가)
+document.getElementById('carNumber').addEventListener('keydown', function(e) {
+  if (e.key === "Enter") {
+    e.preventDefault(); // 기본 엔터 제출 방지
+    registerCar(e);
+  }
+});
+
+
+    // 차량 정보를 테이블에 추가하는 함수
+    function addCarToList(time, carNumber) {
+      const localTime = new Date(time).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' });
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${localTime}</td>
+        <td>${carNumber}</td>
+        <td><button type="button" class="btn btn-secondary btn-sm" onclick="deleteCar('${time}', '${carNumber}', this)">⛔</button></td>
+      `;
+      carList.append(tr);
+    }
+
+    // 차량 삭제 함수
+    function deleteCar(time, carNumber, btn) {
+     if (!confirm(`🤷‍♂️차량번호 [ ${carNumber} ]를 삭제하시겠습니까?`)) return;
+
+
+      const originalText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '🔂삭제중...';
+
+      const formattedTime = new Date(time).toLocaleString('sv-SE').replace('T', ' ');
+
+      fetch(WEB_APP_URL, {
+        method: "POST",
+        mode: "no-cors",
+        body: JSON.stringify({ time: formattedTime, carNumber, action: 'delete' }),
+        headers: { "Content-Type": "application/json" },
+      })
+      .then(() => {
+        btn.closest('tr').remove();
+        alert("삭제되었습니다.");
+      })
+      .catch(err => {
+        alert("삭제 실패: " + err);
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      });
+    }
+  </script>
+</body>
+</html>
