@@ -96,6 +96,7 @@
 
   if (signaturePad.isEmpty()) {
     alert("서명을 해주세요.");
+    if ("vibrate" in navigator) navigator.vibrate(200); // 진동 추가
     return;
   }
 
@@ -118,6 +119,7 @@
       }
     });
 
+    if ("vibrate" in navigator) navigator.vibrate([100, 50, 100]); // 성공시 짧은 진동 2회 
     alert('🚀서약서가 정상 제출 되었습니다');
     resultBox.textContent = "✅ 서약서가 정상적으로 제출되었습니다.";
     resultBox.classList.add('text-success');
@@ -125,6 +127,7 @@
     form.reset();
     signaturePad.clear();
   } catch (error) {
+    if ("vibrate" in navigator) navigator.vibrate([200, 100, 200]); // 실패시 강한 진동 2회
     resultBox.textContent = "❌ 제출 중 문제가 발생했습니다. 다시 시도해주세요.";
     resultBox.classList.add('text-danger');
   } finally {
