@@ -31,16 +31,58 @@
       margin: 20px auto 0;
       width: 200px;
     }
+     .spinner-container {
+      position: absolute;
+      top: 40%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+
+    .spinner {
+      border: 6px solid #e0e0e0;
+      border-top: 6px solid #007bff;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .spinner-text {
+      margin-top: 10px;
+      font-size: 1rem;
+      color: #555;
+    }
   </style>
 </head>
 <body>
   <div class="iframe-container">
+    <!-- 로딩 스피너 -->
+    <div class="spinner-container" id="spinner">
+      <div class="spinner"></div>
+      <div class="spinner-text">🚑페이지 불러오는 중...</div>
+    </div>
     <iframe
       src="https://script.google.com/macros/s/AKfycby4yjbCYeNyaA3bIsSCBTfcuMusvfkQ95Z0KnH_siVppei1FxelUV4spYqVLj47WDtf/exec"
       title="응급병동 2025휴가 입력"
-      allowfullscreen>
+      onload="iframeLoaded()">
     </iframe>
     <img src="img/cmclogo.png" alt="CMC Logo">
   </div>
+
+    <script>
+    function iframeLoaded() {
+      const iframe = document.querySelector('iframe');
+      const spinner = document.getElementById('spinner');
+      spinner.style.display = 'none';
+      iframe.style.display = 'block';
+    }
+  </script>
 </body>
 </html>
