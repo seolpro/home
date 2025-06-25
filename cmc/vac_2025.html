@@ -11,23 +11,23 @@
       background: #f8f9fa;
       font-family: 'Arial', sans-serif;
     }
+  .iframe-container {
+    text-align: center;
+    position: relative;
+    max-width: 100%;
+  }
 
-    .iframe-container {
-      position: relative;
-      width: 100%;
-      padding-top: 100vh; /* 100% of viewport height */
-      overflow: hidden;
-    }
+  .iframe-container iframe {
+    width: 100%;
+    height: 600px; /* 적절한 높이로 설정 */
+    border: none;
+    margin-bottom: 0; /* iframe 아래 여백 제거 */
+  }
 
-    .iframe-container iframe {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 60%;
-      border: none;
-    }
-
+  .iframe-container img {
+    margin-top: -30px; /* 이미지가 iframe과 너무 멀어지는 것 방지 */
+    width: 120px;
+  }
     @media (max-width: 768px) {
       .iframe-container {
         padding-top: 150vh;
@@ -36,13 +36,13 @@
   </style>
 </head>
 <body>
-  <div class="iframe-container" style="text-align: center;">
-    <iframe
-      src="https://script.google.com/macros/s/AKfycby4yjbCYeNyaA3bIsSCBTfcuMusvfkQ95Z0KnH_siVppei1FxelUV4spYqVLj47WDtf/exec"
-      title="응급병동 2025휴가 입력"
-      allowfullscreen>
-    </iframe>
-    <img src="img/cmclogo.png">
-  </div>
+<div class="iframe-container">
+  <iframe
+    src="https://script.google.com/macros/s/AKfycby4yjbCYeNyaA3bIsSCBTfcuMusvfkQ95Z0KnH_siVppei1FxelUV4spYqVLj47WDtf/exec"
+    title="응급병동 2025휴가 입력"
+    allowfullscreen>
+  </iframe>
+  <img src="img/cmclogo.png" alt="CMC Logo">
+</div>
 </body>
 </html>
