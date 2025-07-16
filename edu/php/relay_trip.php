@@ -74,7 +74,7 @@ $payload = [
 ];
 
 // ✅ 알림톡 전송 요청 (cURL)
-$ch = curl_init("https://message.ppurio.com/v1/send/alimtalk");
+$ch = curl_init("https://message.ppurio.com/v1/kakao"); // ✅ 수정된 전송 경로
 curl_setopt($ch, CURLOPT_POST, true);
 curl_setopt($ch, CURLOPT_HTTPHEADER, [
     "Authorization: Bearer $token",

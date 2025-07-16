@@ -184,76 +184,64 @@
     const scriptURL = 'https://script.google.com/macros/s/AKfycbzP-VPAbjtzV1oqTfLsuSDYtnpQBludpT0SPxGPQQ4V7BzKAVTrZ3l8FGVPjslVGBYO/exec'; // 배포된 웹 앱 URL로 변경해주세요
 
     function submitForm(event) {
-      event.preventDefault();
+  event.preventDefault();
 
-      const form = document.getElementById("travelForm");
-      const btn = document.getElementById("submitBtn");
-      const spinner = document.getElementById("loadingSpinner");
+  const form = document.getElementById("travelForm");
+  const btn = document.getElementById("submitBtn");
+  const spinner = document.getElementById("loadingSpinner");
 
-      const contact = document.getElementById("contact").value.trim();
-        // 연락처가 11자리 숫자인지 확인
-     if (!/^\d{11}$/.test(contact)) {
+  const contact = document.getElementById("contact").value.trim();
+  if (!/^\d{11}$/.test(contact)) {
     alert("📞 연락처는 숫자만 11자리입니다. 확인해 주세요. 예: 01012345678");
     document.getElementById("contact").focus();
     return;
   }
 
-      const data = {
-        employeeId: document.getElementById("employeeId").value.trim(),
-        name: document.getElementById("name").value.trim(),
-        contact: document.getElementById("contact").value.trim(),
-        attendees: document.getElementById("attendees").value,
-        consent: document.getElementById("consent").checked ? "동의" : "미동의",
-        comment: document.getElementById("comment").value.trim()
-      };
+  const data = {
+    employeeId: document.getElementById("employeeId").value.trim(),
+    name: document.getElementById("name").value.trim(),
+    contact: contact,
+    attendees: document.getElementById("attendees").value,
+    consent: document.getElementById("consent").checked ? "동의" : "미동의",
+    comment: document.getElementById("comment").value.trim()
+  };
 
-      const confirmMsg = `입력하신 내용을 확인해주세요:\n\n` +
-        `📌 사번: ${data.employeeId}\n` +
-        `👤 성명: ${data.name}\n` +
-        `📞 연락처: ${data.contact}\n` +
-        `👥 참석인원: ${data.attendees}명\n\n` +
-        `이대로 제출하시겠습니까?`;
+  // 필수 입력값 추가 체크
+  if (!data.employeeId || !data.name) {
+    alert("사번과 성명은 필수 입력 항목입니다.");
+    return;
+  }
 
-      if (!confirm(confirmMsg)) return;
+  if (typeof scriptURL === "undefined" || !scriptURL) {
+    alert("제출 경로가 설정되지 않았습니다. 관리자에게 문의하세요.");
+    return;
+  }
 
-      btn.disabled = true;
-      btn.innerText = "🔄 제출 중...";
-      spinner.style.display = "inline-block";
+  const confirmMsg = `입력하신 내용을 확인해주세요:\n\n` +
+    `📌 사번: ${data.employeeId}\n` +
+    `👤 성명: ${data.name}\n` +
+    `📞 연락처: ${data.contact}\n` +
+    `👥 참석인원: ${data.attendees}명\n\n` +
+    `이대로 제출하시겠습니까?`;
 
-      fetch(scriptURL, {
-  method: "POST",
-  mode: "no-cors", // ✨ 핵심 설정
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify(data)
-})
+  if (!confirm(confirmMsg)) return;
 
-.finally(() => {
-  alert("✅ 신청이 완료되었을 수 있습니다.\n 취소 및 변경은 신협으로 신청 바랍니다. ");
-  form.reset();
-  btn.disabled = false;
-  btn.innerText = "📤 제출하기";
-  spinner.style.display = "none";
-});
-    }
+  btn.disabled = true;
+  btn.innerText = "🔄 제출 중...";
+  spinner.style.display = "inline-block";
 
-// 알림톡 알림 전송 함수
-function sendAlimtalk(data) {
-  fetch("https://ajoucu.mycafe24.com/relay_trip.php", {
+  fetch(scriptURL, {
     method: "POST",
+    mode: "no-cors",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      name: data.name,
-      contact: data.contact,
-      attendees: data.attendees,
-      comment: data.comment
-    })
+    body: JSON.stringify(data)
   })
-  .then(res => res.text())  // 서버가 텍스트 응답을 줄 경우
-  .then(result => {
-    alert("✅ 알림톡 응답 결과:\n" + result);
-  })
-  .catch(err => {
-    alert("❌ 알림톡 오류 발생:\n" + err);
+  .finally(() => {
+    alert("✔신청서가 잘 접수되었습니다.\n 💬알림톡으로 안내 드립니다..");
+    form.reset();
+    btn.disabled = false;
+    btn.innerText = "📤 제출하기";
+    spinner.style.display = "none";
   });
 }
   </script>
