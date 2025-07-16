@@ -18,7 +18,8 @@
       text-align: center;
     }
     .img-sample {
-      max-width: 100%;
+      max-width: 70%;
+      max-height: 700px;
       border-radius: 10px;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
@@ -37,10 +38,10 @@
       <ul class="navbar-nav ms-auto">
         <li class="nav-item"><a class="nav-link" href="#intro">소개</a></li>
         <li class="nav-item"><a class="nav-link" href="#gas">구글앱스크립트(GAS)</a></li>
-        <li class="nav-item"><a class="nav-link" href="#php">PHP(서버관리)</a></li>
-        <li class="nav-item"><a class="nav-link" href="#alimtalk">알림톡</a></li>
-        <li class="nav-item"><a class="nav-link" href="#ai">AI 활용</a></li>
-        <li class="nav-item"><a class="nav-link" href="#demo">데모</a></li>
+        <li class="nav-item"><a class="nav-link" href="#php">cafe24 호스트서버생성</a></li>
+        <li class="nav-item"><a class="nav-link" href="#alimtalk">구글시트(GAS)</a></li>
+        <li class="nav-item"><a class="nav-link" href="#ai">알림톡 템플릿 생성</a></li>
+        <li class="nav-item"><a class="nav-link" href="#demo">Demo</a></li>
         <li class="nav-item"><a class="nav-link" href="#qna">Q&A</a></li>
       </ul>
     </div>
@@ -58,17 +59,18 @@
 <!-- GAS 섹션 -->
 <section class="section" id="gas">
   <div class="container">
-    <h2>1. html + GAS를 이용한 신청폼 제작</h2>
-    <p>HTML+JS+Bootstrap 기반의 폼을 만들고 Google Sheets에 저장합니다.</p>
+    <h2>1. AI를 활용한 html 제작</h2>
+    <p>AI를 활용하여 프론트앤드(HTML+JS+Bootstrap 기반)을 만듭니다.</p>
     <ul>
       <li>POST 방식으로 Google Sheet에 데이터 저장</li>
       <li>Bootstrap을 활용한 반응형 UI</li>
     </ul>
     <a href="https://seolpro.github.io/home/edu/join_trip.html" target="_blank">🚌조합원테마여행신청Form</a>
-    <a href="https://seolpro.github.io/home/edu/relay_php.html" target="_blank">📍카페24서버(PHP코드)</a>
+    
     <br>
-    <img src="https://via.placeholder.com/800x400?text=GAS+Form+Sample" class="img-sample" alt="GAS form">
+    <img src="img/join_page.jpg" class="img-sample" alt="html form">
     <div class="text-end mt-3">
+
       <a href="#php" class="btn btn-outline-primary">다음 ➤</a>
     </div>
   </div>
@@ -77,13 +79,15 @@
 <!-- PHP 섹션 -->
 <section class="section bg-light" id="php">
   <div class="container">
-    <h2>2. PHP와 Cafe24 서버 연동</h2>
-    <p>PHP 서버에 요청을 전송하고 중계 방식으로 API 연동합니다.</p>
+    <h2>2. AI를 활용한 뿌리오 알림톡 전송 매체인 서버(카페24호스트)를 구축</h2>
+    <p>AI로 코딩한  PHP 파일 생성</p>
     <ul>
       <li>Cafe24 호스트에 relay_notify.php 업로드</li>
-      <li>GAS 또는 HTML에서 호출하여 알림 요청</li>
+      <li>HTML에서 알림톡 호출을 받아 PHP를 통한 알림톡 전송 요청</li>
     </ul>
-    <img src="https://via.placeholder.com/800x400?text=PHP+Relay+Server" class="img-sample" alt="PHP relay">
+    <a href="https://seolpro.github.io/home/edu/relay_php.html" target="_blank">📍카페24서버(PHP코드)</a>
+    <br>
+    <img src="img/care24_host.jpg" class="img-sample" alt="cafe24host">
     <div class="text-end mt-3">
       <a href="#alimtalk" class="btn btn-outline-primary">다음 ➤</a>
     </div>
@@ -93,13 +97,15 @@
 <!-- 알림톡 섹션 -->
 <section class="section" id="alimtalk">
   <div class="container">
-    <h2>3. 뿌리오 알림톡 API 연동</h2>
-    <p>PHP에서 발급받은 토큰과 템플릿을 사용하여 알림톡 발송</p>
+    <h2>3. 구글시트의 입력자료 저장 (GAS)</h2>
+    <p>프론트앤드(html)에서 사용자가 입력한 신청자료를 입력받아 저장하는 공간</p>
     <ul>
-      <li>템플릿 코드, 수신자 번호, 변수 포함</li>
-      <li>다중 수신자 및 시간 조건 분기</li>
+      <li>AI를 활용한 통한 구글앱스크립트(GAS) 구현</li>
+      <li>구글시트의 신청자료 저장 및 활용</li>
     </ul>
-    <img src="https://via.placeholder.com/800x400?text=Alimtalk+API+Flow" class="img-sample" alt="알림톡">
+    <a href="https://docs.google.com/spreadsheets/d/1LvIblOHeO__YpXUxX7czLkrhi0GVnbxQGwT2ObqTxhk/edit?usp=sharing" target="_blank">📝구글시트(신청접수)</a>
+    <br>
+    <img src="img/sheetimg.jpg" class="img-sample" alt="구글GAS">
     <div class="text-end mt-3">
       <a href="#ai" class="btn btn-outline-primary">다음 ➤</a>
     </div>
@@ -109,13 +115,13 @@
 <!-- AI 섹션 -->
 <section class="section bg-light" id="ai">
   <div class="container">
-    <h2>4. AI(ChatGPT)를 활용한 코드 생성</h2>
-    <p>AI를 통해 코드 작성, 디버깅, 자동화 방법을 실습합니다.</p>
+    <h2>4. 뿌리오 알림톡 템플릿 생성</h2>
+    <p>뿌리오 알림톡 생성</p>
     <ul>
-      <li>HTML/JS/GAS 코드 자동 생성</li>
-      <li>오류 추적 및 최적화 시연</li>
+      <li>카카오 비즈니스채널(사업자,법인)인 경우 알림톡 생성가능</li>
+      <li>사용자 액션기반 및 정보성 메세지 생성 전송가능, 단 광고성은 불가</li>
     </ul>
-    <img src="https://via.placeholder.com/800x400?text=AI+Generated+Code" class="img-sample" alt="AI code">
+    <img src="img/alt_temple.jpg" class="img-sample" alt="알림톡템플릿">
     <div class="text-end mt-3">
       <a href="#demo" class="btn btn-outline-primary">다음 ➤</a>
     </div>
@@ -126,11 +132,11 @@
 <section class="section" id="demo">
   <div class="container">
     <h2>5. 실전 데모</h2>
-    <p>전체 흐름을 통합 시연합니다: 신청 → 저장 → 발송</p>
-    <iframe src="https://ajou9770.github.io/form/sample.html" width="100%" height="500" style="border:1px solid #ccc; border-radius: 8px;"></iframe>
-    <div class="text-end mt-3">
+    <p>실제 신청 및 알림톡 수신 시현</p>
+    <img src="img/#" class="img-sample" alt="알림톡템플릿">
+    <!-- <div class="text-end mt-3">
       <a href="#qna" class="btn btn-outline-primary">다음 ➤</a>
-    </div>
+    </div> -->
   </div>
 </section>
 
@@ -138,7 +144,7 @@
 <section class="section bg-light" id="qna">
   <div class="container">
     <h2>6. Q&A / 댓글</h2>
-    <p>질문을 자유롭게 남겨주세요. 아래는 참석자 질문 예시입니다.</p>
+    <p>자주하는 질문 유형들...</p>
     <ul class="list-group">
       <li class="list-group-item">Q1. GAS에서 직접 알림톡 API 호출도 가능한가요?</li>
       <li class="list-group-item">Q2. PHP 서버는 Cafe24 외에도 사용 가능한가요?</li>
