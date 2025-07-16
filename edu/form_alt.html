@@ -23,6 +23,18 @@
       border-radius: 10px;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
+    .zoom-on-hover {
+  transition: transform 0.3s ease;  /* 부드러운 확대 효과 */
+  cursor: pointer;                  /* 마우스 커서 변경 */
+}
+.zoom-on-hover:hover {
+  transform: scale(1.7);            /* 1.5배 확대 */
+  z-index: 999;
+}
+.img-container {
+  overflow: visible; /* 또는 hidden */
+  position: relative;
+}
   </style>
 </head>
 <body>
@@ -67,7 +79,7 @@
     </ul>
     <a href="https://seolpro.github.io/home/edu/join_trip.html" target="_blank">🚌조합원테마여행신청Form</a>
     
-    <br>
+    <br><br>
     <img src="img/join_page.jpg" class="img-sample" alt="html form">
     <div class="text-end mt-3">
 
@@ -79,13 +91,16 @@
 <!-- PHP 섹션 -->
 <section class="section bg-light" id="php">
   <div class="container">
-    <h3>2. AI를 활용한 뿌리오 알림톡 전송 매체인 서버(카페24호스트)를 구축</h3>
+    <h3>2. AI를 활용한 뿌리오 알림톡 전송 매체인 서버(카페24_Hosting 서비스) 구축</h3>
     <p>AI로 코딩한 PHP 파일 생성</p>
     <ul>
       <li>Cafe24 호스트에 relay_notify.php 업로드</li>
       <li>HTML에서 알림톡 호출을 받아 PHP를 통한 알림톡 전송 요청(뿌리오 API 연동)</li>
     </ul>
     <a href="https://seolpro.github.io/home/edu/relay_php.html" target="_blank">📍카페24서버(PHP코드)</a>
+    <br>
+    <a href="https://hosting.cafe24.com/" target="_blank">🔗cafe24호스팅(서버)</a>
+    <br>
     <br>
     <img src="img/care24_host.jpg" class="img-sample" alt="cafe24host">
     <div class="text-end mt-3">
@@ -104,7 +119,7 @@
       <li>구글시트의 신청자료 저장 및 활용</li>
     </ul>
     <a href="https://docs.google.com/spreadsheets/d/1LvIblOHeO__YpXUxX7czLkrhi0GVnbxQGwT2ObqTxhk/edit?usp=sharing" target="_blank">📝구글시트(신청접수)</a>
-    <br>
+    <br><br>
     <img src="img/sheetimg.jpg" class="img-sample" alt="구글GAS">
     <div class="text-end mt-3">
       <a href="#ai" class="btn btn-outline-primary">다음 ➤</a>
@@ -132,8 +147,10 @@
 <section class="section" id="demo">
   <div class="container">
     <h3>5. 실전 데모</h3>
-    <p>실제 신청 및 알림톡 수신 시현</p>
-    <img src="img/join_trip_qr.jpg" class="img-sample" alt="테마여행신청샘플">
+    <p>🚌조합원테마여행 신청 및 💬알림톡 수신 테스트</p>
+    <a href="https://seolpro.github.io/home/edu/join_trip.html" target="_blank">
+    <img src="img/join_trip_qr.jpg" class="img-sample zoom-on-hover" alt="테마여행신청" title="🔗테마여행신청페이지 이동">
+    </a>
     <!-- <div class="text-end mt-3">
       <a href="#qna" class="btn btn-outline-primary">다음 ➤</a>
     </div> -->
