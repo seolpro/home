@@ -1,5 +1,5 @@
 <?php
-// relay.trip.php
+require_once __DIR__ . '/lib/ppurio_token_manager.php';
 
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=utf-8");
@@ -15,8 +15,8 @@ $contact = $data["contact"] ?? "";
 $attendees = $data["attendees"] ?? "";
 $comment = $data["comment"] ?? "-";
 
-// 📌 토큰 발급
-$token = file_get_contents("/lib/ppurio_token_manager.php");
+// ✅ 토큰 발급
+$token = getPpurioToken();
 if (!$token) {
     echo json_encode(["error" => "토큰 발급 실패"]);
     exit;
@@ -31,7 +31,7 @@ $payload = [
         "name" => $name,
         "changeWord" => [
             "var1" => $contact,
-            "var2" => $attendees,
+            "var2" => $attendees . "명"
             "var3" => $comment
         ]
     ]]
@@ -48,5 +48,6 @@ $options = [
 
 $context = stream_context_create($options);
 $response = file_get_contents("https://message.ppurio.com/v1/send/alimtalk", false, $context);
+
+// 실제 응답 반환
 echo $response ?: json_encode(["error" => "전송 실패"]);
-?>

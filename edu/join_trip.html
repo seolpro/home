@@ -247,9 +247,15 @@ function sendAlimtalk(data) {
       attendees: data.attendees,
       comment: data.comment
     })
-  }).then(res => console.log("✅ 알림톡 요청 완료")).catch(err => console.error("❌ 알림톡 오류:", err));
+  })
+  .then(res => res.text())  // 서버가 텍스트 응답을 줄 경우
+  .then(result => {
+    alert("✅ 알림톡 응답 결과:\n" + result);
+  })
+  .catch(err => {
+    alert("❌ 알림톡 오류 발생:\n" + err);
+  });
 }
-
   </script>
 </body>
 </html>
