@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+<title>🚀디지털 채널을 활용한 조합원 관리</title>
+<style>
+    .hidden {
+        display: none;
+    }
+    #qr-code-img {
+        width: 100%;
+        max-width: 300px;
+    }
+    a {
+        text-decoration: none;
+    }
+    /* 모달 스타일 */
+/* 모달 스타일 */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 10px;
+    width: 95%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.7);
+}
+
+.modal-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    padding: 20px;
+    background-color: #fff;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.button-group {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 20px;
+}
+<!-- mark {
+    background-color: transparent;  /* 배경색을 투명하게 설정 */
+    color: inherit;                 /* 텍스트 색상을 기본값으로 유지 */
+    text-decoration: none;         /* 기본 밑줄 제거 */
+    position: relative;            /* 그림자를 위한 상대 위치 설정 */
+}
+
+mark::after {
+    content: "";                   /* 가상 요소 생성 */
+    position: absolute;            /* 절대 위치 설정 */
+    left: 0;                       /* 왼쪽 정렬 */
+    right: 0;                      /* 오른쪽 정렬 */
+    bottom: 0;                     /* 텍스트 바로 아래에 위치 */
+    height: 2px;                   /* 밑줄 두께 설정 */
+    background: #FFB6C1;          /* 밑줄 색상 설정 (파스텔 핑크) */
+    box-shadow: 
+        2px 2px 0px #FFB6C1,     /* 그림자를 사용하여 불규칙한 모양 생성 */
+        -2px -2px 0px #FFB6C1;
+    border-radius: 1px;           /* 밑줄의 모서리를 둥글게 */
+} -->
+mark {
+    background-color: rgba(255, 182, 193, 0.3); /* 파스텔 핑크의 투명한 배경색 */
+    color: inherit;                             /* 텍스트 색상을 기본값으로 유지 */
+    text-decoration: none;                      /* 기본 밑줄 제거 */
+    padding: 0.2em 0.4em;                       /* 텍스트 주위에 약간의 패딩 추가 */
+    border-radius: 0.5em;                       /* 라운드된 모서리 */
+    box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.1); /* 부드러운 그림자 */
+    transition: all 0.3s ease;                  /* 부드러운 전환 효과 */
+}
+
+mark:hover {
+    background-color: rgba(255, 182, 193, 0.5); /* 호버 시 배경색 강조 */
+}
+
+</style>
+</head>
+<body>
+
+<div class="container my-5">
+    
+    <h1 class="text-center mb-5">📲디지털 채널을 활용한 조합원 관리(홍보)</h1>
+
+    <!-- 펼치기/접기 버튼과 리스트 추가 시작 -->
+    <div class="mb-4">
+        <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#collapseList" aria-expanded="false" aria-controls="collapseList">
+         ✔왜(Why?) 디지털 채널이 필요할까?🔻
+        </button>
+        <div class="collapse" id="collapseList">
+            <div class="card card-body">
+                <ul>
+                    <li> MZ세대 등 차세대 조합원 관리에 용이</li>
+                    <li> 카카오톡 등 무료 플랫폼 이용에 따른 높은 운영 가성비</li>
+                    <li> 조합원과의 소통창구로서의 기능 수행 </li>
+                    <li><mark>중앙회에서 제공하는 온라인디지털 채널과의 연계(리온브런치, 라이프온 등)</mark></li>
+                    <li> 비대면 온라인 창구의 역할 수행 가능(확대)</li>
+                    <li> 온라인 SNS등 디지털환경에서 조합의 효과적인 홍보 가능</li>
+                    <!-- ... (원하는 만큼 리스트 항목 추가) ... -->
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <a href="https://ajou9770.github.io/edu/use_ajoucu.html" target="_blank"><button class="btn btn-primary">🚀아주대의료원신협 활용사례</button></a>
+    <hr>
+    <!-- 펼치기/접기 버튼과 리스트 추가 끝 -->
+    <div class="row">
+        <!-- 테마 1 -->
+        <div class="col-md-4">
+            <div class="card">
+                <img src="img/kakao_chimg.png" class="card-img-top" alt="카카오채널 이미지">
+                <div class="card-body">
+                    <h5 class="card-title">⭐카카오톡 비즈채널 활용(40분)</h5>
+                    <p class="card-text">🚀카카오톡 비즈채널 활용 조합원 관리(홍보)</p>
+                    <a href="http://ajou9770.github.io/edu/kakaoch.html" class="btn btn-primary">🔎자세히 알아보기</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 테마 2 -->
+        <div class="col-md-4">
+            <div class="card">
+                <img src="img/kakao_tokimg.png" class="card-img-top" alt="알림톡 이미지">
+                <div class="card-body">
+                    <h5 class="card-title">⭐알림톡으로 스마트하게 메세지 보내기(40분)</h5>
+                    <p class="card-text">알림톡 설명</p>
+                    <a href="http://ajou9770.github.io/edu/tok.html" class="btn btn-primary">🔎자세히 알아보기</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 테마 3 -->
+        <div class="col-md-4">
+            <div class="card">
+                <img src="img/google_formimg.png" class="card-img-top" alt="구글설문지 이미지">
+                <div class="card-body">
+                    <h5 class="card-title">🖥️구글설문지 활용 방법(30분)</h5>
+                    <p class="card-text">조합원과의 소통을 위한 구글 설문지 활용 방법</p>
+                    <a href="http://ajou9770.github.io/edu/googleform.html" class="btn btn-primary">🔎자세히 알아보기</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+
+<div class="text-center my-5">
+    <button id="toggle-button" class="btn btn-secondary"><i class="fas fa-qrcode fa-lg"></i></button>
+    <div id="qr-code" class="hidden my-3">
+        <img id="qr-code-img" src="img/qrcode.png" alt="QR 코드">
+        <h2>https: //<b>rebrand.ly/y2qmhci</b></h2>
+    </div>
+    <a href="http://ajou9770.github.io/edu/ytb.html" class="btn btn-secondary btn-sm" target="_blank" style="margin-right:20px; font-weight:600;"><i class="fab fa-youtube"></i>동영상 강의자료</a>
+    <br><br>
+    <!-- <small onclick="appDo()">🚀업무용APP(활용 사례)</a></small>
+    <br><br> -->
+    <a href="https://www.cu.co.kr/GSSP040000.do?cu_ingno=03239&busi_ty=010&disclosure_no=19818&disclosure_ty=1" target="_blank" style="font-weight: 600; font-family: sans-serif;">📑아주대의료원신협 현황(2024년 경영공시자료 참조)</a> 
+</div>
+</div>
+</div>
+<!-- 모달 구조 -->
+<!-- 모달 구조 -->
+<div id="passwordModal" class="modal">
+    <div class="modal-content">
+        <h4>🔢비밀번호 입력</h4>
+        <input type="password" id="passwordInput" placeholder="비밀번호를 입력하세요">
+        <div class="button-group">
+            <button class="btn btn-primary btn-sm" onclick="checkPasswordAndRedirect()">✔확인</button>
+            <button class="btn btn-danger btn-sm" onclick="closeModal()">❌취소</button>
+        </div>
+    </div>
+</div>
+<script>
+    function appDo() {
+        // 모달을 표시
+        document.getElementById('passwordModal').style.display = 'block';
+    }
+    
+    function checkPasswordAndRedirect() {
+        var password = document.getElementById('passwordInput').value;
+        var hardcodedPassword = '2130';  // 웹 페이지 내에 직접 저장된 비밀번호
+    
+        if (password === hardcodedPassword) {
+            // 비밀번호가 일치하면 모달을 숨기고 페이지를 새 탭에서 엽니다.
+            closeModal();
+            window.open("https://ajou9770.github.io/notice/ETC/appsheet.html", "_blank");
+        } else {
+            alert("⚠죄송합니다. 직원의 개인정보노출우려로 접속을 제한합니다");
+        }
+    }
+    
+    function closeModal() {
+        // 모달을 숨김
+        document.getElementById('passwordModal').style.display = 'none';
+    }
+    
+   <!--  // 오른쪽 마우스 버튼 사용 금지
+    document.addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+        alert("⛔오른쪽 마우스 버튼 사용이 제한 됩니다");
+    }); -->
+ </script>
+<!-- 문의 버튼들 
+<div class="fixed-bottom mb-3 d-flex justify-content-center">
+    <div class="btn-group" role="group">
+      <a href="tel:123456789" class="btn btn-info">
+        <i class="fas fa-phone-alt"></i> 유선 문의
+      </a>
+      <a href="mailto:example@example.com" class="btn btn-danger">
+        <i class="fas fa-envelope"></i> 이메일 문의
+      </a>
+    </div>
+  </div>-->
+<script>
+    document.getElementById('toggle-button').addEventListener('click', () => {
+        document.getElementById('qr-code').classList.toggle('hidden');
+        
+        window.scrollTo({
+            top: document.body.scrollHeight,
+            behavior: 'smooth'
+        });
+    });
+    </script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
