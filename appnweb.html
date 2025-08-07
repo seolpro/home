@@ -53,7 +53,9 @@
               <a href="https://ajou9770.github.io/workform/research" class="btn btn-outline-danger btn-sm" target="_blank">💱외부자금유치운용수익분석</a>
               <a href="https://script.google.com/macros/s/AKfycbxX-8yTiGuYRBos9EmKYCUe7baprHoSlqQpKrhrN9eJ2YxC4gY4dSh_sGlB90-A_6ff/exec" class="btn btn-outline-danger btn-sm" target="_blank">🎁 총회 경품추첨프로그램</a>
               <a href="https://ajou9770.github.io/notice/ETC/file_cowork.html" class="btn btn-outline-danger btn-sm" target="_blank">📤 공유 파일 업&다운</a>
-              <a href="https://seolpro.github.io/home/alt_notify.html" class="btn btn-outline-danger btn-sm" target="_blank">💬 조합원 카톡 알림톡 안내</a>
+              <a href="javascript:void(0)" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#pwModalAltNotify">
+  💬 조합원 카톡 알림톡 안내
+</a>
               <a href="https://seolpro.github.io/home/send_sms.html" class="btn btn-outline-danger btn-sm" target="_blank">💬 조합원 문자 안내</a>
               <a href="https://seolpro.github.io/home/trip_insu"  class="btn btn-outline-danger btn-sm" target="_blank">📝여행자보험 가입정보 수집폼</a>
               <a href="https://seolpro.github.io/home/order_menu"  class="btn btn-outline-danger btn-sm" target="_blank">🍜테마여행 점심메뉴 주문폼</a>
@@ -178,6 +180,23 @@
     </div> <!-- row -->
   </div> <!-- container -->
 
+  <!-- 📌카톡알림톡발송 모달창 (비밀번호 입력) -->
+<div class="modal fade" id="pwModalAltNotify" tabindex="-1" aria-labelledby="pwModalAltNotifyLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span class="modal-title" id="pwModalAltNotifyLabel">🔑접속 비밀번호?</span>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button>
+      </div>
+      <div class="modal-body">
+        <input type="password" id="pwInputAlt" class="form-control" placeholder="🔑비밀번호 입력" />
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-danger btn-sm" onclick="verifyAltNotify()">✔확인</button>
+      </div>
+    </div>
+  </div>
+</div>
  
 <!-- 📌 Bootstrap 모달 -->
 <div class="modal fade" id="passwordModal" tabindex="-1" aria-labelledby="passwordModalLabel" aria-hidden="true">
@@ -196,6 +215,29 @@
     </div>
   </div>
 </div>
+<!-- 알림톡발송 모달창 비번 JS-->
+<script>
+  function verifyAltNotify() {
+    const inputPw = document.getElementById("pwInputAlt").value;
+
+    const today = new Date();
+    const day = String(today.getDate()).padStart(2, '0');
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const expectedPw = `ajou${day}${month}`;
+
+    if (inputPw === expectedPw) {
+      // 모달 닫기
+      const modal = bootstrap.Modal.getInstance(document.getElementById("pwModalAltNotify"));
+      modal.hide();
+
+      // URL 새 탭으로 열기
+      window.open("https://seolpro.github.io/home/alt_notify.html", "_blank");
+    } else {
+      alert("⛔ 비밀번호가 미입력되었거나 불일치 합니다.");
+    }
+  }
+</script>
+
 
 <script>
   function verifyPassword() {
