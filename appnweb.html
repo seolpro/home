@@ -65,10 +65,10 @@
       </a>
     </div>
     <div class="text-end">
-      <a href="https://docs.google.com/spreadsheets/d/1SLTIeQHYW0tcKBZ2x6ckCr8jGyKFELZS08MXMTfHiS4/edit?usp=sharing"
-         class="text-muted small text-decoration-none" target="_blank">
-        #저장 시트 보기
-      </a>
+    <!-- 📌 비밀번호 입력 링크 -->
+    <a href="javascript:void(0)" class="text-muted small text-decoration-none" data-bs-toggle="modal" data-bs-target="#passwordModal">
+   # 저장 시트 보기
+   </a>
     </div>
   </div>
 </div>
@@ -88,22 +88,20 @@
             <p class="card-text small">📝각종신청서 및 조회서비스</p>
             <div class="d-flex flex-wrap gap-2 btn-group-custom">
             <a href="https://seolpro.github.io/home/search_share" class="btn btn-outline-primary btn-sm" target="_blank">🔎 이용고 배당 사전조회</a>
-<!-- <a href="https://ajou9770.github.io/usertip/congrat.html" class="btn btn-outline-primary btn-sm" target="_blank">✨조합원 경조금신청서</a>
-<a href="https://docs.google.com/spreadsheets/d/1Wp3-YktAmDklS4hc2TSoIi0BvEEVOBail9OQQTXk-AU/edit?usp=sharing">🔗경조금 접수시트보기</a> -->
-<div class="card p-3 shadow-sm mb-3" style="max-width: 500px;">
+
+            <div class="card p-3 shadow-sm mb-3" style="max-width: 500px;">
   <div class="d-flex justify-content-between align-items-center">
     <div>
-      <h6 class="mb-2">📌 조합원 경조금 신청</h6>
       <a href="https://ajou9770.github.io/usertip/congrat.html" class="btn btn-outline-primary btn-sm" target="_blank">
         ✨ 경조금 신청서 작성
       </a>
     </div>
-    <div class="text-end">
+    <!-- <div class="text-end">
       <a href="https://docs.google.com/spreadsheets/d/1Wp3-YktAmDklS4hc2TSoIi0BvEEVOBail9OQQTXk-AU/edit?usp=sharing"
          class="text-muted small" target="_blank">
         🔗 접수 시트 보기
       </a>
-    </div>
+    </div> -->
   </div>
 </div>
 
@@ -113,12 +111,12 @@
       <a href="https://ajou9770.github.io/workform/pay_ajoumc.html" class="btn btn-outline-primary btn-sm" target="_blank">
         💰 급여이체 변경신청</a>
     </div>
-    <div class="text-end">
+   <!--  <div class="text-end">
       <a href="https://docs.google.com/spreadsheets/d/1Yd7dkK6ZZUtPVQR7r0tpfWuD7ySw1ErxTca9dzg_nbU/edit?usp=sharing"
          class="text-muted small text-decoration-none" target="_blank">
         # 접수시트 보기
       </a>
-    </div>
+    </div> -->
   </div>
 </div>
 
@@ -130,12 +128,12 @@
         ⏲ 공제상담예약 신청
       </a>
     </div>
-    <div class="text-end">
+    <!-- <div class="text-end">
       <a href="https://docs.google.com/spreadsheets/d/17sjUJ8LjSapBMFjbo0KSCVSb2tL3PqDxLnWmLkENVCw/edit?usp=sharing"
          class="text-muted small text-decoration-none" target="_blank">
         # 접수시트 보기
       </a>
-    </div>
+    </div> -->
   </div>
 </div>
 
@@ -180,6 +178,45 @@
     </div> <!-- row -->
   </div> <!-- container -->
 
+ 
+<!-- 📌 Bootstrap 모달 -->
+<div class="modal fade" id="passwordModal" tabindex="-1" aria-labelledby="passwordModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span class="modal-title" id="passwordModalLabel">🔑접속 비밀번호를 입력하세요</span>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button>
+      </div>
+      <div class="modal-body">
+        <input type="password" id="pwInput" class="form-control" placeholder="🔑password" />
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary btn-sm" onclick="verifyPassword()">확인</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function verifyPassword() {
+    const userInput = document.getElementById("pwInput").value;
+    const today = new Date();
+    const day = String(today.getDate()).padStart(2, '0');
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const expectedPassword = `ajou${day}${month}`; 
+
+    if (userInput === expectedPassword) {
+      // 모달 닫기
+      const modal = bootstrap.Modal.getInstance(document.getElementById("passwordModal"));
+      modal.hide();
+
+      // 시트 열기
+      window.open("https://docs.google.com/spreadsheets/d/1SLTIeQHYW0tcKBZ2x6ckCr8jGyKFELZS08MXMTfHiS4/edit?usp=sharing", "_blank");
+    } else {
+      alert("❌ 비밀번호가 일치하지 않습니다.");
+    }
+  }
+</script>
 
   <script>
   const zoomImages = document.querySelectorAll('.zoomImg');
