@@ -43,18 +43,18 @@
       </div>
       <div class="mb-3">
   <label class="form-label"><i class="bi bi-chat-dots-fill"></i>💬회신 내용</label>
-  <textarea class="form-control" id="message" rows="3" placeholder="답변 내용을 입력(최대 60bytes 이내)" required></textarea>
-  <div id="byteCount" class="form-text text-end text-muted">총 0 / 60 bytes</div>
+  <textarea class="form-control" id="message" rows="3" placeholder="총 105bytes이내로 URL링크는 공백으로 분리해 주세요" required></textarea>
+  <div id="byteCount" class="form-text text-end text-muted">총 0 / 105 bytes</div>
 </div>
   <div class="mb-3">
         <label for="sender" class="form-label"><i class="bi bi-person-badge-fill"></i>👤보내는 직원</label>
         <select class="form-select" id="sender" required>
           <option value="">직원 선택</option>
-          <option>설프로 상무</option>
-          <option>이프로 부장</option>
-          <option>한프로 부장</option>
-          <option>박프로 과장</option>
-          <option>송프로 과장</option>
+          <option>김설호 상무</option>
+          <option>이연주 부장</option>
+          <option>한진희 부장</option>
+          <option>이정민 과장</option>
+          <option>김기헌 과장</option>
         </select>
       </div>
 
@@ -71,9 +71,11 @@
         <select class="form-select" id="linkSelect">
           <option value="">🔍 안내 링크 선택 => 답변내용에 자동입력 </option>
           <option value="https://go.bccard.com/app/apply?mbNo=048"># 민생회복 소비쿠폰 신청</option>
+          <option value="https://ajou9770.github.io/workform/pay_ajoumc"># 급여이체 변경신청서</option>          
           <option value="https://ajou9770.github.io/usertip/dm.html"># 소노호텔 리조트 안내</option>
           <option value="https://ajou9770.github.io/notice/sgicsign.html"># 서울보증보험 전자서명</option>
           <option value="http://pf.kakao.com/_dfhkK"># 조합 카카오톡홈</option>
+          <option value="http://pf.kakao.com/_dfhkK/friend"># 카카오채널 친구추가</option>
           <option value="https://ajou9770.github.io/usertip/congrat.html"># 경조금 신청</option>
           <option value="https://ajou9770.github.io/usertip"># 조합 이용팁</option>
           <option value="https://ajou9770.github.io/usertip/event.html"># 진행중 이벤트</option>
@@ -88,8 +90,8 @@
   <script>
       const messageInput = document.getElementById("message");
   const byteCountDisplay = document.getElementById("byteCount");
-  const MAX1 = 60;
-  const MAX2 = 0;
+  const MAX1 = 55;
+  const MAX2 = 50;
   const MAX_TOTAL = MAX1 + MAX2;
 
   function getByteLength(text) {
@@ -161,15 +163,15 @@ copyBtn.addEventListener("click", async () => {
       const var1 = document.getElementById("subject").value.trim(); // 제목
       const var3 = document.getElementById("sender").value;         // 직원
       const fullMsg = document.getElementById("message").value.trim();
-const var2 = splitTextByByte(fullMsg, MAX1); // 앞 60바이트
-const var4 = splitTextByByte(fullMsg.substring(var3.length), MAX2); // 나머지 최대 50바이트       // 내용2
+      const var2 = splitTextByByte(fullMsg, MAX1); // 앞 55바이트
+      const var4 = splitTextByByte(fullMsg.substring(var2.length), MAX2); // 나머지 최대 50바이트       // 내용2
 
       if (!name || !to || !var1 || !var2 || !var3) {
         alert("모든 항목을 빠짐없이 입력해 주세요.");
         return;
       }
 
-      const confirmMsg = `📱 수신자: ${name} (${to})\n📌 제목: ${var1}\n📨 회신내용: ${var3}${var4}\n👤 직원: ${var2}\n\n이대로 전송하시겠습니까?`;
+      const confirmMsg = `📱 수신자: ${name} [ ${to} ]\n📌 제목: ${var1}\n\n📨 회신내용: ${var2}${var4}\n\n👤 직원: ${var3}\n\n이대로 전송하시겠습니까?`;
       if (!confirm(confirmMsg)) return;
 
       const submitBtn = document.getElementById("submitBtn");
@@ -177,7 +179,7 @@ const var4 = splitTextByByte(fullMsg.substring(var3.length), MAX2); // 나머지
       submitBtn.innerText = "📤 전송 중...";
 
       try {
-        const res = await fetch("https://ajoucu.mycafe24.com/send_alimtalk_notify.php", {
+        const res = await fetch("https://ajoucu.mycafe24.com/send_alt_long.php", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ name, to, var1, var3, var4, var2 })

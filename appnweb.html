@@ -51,7 +51,6 @@
             <p class="card-text small">🔗그외 업무관련 App(사용 가능)</p>
             <div class="d-flex flex-wrap gap-2 btn-group-custom">
               <a href="https://ajou9770.github.io/workform/research" class="btn btn-outline-danger btn-sm" target="_blank">💱외부자금유치운용수익분석</a>
-              <a href="https://dpaper.kr/ewp/login.do" class="btn btn-outline-danger btn-sm" target="_blank" onclick="alert('💁🏻‍♀️프로세스: 사업자등록번호입력=>법인공인인증 로그인=>전자문서조회(내려받기)')">📑전자문서지갑(기관)</a>
               <a href="https://script.google.com/macros/s/AKfycbxX-8yTiGuYRBos9EmKYCUe7baprHoSlqQpKrhrN9eJ2YxC4gY4dSh_sGlB90-A_6ff/exec" class="btn btn-outline-danger btn-sm" target="_blank">🎁 총회 경품추첨프로그램</a>
               <a href="https://ajou9770.github.io/notice/ETC/file_cowork.html" class="btn btn-outline-danger btn-sm" target="_blank">📤 공유 파일 업&다운</a>
               <a href="https://seolpro.github.io/home/alt_notify.html" class="btn btn-outline-danger btn-sm" target="_blank">💬 조합원 카톡 알림톡 안내</a>
@@ -90,7 +89,8 @@
 <a href="http://ajou9770.github.io/notice/sgicsign.html" class="btn btn-outline-primary btn-sm" target="_blank">🔎보증보험개인정보동의방법</a>
 <a href="https://dpaper.kr/deepLinkList.do" class="btn btn-outline-primary btn-sm" target="_blank">🔗전자(지갑)증명서제출</a>
 <a href="https://dpaper.kr/ewp/login.do" class="btn btn-outline-info btn-sm" target="_blank" onclick="alert('💁🏻‍♀️프로세스: 사업자등록번호입력=>법인공인인증 로그인=>전자문서조회(내려받기)')">📑전자문서지갑(기관)</a>
-<img id="zoomImg" src="images/qr_kr_img.jpg" style="width: 150px; height: 100px; transition: transform 0.3s ease;" />
+<img class="zoomImg" src="images/jikab_img.jpg" style="width: 150px; height: 100px; transition: transform 0.3s ease;" />
+<img class="zoomImg" src="images/qr_kr_img.jpg" style="width: 150px; height: 100px; transition: transform 0.3s ease;" />
 
 </div>
           </div>
@@ -117,31 +117,34 @@
     </div> <!-- row -->
   </div> <!-- container -->
 
+
   <script>
-  const img = document.getElementById('zoomImg');
+  const zoomImages = document.querySelectorAll('.zoomImg');
 
-  // 마우스 오버 시 확대
-  img.addEventListener('mouseenter', () => {
-    img.style.transform = 'scale(2)';
-    img.style.zIndex = '1000';
-  });
+  zoomImages.forEach(img => {
+    // 마우스 오버 시 확대
+    img.addEventListener('mouseenter', () => {
+      img.style.transform = 'scale(2)';
+      img.style.zIndex = '1000';
+    });
 
-  // 마우스 나갈 때 원래 크기로
-  img.addEventListener('mouseleave', () => {
-    img.style.transform = 'scale(1)';
-    img.style.zIndex = '1';
-  });
+    // 마우스 나갈 때 원래 크기로
+    img.addEventListener('mouseleave', () => {
+      img.style.transform = 'scale(1)';
+      img.style.zIndex = '1';
+    });
 
-  // 터치 시작 시 확대 (모바일 대응)
-  img.addEventListener('touchstart', () => {
-    img.style.transform = 'scale(2)';
-    img.style.zIndex = '1000';
-  });
+    // 터치 시작 시 확대
+    img.addEventListener('touchstart', () => {
+      img.style.transform = 'scale(2)';
+      img.style.zIndex = '1000';
+    });
 
-  // 터치 종료 시 원래 크기로
-  img.addEventListener('touchend', () => {
-    img.style.transform = 'scale(1)';
-    img.style.zIndex = '1';
+    // 터치 끝나면 원래대로
+    img.addEventListener('touchend', () => {
+      img.style.transform = 'scale(1)';
+      img.style.zIndex = '1';
+    });
   });
 </script>
 
