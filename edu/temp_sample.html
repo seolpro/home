@@ -265,16 +265,16 @@ async function postWithFallback(body){
 function buildConfirmText(payload){
   const lines = SCHEMA.map(f => {
     let val = payload[f.name] || '';
-    if (f.type === 'signature') val = val ? '(서명 이미지 있음)' : '(미서명)';
+    if (f.type === 'signature') val = val ? '(📝서명 이미지 있음)' : '(⛔미서명)';
     return `${f.label}: ${val}`;
   });
-  return (META.confirmText || '제출하시겠습니까?\n\n') + lines.join('\n');
+  return (META.confirmText || '🤷‍♂️아래와 같이 제출하시겠습니까?\n\n') + lines.join('\n');
 }
 async function submitForm(){
   const submitBtn = document.getElementById('submitBtn');
-  const normalLabel = META.submitText || '제출';
+  const normalLabel = META.submitText || '✔신청(제출)하기';
   try{
-    if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = '🔄제출중...'; }
+    if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = '🔄제출(신청)중...'; }
     setStatus('전송 중…');
 
     // 서명 hidden에 직렬화
