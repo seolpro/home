@@ -2,6 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>소스코드 복사 페이지</title>
 <style>
 textarea { width: 100%; height: 300px; margin-bottom: 10px; }
@@ -29,15 +30,15 @@ function copyCode(targetId) {
 </head>
 <body>
 
-<h2>폼생성 HTML</h2>
+<h2>🛠️폼생성 HTML</h2>
 <textarea id="formHtml" readonly></textarea>
 <button onclick="copyCode('formHtml')">복사</button>
 
-<h2>스키마 생성 HTML (GAS 내부)</h2>
+<h2>💡스키마 생성 HTML (GAS 내부)</h2>
 <textarea id="schemaHtml" readonly></textarea>
 <button onclick="copyCode('schemaHtml')">복사</button>
 
-<h2>code.gs</h2>
+<h2>📌code.gs</h2>
 <textarea id="codeGs" readonly></textarea>
 <button onclick="copyCode('codeGs')">복사</button>
 
