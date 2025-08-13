@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>GAS 폼생성기 코드 복사</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  body { font-family: system-ui, sans-serif; padding: 20px; background: #f8fafc; }
+  h1 { font-size: 20px; }
+  .code-block { margin-bottom: 30px; }
+  textarea { width: 100%; height: 300px; font-family: monospace; font-size: 13px; white-space: pre; }
+  button { margin-top: 5px; padding: 5px 12px; cursor: pointer; }
+</style>
+</head>
+<body>
+
+<h1>📋 GAS 폼생성기 코드 복사</h1>
+
+<div class="code-block">
+  <h2>1. 폼생성 HTML</h2>
+  <textarea id="formHtml" readonly>불러오는 중...</textarea>
+  <button onclick="copyCode('formHtml')">복사</button>
+</div>
+
+<div class="code-block">
+  <h2>2. code.gs</h2>
+  <textarea id="codeGs" readonly>불러오는 중...</textarea>
+  <button onclick="copyCode('codeGs')">복사</button>
+</div>
+
+<div class="code-block">
+  <h2>3. SchemaBuild.html</h2>
+  <textarea id="schemaHtml" readonly>불러오는 중...</textarea>
+  <button onclick="copyCode('schemaHtml')">복사</button>
+</div>
+
+<script>
+function copyCode(id) {
+  const el = document.getElementById(id);
+  el.select();
+  document.execCommand('copy');
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(el.value).catch(() => {});
+  }
+  alert('복사되었습니다!');
+}
+
+function loadCodeMany(urls, targetId){
+  const el = document.getElementById(targetId);
+  (async () => {
+    for (const u of urls){
+      try{
+        const res = await fetch(u, {cache:'no-store', mode:'cors'});
+        if (!res.ok) throw new Error('HTTP '+res.status);
+        const text = await res.text();
+        el.value = text;
+        return;
+      }catch(e){}
+    }
+    el.value = '불러오기 실패: 모든 소스 URL 접근 불가';
+  })();
+}
+
+// 예시: 본인 경로로 바꾸세요
+loadCodeMany([
+  'https://raw.githubusercontent.com/<user>/<repo>/<branch>/form.html',
+  'https://cdn.jsdelivr.net/gh/<user>/<repo>@<branch>/form.html'
+], 'formHtml');
+
+loadCodeMany([
+  'https://raw.githubusercontent.com/<user>/<repo>/<branch>/code.gs.txt',
+  'https://cdn.jsdelivr.net/gh/<user>/<repo>@<branch>/code.gs.txt'
+], 'codeGs');
+
+loadCodeMany([
+  'https://raw.githubusercontent.com/<user>/<repo>/<branch>/SchemaBuild.html.txt',
+  'https://cdn.jsdelivr.net/gh/<user>/<repo>@<branch>/SchemaBuild.html.txt'
+], 'schemaHtml');
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>스키마 작성기</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { padding: 12px; }
+    .sticky-actions { position: sticky; bottom: 0; background: #fff; padding-top: 8px; }
+    .row-handle { cursor: ns-resize; user-select: none; }
+    .small-muted { font-size: 12px; color: #6b7280; }
+    .table thead th { position: sticky; top: 0; background: #f8fafc; z-index: 1; }
+    .chip { display:inline-block; padding:2px 8px; border-radius: 999px; background:#eef2ff; font-size:12px; }
+  </style>
+</head>
+<body>
+  <div class="small-muted mb-3">
+    order / label / type / name / options / required 를 편집해 저장하세요.
+  </div>
+
+  <!-- formKey 선택 -->
+  <div class="input-group mb-3">
+    <span class="input-group-text">formKey</span>
+    <select id="formKey" class="form-select"></select>
+    <input id="formKeyNew" class="form-control" placeholder="새 formKey (직접 입력)">
+    <button type="button" class="btn btn-outline-secondary" id="btnLoad">불러오기</button>
+  </div>
+
+  <!-- 한 줄 추가 폼 -->
+  <div class="card mb-3">
+    <div class="card-body">
+      <div class="row g-2 align-items-center">
+        <div class="col-2"><input type="number" id="f_order" class="form-control" placeholder="order"></div>
+        <div class="col-3"><input type="text"   id="f_label" class="form-control" placeholder="label (보이는 이름)"></div>
+        <div class="col-3">
+          <select id="f_type" class="form-select">
+            <!-- 기본값(서버에서 allowedTypes 내려오면 교체됨) -->
+            <option>text</option><option>tel</option><option>email</option><option>number</option>
+            <option>textarea</option><option>select</option><option>address</option><option>signature</option>
+            <option>date</option><option>time</option><option>datetime</option><option>month</option>
+            <option>radio</option><option>checkboxes</option><option>checkbox</option>
+            <option>url</option><option>password</option>
+            <option>meta</option>
+          </select>
+        </div>
+        <div class="col-3"><input type="text"   id="f_name" class="form-control" placeholder="name (영문 식별자)"></div>
+        <div class="col-4 mt-2">
+          <input type="text" id="f_options" class="form-control"
+                 placeholder="options (select/radio/checkboxes, 쉼표구분)" disabled>
+        </div>
+        <div class="col-2 mt-2 form-check">
+          <input class="form-check-input" type="checkbox" id="f_required">
+          <label class="form-check-label" for="f_required">required</label>
+        </div>
+        <div class="col-6 mt-2 text-end">
+          <button type="button" class="btn btn-primary" id="btnAdd">추가</button>
+        </div>
+      </div>
+      <div class="small-muted mt-2">
+        * name은 영문/숫자/밑줄 권장. <b>select/radio/checkboxes</b> 에서만 options 사용(예: <code>예금,적금,대출</code>).<br>
+        * <b>checkbox</b>는 단일 체크(동의 등), <b>checkboxes</b>는 다중 선택.
+      </div>
+    </div>
+  </div>
+
+  <!-- 표 -->
+  <div class="table-responsive" style="max-height: 420px;">
+    <table class="table table-sm align-middle" id="grid">
+      <thead>
+        <tr>
+          <th style="width:36px;"></th>
+          <th style="width:70px;">order</th>
+          <th>label</th>
+          <th style="width:140px;">type</th>
+          <th style="width:160px;">name</th>
+          <th>options</th>
+          <th style="width:90px;">required</th>
+          <th style="width:48px;"></th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <!-- 액션 -->
+  <div class="sticky-actions d-flex gap-2 mt-2">
+    <button type="button" class="btn btn-success flex-fill" id="btnSave">저장</button>
+    <button type="button" class="btn btn-outline-secondary" id="btnSync">join 헤더 동기화</button>
+  </div>
+
+  <div class="small-muted mt-2">허용 type:
+    <span class="chip">text</span> <span class="chip">tel</span> <span class="chip">email</span>
+    <span class="chip">number</span> <span class="chip">textarea</span> <span class="chip">select</span>
+    <span class="chip">address</span> <span class="chip">signature</span>
+    <span class="chip">date</span> <span class="chip">time</span> <span class="chip">datetime</span> <span class="chip">month</span>
+    <span class="chip">radio</span> <span class="chip">checkboxes</span> <span class="chip">checkbox</span>
+    <span class="chip">url</span> <span class="chip">password</span>
+    <span class="chip">meta</span>
+  </div>
+
+<!-- 알림 설정 -->
+<div class="card my-3">
+  <div class="card-header fw-bold">🔔 알림 설정</div>
+  <div class="card-body">
+    <div class="row g-3">
+      <div class="col-md-3">
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" id="cfg_enable_email">
+          <label class="form-check-label" for="cfg_enable_email">이메일 알림 사용</label>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" id="cfg_enable_at">
+          <label class="form-check-label" for="cfg_enable_at">알림톡(뿌리오) 사용</label>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <input type="text" id="cfg_admin_emails" class="form-control" placeholder="관리자 이메일(쉼표로 다수)">
+      </div>
+
+      <div class="col-md-4">
+        <input type="text" id="cfg_email_prefix" class="form-control" placeholder="이메일 제목 접두어">
+      </div>
+      <div class="col-md-4">
+        <input type="text" id="cfg_email_sender" class="form-control" placeholder="이메일 보내는 이름">
+      </div>
+      <div class="col-md-4">
+        <input type="text" id="cfg_phone_field" class="form-control" placeholder="휴대폰 필드명(예: phone)">
+      </div>
+
+      <div class="col-12">
+        <hr>
+        <div class="fw-semibold mb-2">뿌리오 계정/템플릿</div>
+      </div>
+
+      <div class="col-md-4"><input type="text" id="cfg_ppurio_account" class="form-control" placeholder="PPURIO_ACCOUNT"></div>
+      <div class="col-md-4">
+        <input type="password" id="cfg_ppurio_password" class="form-control" placeholder="PPURIO_PASSWORD (입력 시에만 갱신)">
+        <div id="cfg_pwd_hint" class="small text-muted mt-1"></div>
+      </div>
+      <div class="col-md-4"><input type="text" id="cfg_ppurio_senderkey" class="form-control" placeholder="PPURIO_SENDER_KEY"></div>
+
+      <div class="col-md-4"><input type="text" id="cfg_ppurio_from" class="form-control" placeholder="발신번호(예: 07000000000)"></div>
+      <div class="col-md-4"><input type="text" id="cfg_ppurio_tpl_code" class="form-control" placeholder="템플릿 코드"></div>
+      <div class="col-md-4"><input type="text" id="cfg_ppurio_tpl_msg" class="form-control" placeholder="템플릿 본문(#{name} 등 변수 사용 가능)"></div>
+    </div>
+
+    <div class="text-end mt-3">
+      <button type="button" class="btn btn-outline-secondary me-2" id="btnCfgReload">설정 불러오기</button>
+      <button type="button" class="btn btn-primary" id="btnCfgSave">설정 저장</button>
+    </div>
+  </div>
+</div>
+
+
+  <script>
+    /* ---------- 안전 유틸 ---------- */
+    function toast(msg){ try{ alert(String(msg)); }catch(e){} }
+    const $ = id => document.getElementById(id);
+    function req(id){
+      const el = $(id);
+      if (!el) { toast(`#${id} 요소를 찾지 못했습니다. (HTML id 확인)`); throw new Error(`#${id} not found`); }
+      return el;
+    }
+    function slugify(s){
+      s = String(s||'').trim().toLowerCase()
+        .normalize('NFKD').replace(/[^\w]+/g,'_').replace(/^_+|_+$/g,'');
+      return s || ('field_' + (rows.length+1));
+    }
+
+    /* ---------- 상태 ---------- */
+    // 기본 허용 타입(서버에서 덮어쓸 수 있음)
+    let ALLOWED_TYPES = [
+      'text','tel','email','number','textarea','select','address','signature',
+      'date','time','datetime','month',
+      'radio','checkboxes','checkbox',
+      'url','password',
+      'meta'
+    ];
+    let HEADER_FROM_ROW = 5;
+    const rows = [];
+
+    /* ---------- 렌더 ---------- */
+    function redraw(){
+      const tb = req('grid').querySelector('tbody');
+      tb.innerHTML = '';
+      rows.sort((a,b)=>Number(a.order)-Number(b.order));
+      rows.forEach((r, i)=>{
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="text-muted row-handle">↕</td>
+          <td><input type="number" class="form-control form-control-sm" value="${r.order}" data-k="order"></td>
+          <td><input type="text"   class="form-control form-control-sm" value="${r.label}" data-k="label"></td>
+          <td>
+            <select class="form-select form-select-sm" data-k="type">
+              ${ALLOWED_TYPES.map(t => `<option ${t===r.type?'selected':''}>${t}</option>`).join('')}
+            </select>
+          </td>
+          <td><input type="text" class="form-control form-control-sm" value="${r.name}" data-k="name"></td>
+          <td><input type="text" class="form-control form-control-sm" value="${r.options||''}" data-k="options"
+                     ${(['select','radio','checkboxes'].includes(r.type))?'':'disabled'}></td>
+          <td class="text-center"><input type="checkbox" ${r.required?'checked':''} data-k="required"></td>
+          <td class="text-end">
+            <button type="button" class="btn btn-sm btn-outline-danger" data-act="del">✖</button>
+          </td>
+        `;
+        tr.querySelectorAll('input,select').forEach(el=>{
+          el.onchange = ()=>{
+            const k = el.dataset.k;
+            let v = (k==='required') ? el.checked : el.value;
+            if (k==='type') {
+              const optInput = tr.querySelector('[data-k="options"]');
+              optInput.disabled = !(['select','radio','checkboxes'].includes(v));
+            }
+            r[k] = (k==='order') ? Number(v) : v;
+          };
+        });
+        tr.querySelectorAll('button[data-act]').forEach(btn=>{
+          btn.onclick = ()=>{
+            const act = btn.dataset.act;
+            if (act==='del') { rows.splice(i,1); redraw(); return; }
+          };
+        });
+        tb.appendChild(tr);
+      });
+    }
+
+    /* ---------- 행 추가 ---------- */
+    function addRowFromForm(){
+      const orderEl   = req('f_order');
+      const labelEl   = req('f_label');
+      const typeEl    = req('f_type');
+      const nameEl    = req('f_name');
+      const optionsEl = req('f_options');
+      const reqEl     = req('f_required');
+
+      const r = {
+        order: Number(orderEl.value || (rows.length ? Number(rows[rows.length-1].order)+1 : 1)),
+        label: labelEl.value.trim(),
+        type : typeEl.value.trim(),
+        name : nameEl.value.trim() || slugify(labelEl.value),
+        options: optionsEl.value.trim(),
+        required: reqEl.checked
+      };
+      if (!r.label) { toast('label을 입력하세요.'); return; }
+      if (!ALLOWED_TYPES.includes(r.type)) { toast('허용되지 않은 type 입니다.'); return; }
+      if (!r.name)  { toast('name을 입력하세요.'); return; }
+      if (['select','radio','checkboxes'].includes(r.type) && !r.options) {
+        toast(`${r.type}는 options가 필요합니다.`); return;
+      }
+
+      rows.push(r);
+      labelEl.value = ''; nameEl.value = ''; optionsEl.value = '';
+      reqEl.checked = false;
+      orderEl.value = String(Number(r.order)+1);
+      typeEl.value = 'text'; optionsEl.disabled = true;
+      redraw();
+    }
+
+    /* ---------- 로드/저장/동기화 ---------- */
+    function getChosenFormKey(){
+      const pick = (req('formKeyNew').value || '').trim() || (req('formKey').value || '').trim();
+      if (!pick) { toast('formKey를 선택/입력하세요.'); return null; }
+      return pick;
+    }
+
+    function loadForFormKey(formKey){
+      if (!(window.google && google.script && google.script.run)) { redraw(); return; }
+      google.script.run.withSuccessHandler(res=>{
+        if (!res.ok) { toast(res.error||'로드 실패'); return; }
+        if (Array.isArray(res.allowedTypes) && res.allowedTypes.length) ALLOWED_TYPES = res.allowedTypes;
+        HEADER_FROM_ROW = res.headerFromRow || HEADER_FROM_ROW;
+
+        // formKey 셀렉트 채움
+        const sel = req('formKey'); sel.innerHTML = '';
+        (res.formKeys||[]).forEach(k=>{
+          const opt = document.createElement('option');
+          opt.textContent = k; opt.value = k;
+          if (k === formKey) opt.selected = true;
+          sel.appendChild(opt);
+        });
+
+        rows.length = 0;
+        (res.rows||[]).forEach(r=>rows.push(r));
+        req('f_order').value = rows.length ? (Number(rows[rows.length-1].order)+1) : 1;
+        redraw();
+      }).withFailureHandler(err=>toast(err && err.message ? err.message : String(err))).sb_getSchema(formKey);
+    }
+
+    function save(){
+      const formKey = getChosenFormKey(); if (!formKey) return;
+      for (let i=0;i<rows.length;i++){
+        const r=rows[i];
+        if (!r.label) { toast(`${i+1}행 label이 비었습니다.`); return; }
+        if (!r.name)  { toast(`${i+1}행 name이 비었습니다.`); return; }
+        if (!ALLOWED_TYPES.includes(r.type)) { toast(`${i+1}행 type이 허용 목록에 없습니다.`); return; }
+        if (['select','radio','checkboxes'].includes(r.type) && !r.options) {
+          toast(`${i+1}행 options 필요(${r.type})`); return;
+        }
+      }
+      if (!(window.google && google.script && google.script.run)) { toast('Apps Script 환경에서만 저장됩니다.'); return; }
+      google.script.run.withSuccessHandler(res=>{
+        if (!res.ok) { toast(res.error||'저장 실패'); return; }
+        toast(`저장 완료: ${res.count}행`);
+      }).withFailureHandler(err=>toast(err && err.message ? err.message : String(err))).sb_saveSchema(formKey, rows);
+    }
+
+    function syncJoin(){
+      if (!(window.google && google.script && google.script.run)) { toast('Apps Script 환경에서만 동기화됩니다.'); return; }
+      google.script.run.withSuccessHandler(()=>toast('헤더 동기화/서식 완료'))
+        .withFailureHandler(err=>toast(err && err.message ? err.message : String(err)))
+        .syncAndStyleJoinHeaders();
+    }
+
+    /* ---------- 바인딩 ---------- */
+    document.addEventListener('DOMContentLoaded', () => {
+      req('btnAdd').onclick  = addRowFromForm;
+      req('btnSave').onclick = save;
+      req('btnSync').onclick = syncJoin;
+      req('btnLoad').onclick = ()=>{ const k = getChosenFormKey(); if(k) loadForFormKey(k); };
+
+      req('f_label').addEventListener('blur', ()=>{
+        if (!req('f_name').value.trim()) req('f_name').value = slugify(req('f_label').value);
+      });
+      req('f_type').addEventListener('change', ()=>{
+        req('f_options').disabled = !(['select','radio','checkboxes'].includes(req('f_type').value));
+      });
+
+      // 초기 로드
+      if (window.google && google.script && google.script.run) {
+        google.script.run.withSuccessHandler(res=>{
+          const guess = (res.formKeys && res.formKeys[0]) || 'join2025';
+          loadForFormKey(guess);
+        }).sb_getSchema('join2025');
+      } else {
+        // 로컬 테스트용
+        req('f_order').value = 1;
+        redraw();
+      }
+    });
+  </script>
+  <script>
+  // ===== 알림 설정 UI 로드/저장 =====
+  function loadNotifyConfigUI() {
+    if (!(window.google && google.script && google.script.run)) return;
+    google.script.run.withSuccessHandler(res=>{
+      if (!res || !res.ok) { toast('설정 로드 실패'); return; }
+      const c = res.cfg || {};
+      req('cfg_enable_email').checked = !!c.ENABLE_EMAIL_NOTIFY;
+      req('cfg_enable_at').checked    = !!c.ENABLE_ALIMTALK_NOTIFY;
+      req('cfg_admin_emails').value   = c.ADMIN_EMAILS || '';
+      req('cfg_email_prefix').value   = c.EMAIL_SUBJECT_PREFIX || '';
+      req('cfg_email_sender').value   = c.EMAIL_SENDER_NAME || '';
+      req('cfg_phone_field').value    = c.SUBMITTER_PHONE_FIELD || 'phone';
+
+      req('cfg_ppurio_account').value   = c.PPURIO_ACCOUNT || '';
+      req('cfg_ppurio_senderkey').value = c.PPURIO_SENDER_KEY || '';
+      req('cfg_ppurio_from').value      = c.PPURIO_FROM || '';
+      req('cfg_ppurio_tpl_code').value  = c.PPURIO_TEMPLATE_CODE || '';
+      req('cfg_ppurio_tpl_msg').value   = c.PPURIO_TEMPLATE_MESSAGE || '';
+
+      req('cfg_pwd_hint').textContent = c.has_PPURIO_PASSWORD ? '저장된 비밀번호가 있습니다(미표시). 새 값을 입력하면 교체됩니다.' : '비밀번호가 아직 저장되어 있지 않습니다.';
+      req('cfg_ppurio_password').value = ''; // 항상 비움
+    }).withFailureHandler(err=>toast(err && err.message ? err.message : String(err)))
+      .getNotifyConfig();
+  }
+
+  function saveNotifyConfigUI() {
+    if (!(window.google && google.script && google.script.run)) { toast('Apps Script 환경에서만 가능합니다.'); return; }
+    const cfg = {
+      ENABLE_EMAIL_NOTIFY:    req('cfg_enable_email').checked,
+      ENABLE_ALIMTALK_NOTIFY: req('cfg_enable_at').checked,
+      ADMIN_EMAILS:           req('cfg_admin_emails').value.trim(),
+      EMAIL_SUBJECT_PREFIX:   req('cfg_email_prefix').value.trim(),
+      EMAIL_SENDER_NAME:      req('cfg_email_sender').value.trim(),
+      SUBMITTER_PHONE_FIELD:  req('cfg_phone_field').value.trim() || 'phone',
+
+      PPURIO_ACCOUNT:          req('cfg_ppurio_account').value.trim(),
+      PPURIO_PASSWORD:         req('cfg_ppurio_password').value, // 빈 값이면 서버에서 무시
+      PPURIO_SENDER_KEY:       req('cfg_ppurio_senderkey').value.trim(),
+      PPURIO_FROM:             req('cfg_ppurio_from').value.trim(),
+      PPURIO_TEMPLATE_CODE:    req('cfg_ppurio_tpl_code').value.trim(),
+      PPURIO_TEMPLATE_MESSAGE: req('cfg_ppurio_tpl_msg').value.trim()
+    };
+    google.script.run.withSuccessHandler(res=>{
+      if (!res || !res.ok) { toast(res && res.error ? res.error : '설정 저장 실패'); return; }
+      toast('설정 저장 완료');
+      loadNotifyConfigUI(); // 저장 후 갱신
+    }).withFailureHandler(err=>toast(err && err.message ? err.message : String(err)))
+      .saveNotifyConfig(cfg);
+  }
+
+  // 기존 DOMContentLoaded 바인딩에 추가
+  document.addEventListener('DOMContentLoaded', () => {
+    // ...
+    if (window.google && google.script && google.script.run) {
+      loadNotifyConfigUI();
+    }
+    req('btnCfgReload').onclick = loadNotifyConfigUI;
+    req('btnCfgSave').onclick   = saveNotifyConfigUI;
+  });
+</script>
+
+</body>
+</html>

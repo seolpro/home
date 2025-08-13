@@ -1,0 +1,639 @@
+/** ========= CONFIG =========
+ * - 스프레드시트/시트 이름
+ * - 서명 저장 옵션(드라이브)
+ */
+const CONFIG = {
+  SHEET_ID: '구글시트의 ID를 여기에 입력하세요.', // ← 스프레드시트 ID
+  SCHEMA_SHEET: 'schema',   // 구글시트 생성
+  DATA_SHEET: 'join',  // 구글시트에 생성
+  SIGNATURE: {
+    saveToDrive: true,
+    folderId: '12THGJyuF6paq79VFtHrPVnDXD-9hntcT',      // 드라이브 폴더 ID(없으면 My Drive)
+    store: 'url'                                       // 'url' | 'id' | 'base64'
+  }
+};
+
+/** ========= COMMON UTIL ========= */
+function getSS_() {
+  return CONFIG.SHEET_ID ? SpreadsheetApp.openById(CONFIG.SHEET_ID)
+                         : SpreadsheetApp.getActiveSpreadsheet();
+}
+function getSheet_(name) {
+  const sh = getSS_().getSheetByName(name);
+  if (!sh) throw new Error(`시트를 찾을 수 없습니다: ${name}`);
+  return sh;
+}
+function v_(x){ return x == null ? '' : String(x).trim(); }
+function _idx_(header){ return header.reduce((m,h,i)=>(m[String(h).trim()]=i,m),{}); }
+function escapeHtml_(s) {
+  return String(s).replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
+}
+
+/** ========= SCHEMA-SHEET HEADER ENSURE =========
+ * schema 시트의 헤더(formKey|order|label|type|name|options|required) 보장
+ */
+function ensureSchemaHeader_() {
+  const sh = getSheet_(CONFIG.SCHEMA_SHEET);
+  const header = ['formKey','order','label','type','name','options','required'];
+  const range = sh.getRange(1, 1, 1, header.length);
+  const cur = range.getValues()[0].map(String);
+  const needWrite = header.some((h,i) => cur[i] !== h);
+  if (needWrite) {
+    range.setValues([header]);
+    sh.setFrozenRows(1);
+  }
+}
+
+/** ========= LOAD SCHEMA (for form runtime) =========
+ * meta(title/submitText/loadingText) 포함 로딩
+ */
+function loadSchema_(formKey) {
+  ensureSchemaHeader_();
+  const sh = getSheet_(CONFIG.SCHEMA_SHEET);
+  const values = sh.getDataRange().getValues();
+  const header = values.shift();
+  const idx = _idx_(header);
+  ['formKey','order','label','type','name','options','required']
+    .forEach(h=>{ if (idx[h]==null) throw new Error(`schema 헤더 누락: ${h}`); });
+
+  const all = values
+    .filter(r => v_(r[idx.formKey]) === formKey)
+    .map(r => ({
+      order   : Number(r[idx.order] || 0),
+      label   : v_(r[idx.label]),
+      type    : v_(r[idx.type]).toLowerCase(),
+      name    : v_(r[idx.name]) || v_(r[idx.label]),
+      options : v_(r[idx.options]),
+      required: /^y/i.test(v_(r[idx.required])),
+    }))
+    .sort((a,b)=>a.order-b.order);
+
+  const meta = {};
+  all.filter(r => r.type==='meta' && ['title','submitText','loadingText'].includes(r.name))
+     .forEach(r => { meta[r.name] = r.label; });
+
+  // 폼 렌더링용 스키마: meta 제외
+  const fields = all.filter(r => r.type !== 'meta');
+  return { fields, meta };
+}
+
+/** ========= DATA-SHEET HEADER ENSURE (보강판) =========
+ * - 비어있으면: [timestamp] + schema.name[]
+ * - 기존 헤더가 있으면: schema/payload에 있는 누락 컬럼을 오른쪽에 추가
+ * - timestamp 없으면 맨 앞(기본) 또는 맨 뒤에 추가 (옵션)
+ */
+function ensureHeader_(dataSh, schema, payload, opts) {
+  opts = opts || {};
+  const ADD_PREFIX_AT_END = !!opts.putTimestampAtEnd;
+  const MUST_PREFIX = ADD_PREFIX_AT_END ? [] : ['timestamp'];
+
+  const schemaNames = (schema || []).map(f => String(f && f.name || '').trim()).filter(Boolean);
+  const payloadKeys = Object.keys(payload || {});
+  const needed = dedupe([].concat(MUST_PREFIX, schemaNames, payloadKeys));
+
+  const lastRow = dataSh.getLastRow();
+  if (lastRow < 1) {
+    const header = ADD_PREFIX_AT_END ? dedupe([].concat(schemaNames, payloadKeys, ['timestamp']))
+                                     : dedupe([].concat(['timestamp'], schemaNames, payloadKeys));
+    dataSh.getRange(1, 1, 1, header.length).setValues([header]);
+    try { dataSh.setFrozenRows(1); } catch(_) {}
+    return header;
+  }
+
+  let header = dataSh.getRange(1, 1, 1, dataSh.getLastColumn()).getValues()[0].map(String);
+  if (header.every(h => !String(h || '').trim())) {
+    const newHeader = ADD_PREFIX_AT_END ? dedupe([].concat(schemaNames, payloadKeys, ['timestamp']))
+                                        : dedupe([].concat(['timestamp'], schemaNames, payloadKeys));
+    dataSh.getRange(1, 1, 1, newHeader.length).setValues([newHeader]);
+    try { dataSh.setFrozenRows(1); } catch(_) {}
+    return newHeader;
+  }
+
+  const hasTimestamp = header.some(h => String(h).trim() === 'timestamp');
+  if (!hasTimestamp) {
+    if (ADD_PREFIX_AT_END) {
+      header.push('timestamp');
+      dataSh.getRange(1, 1, 1, header.length).setValues([header]);
+    } else {
+      header = ['timestamp'].concat(header);
+      dataSh.insertColumns(1, 1);
+      dataSh.getRange(1, 1, 1, header.length).setValues([header]);
+    }
+  }
+
+  const missing = needed.filter(col => !header.includes(col));
+  if (missing.length) {
+    const startCol = header.length + 1;
+    dataSh.getRange(1, startCol, 1, missing.length).setValues([missing]);
+    header = header.concat(missing);
+  }
+
+  try { dataSh.setFrozenRows(1); } catch(_) {}
+  return header;
+}
+function dedupe(arr) {
+  const seen = Object.create(null), out = [];
+  for (const v of arr) { const k = String(v); if (!k) continue; if (!seen[k]) { seen[k]=1; out.push(k); } }
+  return out;
+}
+
+/** ========= SIGNATURE HELPERS ========= */
+function dataUrlToBlob_(dataUrl) {
+  const m = String(dataUrl||'').match(/^data:(.+);base64,(.+)$/);
+  if (!m) throw new Error('서명 데이터 형식 오류');
+  const contentType = m[1], base64 = m[2];
+  const bytes = Utilities.base64Decode(base64);
+  return Utilities.newBlob(bytes, contentType, 'signature.png');
+}
+function saveSignatureToDrive_(dataUrl, filename) {
+  const blob = dataUrlToBlob_(dataUrl);
+  blob.setName(filename || ('signature_' + Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyyMMdd_HHmmss') + '.png'));
+  const file = CONFIG.SIGNATURE.folderId
+    ? DriveApp.getFolderById(CONFIG.SIGNATURE.folderId).createFile(blob)
+    : DriveApp.createFile(blob);
+  return { id: file.getId(), url: 'https://drive.google.com/uc?id=' + file.getId() };
+}
+
+/** ========= SAVE ========= */
+function saveData_(formKey, payload, idempotencyKey) {
+  const dataSh = getSheet_(CONFIG.DATA_SHEET);
+  const { fields: schema } = loadSchema_(formKey);
+
+  // 필수 검증
+  schema.filter(f=>f.required).forEach(f=>{
+    const key = f.name || f.label;
+    if (!v_(payload[key])) throw new Error(`필수 입력 누락: ${f.label}`);
+  });
+
+  // type 맵 + 서명 처리
+  const typeMap = {}; schema.forEach(f => typeMap[f.name] = (f.type||'').toLowerCase());
+  Object.keys(payload).forEach(k => {
+    if (typeMap[k] === 'signature' && /^data:image\/(png|jpeg);base64,/.test(String(payload[k]||''))) {
+      if (CONFIG.SIGNATURE.saveToDrive) {
+        const saved = saveSignatureToDrive_(payload[k], 'sig_' + k + '.png');
+        payload[k] = (CONFIG.SIGNATURE.store === 'id')  ? saved.id
+                   : (CONFIG.SIGNATURE.store === 'url') ? saved.url
+                   : payload[k];
+      } else {
+        if (String(payload[k]).length > 45000) throw new Error('서명 이미지가 너무 큽니다. 드라이브 저장 옵션을 사용하세요.');
+      }
+    }
+  });
+
+  // 헤더 보장 후 append
+  const header = ensureHeader_(dataSh, schema, payload);
+  const now = new Date();
+  const rowValues = header.map((h, i) => {
+    const key = String(h || '').trim();
+    if (!key) return '';
+    if (i === 0 && key.toLowerCase() === 'timestamp') return now;
+    return v_(payload[key]);
+  });
+  dataSh.appendRow(rowValues);
+  return { rowNumber: dataSh.getLastRow() };
+}
+
+/** ========= RESPOND HELPERS ========= */
+function respondJson_(obj) {
+  return ContentService.createTextOutput(JSON.stringify(obj))
+                       .setMimeType(ContentService.MimeType.JSON);
+}
+
+/** ========= META LOAD (title/submitText/loadingText) ========= */
+function loadMeta_(formKey) {
+  const sh = getSheet_(CONFIG.SCHEMA_SHEET);
+  const values = sh.getDataRange().getValues();
+  const header = values.shift();
+  const idx = _idx_(header);
+  const meta = {};
+  values.forEach(r => {
+    if (v_(r[idx.formKey]) !== formKey) return;
+    const type = v_(r[idx.type]).toLowerCase();
+    if (type === 'meta') {
+      const key = v_(r[idx.name]);
+      const val = v_(r[idx.label]) || v_(r[idx.options]);
+      if (key) meta[key] = val;
+    }
+  });
+  return meta;
+}
+
+/** ========= WEB APP: GET =========
+ * ?action=schema&formKey=...
+ */
+function doGet(e) {
+  try {
+    const action = (e.parameter.action || '').toLowerCase();
+    if (action === 'schema') {
+      const formKey = e.parameter.formKey || '';
+      if (!formKey) return respondJson_({ ok:false, error:'formKey required' });
+      const { fields, meta } = loadSchema_(formKey);
+      return respondJson_({ ok:true, schema: fields, meta });
+    }
+    return respondJson_({ ok:false, error: 'no action' });
+  } catch (err) {
+    return respondJson_({ ok:false, error:String(err) });
+  }
+}
+
+/** ========= WEB APP: POST =========
+ * JSON 또는 x-www-form-urlencoded(payload=JSON) 모두 지원
+ */
+function doPost(e) {
+  try {
+    // 바디 파싱
+    const ctype = (e.postData && e.postData.type) ? e.postData.type : '';
+    let body = {};
+    if (/application\/json/i.test(ctype)) {
+      body = JSON.parse(e.postData.contents || '{}');
+    } else if (/application\/x-www-form-urlencoded/i.test(ctype)) {
+      body = JSON.parse(e.parameter.payload || '{}');
+    } else {
+      const raw = (e.postData && e.postData.contents) || e.parameter.payload || '{}';
+      try { body = JSON.parse(raw); } catch (_) { body = {}; }
+    }
+
+    const formKey = v_(body.formKey);
+    const payload = body.payload || {};
+    const idk = v_(body.idempotencyKey || '');
+    if (!formKey) throw new Error('formKey is required');
+
+    // 저장
+    const saved = saveData_(formKey, payload, idk);
+    const savedRow = (saved && (saved.row ?? saved.rowNumber ?? saved.savedRow ?? saved.lastRow)) || null;
+
+    // 알림(이메일+알림톡)
+    try { notifyOnSubmit_(formKey, payload, savedRow); }
+    catch (nerr) { console.error('[notifyOnSubmit_] 실패:', nerr); }
+
+    return respondJson_({ ok: true, saved, row: savedRow });
+  } catch (err) {
+    return respondJson_({ ok: false, error: String(err) });
+  }
+}
+
+/** ========= 알림 설정 (Script Properties) ========= */
+const _CFG_BOOL = v => (String(v) === 'true');
+
+function getNotifyConfig() {
+  const sp = PropertiesService.getScriptProperties();
+  const cfg = {
+    ENABLE_EMAIL_NOTIFY:     _CFG_BOOL(sp.getProperty('ENABLE_EMAIL_NOTIFY') || 'true'),
+    ENABLE_ALIMTALK_NOTIFY:  _CFG_BOOL(sp.getProperty('ENABLE_ALIMTALK_NOTIFY') || 'true'),
+
+    ADMIN_EMAILS:            sp.getProperty('ADMIN_EMAILS') || '',
+    EMAIL_SUBJECT_PREFIX:    sp.getProperty('EMAIL_SUBJECT_PREFIX') || '[신청 접수] ',
+    EMAIL_SENDER_NAME:       sp.getProperty('EMAIL_SENDER_NAME') || '폼 알림',
+    SUBMITTER_PHONE_FIELD:   sp.getProperty('SUBMITTER_PHONE_FIELD') || 'phone',
+
+    PPURIO_ACCOUNT:          sp.getProperty('PPURIO_ACCOUNT') || '',
+    PPURIO_SENDER_KEY:       sp.getProperty('PPURIO_SENDER_KEY') || '',
+    PPURIO_FROM:             sp.getProperty('PPURIO_FROM') || '',
+    PPURIO_TEMPLATE_CODE:    sp.getProperty('PPURIO_TEMPLATE_CODE') || '',
+    PPURIO_TEMPLATE_MESSAGE: sp.getProperty('PPURIO_TEMPLATE_MESSAGE') || '안녕하세요 #{name}님, 신청이 접수되었습니다. 접수번호: #{no}',
+
+    has_PPURIO_PASSWORD: !!sp.getProperty('PPURIO_PASSWORD') // 비밀번호는 미노출
+  };
+  return { ok: true, cfg };
+}
+function saveNotifyConfig(cfg) {
+  if (!cfg || typeof cfg !== 'object') return { ok:false, error:'invalid cfg' };
+  const sp = PropertiesService.getScriptProperties();
+
+  if ('ENABLE_EMAIL_NOTIFY' in cfg)    sp.setProperty('ENABLE_EMAIL_NOTIFY', String(!!cfg.ENABLE_EMAIL_NOTIFY));
+  if ('ENABLE_ALIMTALK_NOTIFY' in cfg) sp.setProperty('ENABLE_ALIMTALK_NOTIFY', String(!!cfg.ENABLE_ALIMTALK_NOTIFY));
+
+  const setIfProvided = (k, def='') => { if (k in cfg) sp.setProperty(k, String(cfg[k] || def)); };
+  setIfProvided('ADMIN_EMAILS');
+  setIfProvided('EMAIL_SUBJECT_PREFIX', '[신청 접수] ');
+  setIfProvided('EMAIL_SENDER_NAME', '폼 알림');
+  setIfProvided('SUBMITTER_PHONE_FIELD', 'phone');
+
+  setIfProvided('PPURIO_ACCOUNT');
+  setIfProvided('PPURIO_SENDER_KEY');
+  setIfProvided('PPURIO_FROM');
+  setIfProvided('PPURIO_TEMPLATE_CODE');
+  setIfProvided('PPURIO_TEMPLATE_MESSAGE', '안녕하세요 #{name}님, 신청이 접수되었습니다. 접수번호: #{no}');
+
+  if ('PPURIO_PASSWORD' in cfg) {
+    const pwd = String(cfg.PPURIO_PASSWORD || '');
+    if (pwd) sp.setProperty('PPURIO_PASSWORD', pwd);
+  }
+  if (cfg && cfg.reset_PPURIO_PASSWORD) sp.deleteProperty('PPURIO_PASSWORD');
+
+  return { ok:true };
+}
+
+// 런타임용 캐시
+let __RUNTIME_CFG = null;
+function getRuntimeConfig_() {
+  if (__RUNTIME_CFG) return __RUNTIME_CFG;
+  const sp = PropertiesService.getScriptProperties();
+  __RUNTIME_CFG = {
+    ENABLE_EMAIL_NOTIFY:     _CFG_BOOL(sp.getProperty('ENABLE_EMAIL_NOTIFY') || 'true'),
+    ENABLE_ALIMTALK_NOTIFY:  _CFG_BOOL(sp.getProperty('ENABLE_ALIMTALK_NOTIFY') || 'true'),
+    ADMIN_EMAILS:            (sp.getProperty('ADMIN_EMAILS') || '').split(',').map(s=>s.trim()).filter(Boolean),
+    EMAIL_SUBJECT_PREFIX:    sp.getProperty('EMAIL_SUBJECT_PREFIX') || '[신청 접수] ',
+    EMAIL_SENDER_NAME:       sp.getProperty('EMAIL_SENDER_NAME') || '폼 알림',
+    SUBMITTER_PHONE_FIELD:   sp.getProperty('SUBMITTER_PHONE_FIELD') || 'phone',
+    PPURIO: {
+      ACCOUNT:               sp.getProperty('PPURIO_ACCOUNT') || '',
+      PASSWORD:              sp.getProperty('PPURIO_PASSWORD') || '',
+      SENDER_KEY:            sp.getProperty('PPURIO_SENDER_KEY') || '',
+      FROM:                  sp.getProperty('PPURIO_FROM') || '',
+      TEMPLATE_CODE:         sp.getProperty('PPURIO_TEMPLATE_CODE') || '',
+      TEMPLATE_MESSAGE:      sp.getProperty('PPURIO_TEMPLATE_MESSAGE') || '안녕하세요 #{name}님, 신청이 접수되었습니다. 접수번호: #{no}',
+      TOKEN_CACHE_KEY:       'PPURIO_TOKEN',
+      TOKEN_EXP_MS_KEY:      'PPURIO_TOKEN_EXPIRES_AT'
+    }
+  };
+  return __RUNTIME_CFG;
+}
+
+/** ========= NOTIFY (EMAIL + ALIMTALK) ========= */
+function notifyOnSubmit_(formKey, payload, savedRow) {
+  const CFG = getRuntimeConfig_();
+
+  try {
+    if (CFG.ENABLE_EMAIL_NOTIFY && CFG.ADMIN_EMAILS.length) {
+      sendEmailNotification_(formKey, payload, savedRow, CFG);
+    }
+  } catch (e) {
+    console.error('[EMAIL_NOTIFY] 실패:', e);
+  }
+
+  try {
+    if (CFG.ENABLE_ALIMTALK_NOTIFY && CFG.PPURIO.ACCOUNT && CFG.PPURIO.PASSWORD) {
+      const to = pickPhoneFromPayload_(payload, CFG.SUBMITTER_PHONE_FIELD);
+      if (to) {
+        const message = renderTemplate_(CFG.PPURIO.TEMPLATE_MESSAGE, payload);
+        const res = sendAlimtalk_(to, message, CFG.PPURIO);
+        console.log('[ALIMTALK_NOTIFY] 성공:', JSON.stringify(res));
+      } else {
+        console.warn('[ALIMTALK_NOTIFY] 수신자 휴대폰 번호를 찾지 못했습니다.');
+      }
+    }
+  } catch (e) {
+    console.error('[ALIMTALK_NOTIFY] 실패:', e);
+  }
+}
+function sendEmailNotification_(formKey, payload, savedRow, CFG) {
+  const subject = (CFG.EMAIL_SUBJECT_PREFIX || '') + formKey;
+  const html = buildEmailHtml_(formKey, payload, savedRow);
+  MailApp.sendEmail({
+    to: CFG.ADMIN_EMAILS.join(','),
+    subject,
+    htmlBody: html,
+    name: CFG.EMAIL_SENDER_NAME || '폼 알림'
+  });
+}
+function sendAlimtalk_(to, message, PPURIO) {
+  const authHeader = getPpurioAuthHeader_(PPURIO);
+  const refkey = Utilities.getUuid().replace(/-/g, '').slice(0, 32);
+  const body = {
+    account: PPURIO.ACCOUNT,
+    type: 'at',
+    from: PPURIO.FROM,
+    to: String(to),
+    refkey: refkey,
+    content: { at: { senderkey: PPURIO.SENDER_KEY, templatecode: PPURIO.TEMPLATE_CODE, message } }
+  };
+  const res = UrlFetchApp.fetch('https://api.bizppurio.com/v3/message', {
+    method: 'post',
+    contentType: 'application/json; charset=utf-8',
+    headers: { Authorization: authHeader },
+    muteHttpExceptions: true,
+    payload: JSON.stringify(body)
+  });
+  const code = res.getResponseCode();
+  const text = res.getContentText();
+  if (code !== 200) throw new Error(`HTTP ${code}: ${text}`);
+  const json = JSON.parse(text);
+  if (String(json.code) !== '1000') throw new Error(`API 실패: ${text}`);
+  return json;
+}
+function getPpurioAuthHeader_(PPURIO) {
+  const sp = PropertiesService.getScriptProperties();
+  const cached = sp.getProperty(PPURIO.TOKEN_CACHE_KEY);
+  const expMs = Number(sp.getProperty(PPURIO.TOKEN_EXP_MS_KEY) || 0);
+  const now = Date.now();
+  if (cached && now < (expMs - 60 * 1000)) return cached;
+
+  const tokenRes = UrlFetchApp.fetch('https://api.bizppurio.com/v1/token', {
+    method: 'post',
+    headers: {
+      Authorization: 'Basic ' + Utilities.base64Encode(PPURIO.ACCOUNT + ':' + PPURIO.PASSWORD),
+      'Content-Type': 'application/json; charset=utf-8'
+    },
+    muteHttpExceptions: true
+  });
+  const code = tokenRes.getResponseCode();
+  if (code !== 200) throw new Error(`토큰 발급 실패 HTTP ${code}: ${tokenRes.getContentText()}`);
+  const j = JSON.parse(tokenRes.getContentText());
+  if (!(j && j.accesstoken)) throw new Error('토큰 응답에 accesstoken 없음: ' + tokenRes.getContentText());
+
+  const header = (j.type || 'Bearer') + ' ' + j.accesstoken;
+  let expires = Date.now() + 23 * 3600 * 1000;
+  if (j.expired && /^\d{14}$/.test(j.expired)) {
+    const y=j.expired.slice(0,4), mo=j.expired.slice(4,6), d=j.expired.slice(6,8),
+          hh=j.expired.slice(8,10), mm=j.expired.slice(10,12), ss=j.expired.slice(12,14);
+    expires = new Date(Number(y), Number(mo)-1, Number(d), Number(hh), Number(mm), Number(ss)).getTime();
+  }
+  sp.setProperty(PPURIO.TOKEN_CACHE_KEY, header);
+  sp.setProperty(PPURIO.TOKEN_EXP_MS_KEY, String(expires));
+  return header;
+}
+
+/** ========= EMAIL HTML ========= */
+function buildEmailHtml_(formKey, payload, savedRow) {
+  const rows = Object.keys(payload).map(k => {
+    const v = String(payload[k] || '');
+    return `<tr>
+      <td style="padding:6px 10px;border:1px solid #e5e7eb;background:#f9fafb;"><b>${escapeHtml_(k)}</b></td>
+      <td style="padding:6px 10px;border:1px solid #e5e7eb;">${escapeHtml_(v).replace(/\n/g,'<br>')}</td>
+    </tr>`;
+  }).join('');
+  return `<div style="font-family:system-ui,Segoe UI,Arial;">
+    <h3 style="margin:0 0 8px">📨 새 신청 접수: ${escapeHtml_(formKey)}</h3>
+    <div style="color:#6b7280;font-size:12px;margin-bottom:8px">저장 행: ${savedRow||'-'}</div>
+    <table style="border-collapse:collapse;border:1px solid #e5e7eb;font-size:13px"><tbody>${rows}</tbody></table>
+  </div>`;
+}
+
+/** ========= TEMPLATE & PHONE HELPERS ========= */
+function renderTemplate_(tmpl, data) {
+  return String(tmpl||'').replace(/#\{(\w+)\}/g,(_,k)=> data && data[k]!=null ? String(data[k]) : '');
+}
+function pickPhoneFromPayload_(payload, preferredKey) {
+  if (!payload) return '';
+  const keys = [preferredKey,'tel','phone','mobile','cell','휴대폰','연락처'].filter(Boolean);
+  for (const k of keys) { const v = payload[k]; if (v) return String(v).replace(/[^\d]/g,''); }
+  const any = Object.values(payload).map(v=>String(v)).join(' ');
+  const m = any.match(/01[016789]\d{3,4}\d{4}/);
+  return m ? m[0] : '';
+}
+
+/** ========= SCHEMA BUILDER (Spreadsheet UI) ========= */
+const SCHEMA_SHEET_NAME = 'schema';
+const JOIN_SHEET_NAME   = 'join';
+const HEADER_FROM_ROW = 5;
+const ALLOWED_TYPES = [
+  'text','tel','email','number','textarea','select','address','signature',
+  'date','time','datetime','month',
+  'radio','checkbox','checkboxes',
+  'url','password'
+];
+
+function onOpen() {
+  SpreadsheetApp.getUi()
+    .createMenu('📌 사용자메뉴')
+    .addItem('🛠️Form 작성기', 'showSchemaBuilderDialog')
+    .addItem('🔂타이틀 동기화', 'syncAndStyleJoinHeaders')
+    .addToUi();
+}
+function showSchemaBuilderDialog() {
+  const html = HtmlService.createHtmlOutputFromFile('SchemaBuild')
+    .setWidth(1000).setHeight(800);
+  SpreadsheetApp.getUi().showModalDialog(html, '🧩 스키마 작성기');
+}
+
+// schema UI용: 스키마 읽기
+function sb_getSchema(formKey) {
+  ensureSchemaHeader_(); // ✅ 헤더 자동 보장
+  const sh = getSheet_(SCHEMA_SHEET_NAME);
+  const values = sh.getDataRange().getValues();
+  const header = values.shift();
+  const idx = _idx_(header);
+  ['formKey','order','label','type','name','options','required'].forEach(h=>{
+    if (idx[h]==null) throw new Error(`schema 헤더 누락: ${h}`);
+  });
+
+  const keys = Array.from(new Set(values.map(r => String(r[idx.formKey]||'').trim()).filter(Boolean)));
+
+  const allRows = values
+    .filter(r => String(r[idx.formKey]||'').trim() === formKey)
+    .map(r => ({
+      order   : Number(r[idx.order]),
+      label   : String(r[idx.label]||'').trim(),
+      type    : String(r[idx.type]||'').toLowerCase().trim(),
+      name    : String(r[idx.name]||'').trim(),
+      options : String(r[idx.options]||'').trim(),
+      required: /^y/i.test(String(r[idx.required]||'')),
+    }));
+
+  const meta = { title:'', submitText:'', loadingText:'' };
+  allRows.filter(r => r.type==='meta' && ['title','submitText','loadingText'].includes(r.name))
+         .forEach(r => { meta[r.name] = r.label; });
+
+  const rows = allRows.filter(r => r.type !== 'meta').sort((a,b)=>a.order-b.order);
+
+  return { ok:true, formKeys: keys, rows, meta, allowedTypes: ALLOWED_TYPES, headerFromRow: HEADER_FROM_ROW };
+}
+
+// schema UI용: 스키마 저장
+function sb_saveSchema(formKey, rows, meta) {
+  ensureSchemaHeader_(); // ✅ 헤더 자동 보장
+  if (!formKey) throw new Error('formKey가 필요합니다.');
+  if (!Array.isArray(rows)) throw new Error('rows 형식 오류');
+  meta = meta || {};
+
+  rows.forEach((r,i)=>{
+    const rowNo = i+1;
+    const type = String(r.type||'').toLowerCase();
+    if (isNaN(Number(r.order))) throw new Error(`${rowNo}행: order가 숫자가 아닙니다.`);
+    if (!r.label)                throw new Error(`${rowNo}행: label이 비어 있습니다.`);
+    if (!ALLOWED_TYPES.includes(type)) throw new Error(`${rowNo}행: type("${type}")이 허용 목록에 없습니다.`);
+    if (!r.name)                 throw new Error(`${rowNo}행: name이 비어 있습니다.`);
+    if (['select','radio','checkboxes'].includes(type) && !String(r.options||'').trim())
+      throw new Error(`${rowNo}행: ${type} 타입은 options가 필요합니다.`);
+  });
+
+  const sh = getSheet_(SCHEMA_SHEET_NAME);
+  const values = sh.getDataRange().getValues();
+  const header = values[0];
+  const idx = _idx_(header);
+
+  // 기존 formKey 행 삭제
+  for (let r = sh.getLastRow(); r >= 2; r--) {
+    const k = String(sh.getRange(r, idx.formKey+1).getValue()||'').trim();
+    if (k === formKey) sh.deleteRow(r);
+  }
+
+  const toWrite = [];
+  const metaTriples = [
+    {name:'title',       label: String(meta.title||'')       },
+    {name:'submitText',  label: String(meta.submitText||'')  },
+    {name:'loadingText', label: String(meta.loadingText||'') },
+  ];
+  metaTriples.forEach(m => toWrite.push([formKey, 0, m.label, 'meta', m.name, '', 'N']));
+
+  rows.sort((a,b)=>Number(a.order)-Number(b.order));
+  rows.forEach(r=> toWrite.push([
+      formKey, Number(r.order), String(r.label||''), String(r.type||'').toLowerCase(),
+      String(r.name||''), String(r.options||''), r.required ? 'Y' : 'N'
+  ]));
+
+  if (toWrite.length) sh.getRange(sh.getLastRow()+1, 1, toWrite.length, 7).setValues(toWrite);
+  return { ok:true, count: toWrite.length };
+}
+
+/** ====== join 헤더 동기화/서식 (UI 메뉴) ====== */
+function syncJoinHeadersFromSchema() {
+  const ss = getSS_();
+  const schemaSh = ss.getSheetByName(SCHEMA_SHEET_NAME);
+  const joinSh   = ss.getSheetByName(JOIN_SHEET_NAME);
+  if (!schemaSh) throw new Error(`"${SCHEMA_SHEET_NAME}" 시트를 찾을 수 없습니다.`);
+  if (!joinSh)   throw new Error(`"${JOIN_SHEET_NAME}" 시트를 찾을 수 없습니다.`);
+
+  const values = schemaSh.getDataRange().getValues();
+  const header = values[0];
+  const idx = _idx_(header);
+  ['formKey','order','type','name'].forEach(h=>{ if (idx[h]==null) throw new Error(`schema 헤더 누락: ${h}`); });
+
+  const formKey = Browser.inputBox('formKey 입력', '예: join2025', Browser.Buttons.OK_CANCEL);
+  if (formKey === 'cancel' || !formKey) return;
+
+  const rows = values.slice(HEADER_FROM_ROW - 1)
+    .map(r => ({
+      formKey: String(r[idx.formKey]||'').trim(),
+      order  : Number(r[idx.order]),
+      type   : String(r[idx.type]||'').toLowerCase(),
+      name   : String(r[idx.name]||'').trim()
+    }))
+    .filter(r => r.formKey === formKey && r.type !== 'meta' && !isNaN(r.order) && r.name);
+
+  if (!rows.length) throw new Error(`동기화할 name이 없습니다. (formKey=${formKey}, ${HEADER_FROM_ROW}행 이후)`);
+
+  rows.sort((a,b)=>a.order-b.order);
+  const names = rows.map(r=>r.name);
+
+  const needCols = names.length + 1;
+  if (joinSh.getMaxColumns() < needCols) joinSh.insertColumnsAfter(joinSh.getMaxColumns(), needCols - joinSh.getMaxColumns());
+
+  if (!joinSh.getRange('A1').getValue()) joinSh.getRange('A1').setValue('timestamp');
+  joinSh.getRange(1, 2, 1, names.length).setValues([names]);
+
+  const lastCol = joinSh.getLastColumn();
+  const rightStartCol = names.length + 2;
+  if (lastCol >= rightStartCol) joinSh.getRange(1, rightStartCol, 1, lastCol - rightStartCol + 1).clearContent();
+
+  ss.toast(`헤더 동기화 완료: ${names.length}개`, '완료', 3);
+}
+function styleJoinHeaders() {
+  const ss = getSS_();
+  const sh = ss.getSheetByName(JOIN_SHEET_NAME);
+  if (!sh) throw new Error(`"${JOIN_SHEET_NAME}" 시트를 찾을 수 없습니다.`);
+  const lastCol = Math.max(1, sh.getLastColumn());
+  const headerRange = sh.getRange(1, 1, 1, lastCol);
+  headerRange.setFontSize(11).setFontWeight('bold')
+             .setHorizontalAlignment('center').setVerticalAlignment('middle')
+             .setWrap(true).setBackground('#F2F4F7').setFontColor('#202124');
+  sh.setRowHeight(1, 28);
+  headerRange.setBorder(false, false, true, false, false, false, '#DADCE0', SpreadsheetApp.BorderStyle.SOLID);
+  sh.setFrozenRows(1);
+  ss.toast('join 헤더 서식 적용 완료', '완료', 3);
+}
+function syncAndStyleJoinHeaders() {
+  syncJoinHeadersFromSchema();
+  styleJoinHeaders();
+}

@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>커스터마이징 Form</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    body{background:#f8f9fa}
+    .toast-container{position:fixed;bottom:1rem;right:1rem;z-index:1080}
+  </style>
+</head>
+<body>
+<div class="container py-4">
+  <h3 id="formTitle" class="mb-3">🛠️커스터마이징 Form</h3>
+  <div id="formArea" class="card shadow-sm p-3">🔄폼을 로딩 중입니다...잠시만 기다려 주세요</div>
+</div>
+
+<div class="toast-container">
+  <div id="toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="toast-body">상태 메시지</div>
+  </div>
+</div>
+
+<script>
+// ===== 설정 =====
+const GAS_ENDPOINT = 'https://script.google.com/macros/s/AKfycby8ByYThpa6geTY0FoiXMDuCKuLAC6EE-RgNsU60TzBE6azi3DBhlB_RiSFHGEDx82izw/exec';
+const FORM_KEY = 'join2025';
+
+let SCHEMA = [];
+let META = {}; // { title, submitText, loadingText, confirmText? }
+
+// ===== Kakao 주소 API =====
+let _kakaoSDKLoading = null;
+function loadKakaoPostcodeSDK() {
+  if (window.daum && window.daum.Postcode) return Promise.resolve();
+  if (_kakaoSDKLoading) return _kakaoSDKLoading;
+  _kakaoSDKLoading = new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = 'https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js';
+    s.onload = () => resolve();
+    s.onerror = () => reject(new Error('Kakao Postcode SDK 로드 실패'));
+    document.head.appendChild(s);
+  });
+  return _kakaoSDKLoading;
+}
+function openPostcode(name) {
+  loadKakaoPostcodeSDK().then(() => {
+    new daum.Postcode({
+      oncomplete: (data) => {
+        const v = `[${data.zonecode}] ${data.roadAddress || data.jibunAddress || ''}`.trim();
+        const input = document.getElementById(`f_${name}`);
+        if (input) input.value = v;
+      }
+    }).open();
+  }).catch(err => setStatus(err.message, 'danger'));
+}
+
+// ===== 서명 캔버스 =====
+const signaturePads = {}; // name -> {canvas, ctx, drawing, dirty, ratio}
+function setupSignature(name) {
+  const wrap = document.getElementById(`sigwrap_${name}`);
+  const canvas = document.getElementById(`sig_${name}`);
+  if (!canvas || !wrap) return;
+
+  function resizeCanvas() {
+    const ratio = Math.max(window.devicePixelRatio || 1, 1);
+    const rect = wrap.getBoundingClientRect();
+    canvas.width = Math.floor(rect.width * ratio);
+    canvas.height = Math.floor(180 * ratio);
+    canvas.style.width = '100%';
+    canvas.style.height = '180px';
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(1,0,0,1,0,0);
+    ctx.scale(ratio, ratio);
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = '#000';
+    signaturePads[name] = { canvas, ctx, drawing:false, dirty:false, ratio };
+  }
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+
+  const pad = () => signaturePads[name];
+  function getPos(evt){ const r = canvas.getBoundingClientRect(); const p = evt.touches ? evt.touches[0] : evt; return { x:p.clientX - r.left, y:p.clientY - r.top }; }
+  function start(e){ e.preventDefault(); const p=pad(); p.drawing=true; const {x,y}=getPos(e); p.ctx.beginPath(); p.ctx.moveTo(x,y); }
+  function move(e){ if(!pad().drawing) return; e.preventDefault(); const {x,y}=getPos(e); const p=pad(); p.ctx.lineTo(x,y); p.ctx.stroke(); p.dirty=true; }
+  function end(e){ if(!pad().drawing) return; e.preventDefault(); pad().drawing=false; }
+
+  canvas.addEventListener('pointerdown', start);
+  canvas.addEventListener('pointermove', move);
+  canvas.addEventListener('pointerup', end);
+  canvas.addEventListener('pointerleave', end);
+  canvas.addEventListener('touchstart', start, {passive:false});
+  canvas.addEventListener('touchmove', move, {passive:false});
+  canvas.addEventListener('touchend', end);
+
+  const clearBtn = document.getElementById(`sigclear_${name}`);
+  if (clearBtn) clearBtn.onclick = () => {
+    const p = pad();
+    p.ctx.clearRect(0,0,p.canvas.width,p.canvas.height);
+    p.dirty = false;
+    const hidden = document.getElementById(`f_${name}`);
+    if (hidden) hidden.value = '';
+  };
+}
+function saveSignatureToInput(name) {
+  const p = signaturePads[name];
+  const hidden = document.getElementById(`f_${name}`);
+  if (!p || !hidden) return;
+  hidden.value = p.dirty ? p.canvas.toDataURL('image/png') : '';
+}
+
+// ===== 공통 유틸 =====
+function onReady(fn){ if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fn); else fn(); }
+function setStatus(msg, type='muted'){ const el = document.getElementById('statusMsg'); if (!el) return; el.className = `ms-2 small text-${type}`; el.textContent = msg || ''; }
+function ensureFormTitle(){
+  const el = document.getElementById('formTitle');
+  if (el) el.textContent = META.title || '신청 폼';
+}
+
+function ensureButtons() {
+  const area = document.getElementById('formArea');
+  if (!area) return;
+  if (!area.querySelector('#submitBtn')) {
+    const wrap = document.createElement('div');
+    wrap.className = 'mt-3 d-flex gap-2 align-items-center';
+    wrap.innerHTML = `
+      <button id="submitBtn" class="btn btn-primary">${META.submitText || '제출'}</button>
+      <button id="resetBtn" class="btn btn-outline-secondary" type="button">초기화</button>
+      <span id="statusMsg" class="ms-2 small text-muted"></span>
+    `;
+    area.appendChild(wrap);
+  } else {
+    const sb = area.querySelector('#submitBtn');
+    if (sb) sb.textContent = META.submitText || '제출';
+  }
+
+  document.getElementById('submitBtn').onclick = submitForm;
+  document.getElementById('resetBtn').onclick = () => {
+    // 기본 입력 초기화
+    area.querySelectorAll('input, textarea, select').forEach(el => {
+      const t = (el.getAttribute('type') || '').toLowerCase();
+      if (t === 'checkbox' || t === 'radio') {
+        el.checked = false;
+      } else {
+        el.value = '';
+      }
+    });
+    // 서명도 초기화
+    Object.keys(signaturePads).forEach(k => {
+      const p = signaturePads[k];
+      if (p) { p.ctx.clearRect(0,0,p.canvas.width,p.canvas.height); p.dirty=false; }
+      const hidden = document.getElementById(`f_${k}`);
+      if (hidden) hidden.value = '';
+    });
+    setStatus('');
+  };
+}
+
+// ===== 렌더링 =====
+function renderForm(schema, status='ok') {
+  const area = document.getElementById('formArea');
+  if (!area) return;
+
+  if (status !== 'ok') { area.innerHTML = `<div class="text-danger">스키마 로드 실패: ${status}</div>`; return; }
+  if (!Array.isArray(schema)) { area.innerHTML = `<div class="text-danger">스키마 형식 오류</div>`; return; }
+  if (schema.length === 0) {
+    area.innerHTML = `
+      <div class="text-warning">
+        스키마에 <code>${FORM_KEY}</code> 관련 필드가 없습니다.
+        <ul class="mt-2 mb-0 small">
+          <li>schema 시트에 formKey가 정확한지</li>
+          <li>헤더가 formKey/order/label/type/name/options/required 인지</li>
+          <li>웹앱을 최신으로 다시 배포했는지</li>
+        </ul>
+      </div>`;
+    return;
+  }
+
+  const html = schema.map(f => {
+    const id = `f_${f.name}`;
+    const req = f.required ? 'required' : '';
+    const requiredAsterisk = f.required ? ' *' : '';
+    const options = (f.options || '').split(',').map(s => s.trim()).filter(Boolean);
+
+    // 1) 멀티라인
+    if (f.type === 'textarea') {
+      return `
+        <div class="mb-3">
+          <label class="form-label">${f.label}${requiredAsterisk}</label>
+          <textarea id="${id}" class="form-control" ${req}></textarea>
+        </div>`;
+    }
+
+    // 2) 셀렉트
+    if (f.type === 'select') {
+      const opts = options.map(v => `<option value="${v}">${v}</option>`).join('');
+      return `
+        <div class="mb-3">
+          <label class="form-label">${f.label}${requiredAsterisk}</label>
+          <select id="${id}" class="form-select" ${req}>${opts}</select>
+        </div>`;
+    }
+
+    // 3) 주소(카카오 우편번호)
+    if (f.type === 'address') {
+      return `
+        <div class="mb-3">
+          <label class="form-label">${f.label}${requiredAsterisk}</label>
+          <div class="input-group">
+            <input id="${id}" type="text" class="form-control" ${req} placeholder="우편번호/도로명 주소" readonly>
+            <button class="btn btn-outline-secondary" type="button" onclick="openPostcode('${f.name}')">주소검색</button>
+          </div>
+        </div>`;
+    }
+
+    // 4) 서명
+    if (f.type === 'signature') {
+      return `
+        <div class="mb-3">
+          <label class="form-label">${f.label}${requiredAsterisk}</label>
+          <div id="sigwrap_${f.name}" class="border rounded-3 bg-white" style="width:100%; height:180px;">
+            <canvas id="sig_${f.name}" style="width:100%; height:180px; display:block;"></canvas>
+          </div>
+          <div class="mt-2 d-flex gap-2">
+            <button id="sigclear_${f.name}" class="btn btn-sm btn-outline-secondary" type="button">지우기</button>
+          </div>
+          <input id="${id}" type="hidden" ${req} />
+        </div>`;
+    }
+
+    // 5) 날짜/시간 계열
+    if (f.type === 'date' || f.type === 'time' || f.type === 'datetime' || f.type === 'month') {
+      const inputType = (f.type === 'datetime') ? 'datetime-local' : f.type; // datetime → datetime-local
+      return `
+        <div class="mb-3">
+          <label class="form-label">${f.label}${requiredAsterisk}</label>
+          <input id="${id}" type="${inputType}" class="form-control" ${req}>
+        </div>`;
+    }
+
+    // 6) 라디오 (단일 선택)
+    if (f.type === 'radio') {
+      const nameAttr = `f_${f.name}`;
+      const radios = options.map((v, i) => {
+        const rid = `${id}_${i}`;
+        return `
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="${nameAttr}" id="${rid}" value="${v}" ${req}>
+            <label class="form-check-label" for="${rid}">${v}</label>
+          </div>`;
+      }).join('');
+      return `
+        <div class="mb-3">
+          <label class="form-label d-block">${f.label}${requiredAsterisk}</label>
+          ${radios}
+        </div>`;
+    }
+
+    // 7) 체크박스(복수 선택): type = checkboxes
+    if (f.type === 'checkboxes') {
+      const nameAttr = `f_${f.name}[]`;
+      const checks = options.map((v, i) => {
+        const cid = `${id}_${i}`;
+        return `
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="${nameAttr}" id="${cid}" value="${v}">
+            <label class="form-check-label" for="${cid}">${v}</label>
+          </div>`;
+      }).join('');
+      // required의 경우, 최소 1개 선택을 프런트에서 강제하지 않고, 제출 시 검증 로직에서 처리(아래 validateRequired 사용)
+      return `
+        <div class="mb-3">
+          <label class="form-label d-block">${f.label}${requiredAsterisk}</label>
+          ${checks}
+        </div>`;
+    }
+
+    // 8) 체크박스(단일): type = checkbox  (체크 시 "Y", 미체크 시 "")
+    if (f.type === 'checkbox') {
+      const cid = `${id}_single`;
+      return `
+        <div class="mb-3 form-check">
+          <input class="form-check-input" type="checkbox" id="${cid}">
+          <label class="form-check-label" for="${cid}">${f.label}${requiredAsterisk}</label>
+          <input id="${id}" type="hidden" />
+        </div>`;
+    }
+
+    // 9) 일반 인풋 (fallback)
+    const t = ['text','tel','email','number','url','password'].includes(f.type) ? f.type : 'text';
+    return `
+      <div class="mb-3">
+        <label class="form-label">${f.label}${requiredAsterisk}</label>
+        <input id="${id}" type="${t}" class="form-control" ${req}>
+      </div>`;
+  }).join('');
+
+  area.innerHTML = html;
+
+  // 서명 패드 초기화
+  SCHEMA.filter(f => f.type === 'signature').forEach(f => setupSignature(f.name));
+
+  ensureButtons();
+}
+
+// ===== 제출 =====
+function collect(){
+  const data = {};
+  SCHEMA.forEach(f => {
+    const baseId = `f_${f.name}`;
+    // signature는 hidden에 담김(아래 submitForm에서 직렬화)
+    if (f.type === 'radio') {
+      const sel = document.querySelector(`input[name="${baseId}"]:checked`);
+      data[f.name] = sel ? sel.value : '';
+      return;
+    }
+    if (f.type === 'checkboxes') {
+      const nodes = document.querySelectorAll(`input[name="${baseId}[]"]:checked`);
+      const vals = Array.from(nodes).map(n => n.value);
+      data[f.name] = vals.join(', ');
+      return;
+    }
+    if (f.type === 'checkbox') {
+      // 단일 체크박스: 체크시 "Y", 아니면 ""
+      const single = document.getElementById(`${baseId}_single`);
+      data[f.name] = single && single.checked ? 'Y' : '';
+      // 숨겨진 input에도 동일값 반영(필요시)
+      const hidden = document.getElementById(baseId);
+      if (hidden) hidden.value = data[f.name];
+      return;
+    }
+    const el = document.getElementById(baseId);
+    data[f.name] = el ? String(el.value || '').trim() : '';
+  });
+  return data;
+}
+function validateRequired(payload){
+  const missing = [];
+  SCHEMA.forEach(f => {
+    if (!f.required) return;
+    const val = String(payload[f.name] || '').trim();
+    if (f.type === 'checkboxes') {
+      // 최소 1개 선택 필요
+      if (!val) missing.push(f.label);
+    } else if (f.type === 'checkbox') {
+      // 단일 체크박스: 체크(= "Y")가 되어야 함
+      if (val !== 'Y') missing.push(f.label);
+    } else {
+      if (!val) missing.push(f.label);
+    }
+  });
+  return missing;
+}
+async function parseJsonSafe(res){
+  const text = await res.text();
+  try { return JSON.parse(text); }
+  catch { return { ok:false, error:`Non-JSON response: ${text.slice(0,200)}` }; }
+}
+async function postWithFallback(body){
+  try{
+    const res = await fetch(GAS_ENDPOINT, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await parseJsonSafe(res);
+  }catch(err){
+    console.warn('[POST json] 실패, urlencoded 폴백:', err);
+    const res2 = await fetch(GAS_ENDPOINT, { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body: 'payload=' + encodeURIComponent(JSON.stringify(body)) });
+    if (!res2.ok) throw new Error(`HTTP ${res2.status}`);
+    return await parseJsonSafe(res2);
+  }
+}
+function buildConfirmText(payload){
+  const lines = SCHEMA.map(f => {
+    let val = payload[f.name] || '';
+    if (f.type === 'signature') val = val ? '(📝서명 이미지 있음)' : '(⛔미서명)';
+    return `${f.label}: ${val}`;
+  });
+  return (META.confirmText || '🤷‍♂️아래와 같이 제출하시겠습니까?\n\n') + lines.join('\n');
+}
+async function submitForm(){
+  const submitBtn = document.getElementById('submitBtn');
+  const normalLabel = META.submitText || '✔신청(제출)하기';
+  try{
+    if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = '🔄제출(신청)중...잠시만 기다려주세요'; }
+    setStatus('전송 중…');
+
+    // 서명 hidden에 직렬화
+    SCHEMA.filter(f => f.type === 'signature').forEach(f => saveSignatureToInput(f.name));
+
+    const payload = collect();
+
+    // 확인
+    const ok = window.confirm(buildConfirmText(payload));
+    if (!ok) { setStatus('⛔제출이 취소되었습니다', 'warning'); return; }
+
+    // 필수 검증
+    const missing = validateRequired(payload);
+    if (missing.length) { setStatus(`⚠️필수 입력 누락: ${missing.join(', ')}`, 'danger'); return; }
+
+    const idk = (self.crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now());
+    const body = { formKey: FORM_KEY, payload, idempotencyKey: idk };
+
+    const j = await postWithFallback(body);
+    if (!j.ok) throw new Error(j.error || '저장 실패');
+
+    setStatus('✅제출(신청)이 완료되었습니다!', 'success');
+  }catch(err){
+    setStatus(`오류: ${err.message}`, 'danger');
+  }finally{
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = normalLabel; }
+  }
+}
+
+// ===== 스키마 로드 & 초기화 =====
+async function fetchSchema(){
+  const url = `${GAS_ENDPOINT}?action=schema&formKey=${encodeURIComponent(FORM_KEY)}`;
+  const res = await fetch(url);
+  const j = await res.json();
+  if (!j.ok) throw new Error(j.error || 'unknown');
+  META = j.meta || {};
+  return j.schema || [];
+}
+function onInit(){
+  const area = document.getElementById('formArea');
+  if (area && !area.dataset.initialized) { area.innerHTML = '🔄폼을 로딩 중입니다...잠시만 기다려 주세요'; area.dataset.initialized = '1'; }
+  fetchSchema()
+    .then(s => { SCHEMA = s; ensureFormTitle(); if (META.loadingText && area) area.innerHTML = META.loadingText; renderForm(s, 'ok'); })
+    .catch(e => { console.error('스키마 로드 실패:', e); renderForm([], e.message); });
+}
+document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', onInit) : onInit();
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
