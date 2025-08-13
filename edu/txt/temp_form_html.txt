@@ -24,7 +24,7 @@
 
 <script>
 // ===== 설정 =====
-const GAS_ENDPOINT = 'https://script.google.com/macros/s/AKfycby8ByYThpa6geTY0FoiXMDuCKuLAC6EE-RgNsU60TzBE6azi3DBhlB_RiSFHGEDx82izw/exec';
+const GAS_ENDPOINT = '여기를 구글앱스크립트 GAS의 실행URL로 변경하세요';  // 실제 GAS실행 URL로 변경
 const FORM_KEY = 'join2025';
 
 let SCHEMA = [];
