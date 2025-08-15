@@ -59,62 +59,6 @@ function openPostcode(name) {
 }
 
 // ===== 서명 캔버스 =====
-/* const signaturePads = {}; // name -> {canvas, ctx, drawing, dirty, ratio}
-function setupSignature(name) {
-  const wrap = document.getElementById(`sigwrap_${name}`);
-  const canvas = document.getElementById(`sig_${name}`);
-  if (!canvas || !wrap) return;
-
-  function resizeCanvas() {
-    const ratio = Math.max(window.devicePixelRatio || 1, 1);
-    const rect = wrap.getBoundingClientRect();
-    canvas.width = Math.floor(rect.width * ratio);
-    canvas.height = Math.floor(180 * ratio);
-    canvas.style.width = '100%';
-    canvas.style.height = '180px';
-    const ctx = canvas.getContext('2d');
-    ctx.setTransform(1,0,0,1,0,0);
-    ctx.scale(ratio, ratio);
-    ctx.lineWidth = 2;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    ctx.strokeStyle = '#000';
-    signaturePads[name] = { canvas, ctx, drawing:false, dirty:false, ratio };
-  }
-  resizeCanvas();
-  window.addEventListener('resize', resizeCanvas);
-
-  const pad = () => signaturePads[name];
-  function getPos(evt){ const r = canvas.getBoundingClientRect(); const p = evt.touches ? evt.touches[0] : evt; return { x:p.clientX - r.left, y:p.clientY - r.top }; }
-  function start(e){ e.preventDefault(); const p=pad(); p.drawing=true; const {x,y}=getPos(e); p.ctx.beginPath(); p.ctx.moveTo(x,y); }
-  function move(e){ if(!pad().drawing) return; e.preventDefault(); const {x,y}=getPos(e); const p=pad(); p.ctx.lineTo(x,y); p.ctx.stroke(); p.dirty=true; }
-  function end(e){ if(!pad().drawing) return; e.preventDefault(); pad().drawing=false; }
-
-  canvas.addEventListener('pointerdown', start);
-  canvas.addEventListener('pointermove', move);
-  canvas.addEventListener('pointerup', end);
-  canvas.addEventListener('pointerleave', end);
-  canvas.addEventListener('touchstart', start, {passive:false});
-  canvas.addEventListener('touchmove', move, {passive:false});
-  canvas.addEventListener('touchend', end);
-
-  const clearBtn = document.getElementById(`sigclear_${name}`);
-  if (clearBtn) clearBtn.onclick = () => {
-    const p = pad();
-    p.ctx.clearRect(0,0,p.canvas.width,p.canvas.height);
-    p.dirty = false;
-    const hidden = document.getElementById(`f_${name}`);
-    if (hidden) hidden.value = '';
-  };
-}
-function saveSignatureToInput(name) {
-  const p = signaturePads[name];
-  const hidden = document.getElementById(`f_${name}`);
-  if (!p || !hidden) return;
-  hidden.value = p.dirty ? p.canvas.toDataURL('image/png') : '';
-} */
-
-// ===== 서명 캔버스 =====
 const signaturePads = {}; // name -> {canvas, ctx, drawing, dirty, ratio, ro}
 
 function setupSignature(name) {
@@ -497,42 +441,6 @@ function buildConfirmText(payload){
   });
   return (META.confirmText || '🤷‍♂️아래와 같이 제출하시겠습니까?\n\n') + lines.join('\n');
 }
-
-/* async function submitForm(){
-  const submitBtn = document.getElementById('submitBtn');
-  const normalLabel = META.submitText || '✔신청(제출)하기';
-  try{
-    if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = '🔄제출(신청)중...잠시만 기다려주세요'; }
-    setStatus('전송 중…');
-
-    // 서명 hidden에 직렬화
-    SCHEMA.filter(f => f.type === 'signature').forEach(f => saveSignatureToInput(f.name));
-
-    const payload = collect();
-
-    // 확인
-    const ok = window.confirm(buildConfirmText(payload));
-    if (!ok) { setStatus('⛔제출이 취소되었습니다', 'warning'); return; }
-
-            // 필수 검증
-    const missing = validateRequired(payload);
-    if (missing.length) 
-    alert('⚠필수입력 항목이 누락되었습니다. 확인해 주세요');
-    { setStatus(`⚠️필수 입력 누락: ${missing.join(', ')}`, 'danger'); return; }
-
-    const idk = (self.crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now());
-    const body = { formKey: FORM_KEY, payload, idempotencyKey: idk };
-
-    const j = await postWithFallback(body);
-    if (!j.ok) throw new Error(j.error || '저장 실패');
-
-    setStatus('✅제출(신청)이 완료되었습니다!', 'success');
-  }catch(err){
-    setStatus(`오류: ${err.message}`, 'danger');
-  }finally{
-    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = normalLabel; }
-  }
-} */
 
 async function submitForm(){
   const submitBtn = document.getElementById('submitBtn');
