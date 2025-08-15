@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Schema Builder Embed</title>
+  <style>
+    /* 기본 레이아웃: 전체 화면 채우기 */
+    html, body { height: 100%; margin: 0; }
+    :root { --vh: 1vh; } /* 모바일 100vh 보정용 */
+
+    body {
+      /* 노치·홈인디케이터 여백 */
+      padding: env(safe-area-inset-top) env(safe-area-inset-right)
+               env(safe-area-inset-bottom) env(safe-area-inset-left);
+      background: #f7f7fb;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .wrap {
+      flex: 1 1 auto;
+      min-height: 0;               /* iOS overflow 방지 */
+      display: flex;
+      flex-direction: column;
+    }
+
+    .frame-box {
+      position: relative;
+      flex: 1 1 auto;
+      min-height: calc(var(--vh, 1vh) * 100); /* 모바일 주소창 변화 대응 */
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 8px 20px rgba(0,0,0,.06);
+      background: #fff;
+    }
+
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      display: block;
+    }
+
+    /* 로더 */
+    .loader {
+      position: absolute; inset: 0;
+      display: grid; place-items: center;
+      background: #fff;
+      font: 14px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple SD Gothic Neo", "Noto Sans KR", "맑은 고딕", sans-serif;
+      color: #666;
+    }
+    .spinner {
+      width: 40px; height: 40px; border-radius: 50%;
+      border: 3px solid #e5e7eb; border-top-color: #6366f1;
+      animation: spin 1s linear infinite; margin-bottom: 10px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* 전체 패딩 살짝 */
+    .container {
+      width: min(1200px, 100%);
+      margin: 0 auto;
+      padding: clamp(8px, 2.5vw, 20px);
+      box-sizing: border-box;
+      flex: 1 1 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* 상단 안내(필요 없으면 .top-hint DIV 삭제해도 됨) */
+    .top-hint {
+      font: 13px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple SD Gothic Neo", "Noto Sans KR", "맑은 고딕", sans-serif;
+      color: #555;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="container">
+      
+
+      <div class="frame-box">
+        <div class="loader" id="loader">
+          <div class="spinner"></div>
+          불러오는 중…
+        </div>
+        <iframe id="appFrame" title="Schema Builder"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ===== 100vh 보정(모바일 주소창 변화 대응) =====
+    function setVh() {
+      document.documentElement.style.setProperty('--vh', (window.innerHeight * 0.01) + 'px');
+    }
+    setVh();
+    window.addEventListener('resize', setVh);
+    window.addEventListener('orientationchange', () => setTimeout(setVh, 250));
+
+    // ===== 임베드 URL 구성 =====
+    // 기본값을 여기에 세팅하세요.
+    const DEFAULT_EXEC_URL = "https://script.google.com/macros/s/AKfycby8ByYThpa6geTY0FoiXMDuCKuLAC6EE-RgNsU60TzBE6azi3DBhlB_RiSFHGEDx82izw/exec";
+    const DEFAULT_FORM_KEY = "join2025";
+
+    // ?app=...&formKey=... 로 덮어쓰기 지원
+    const params = new URLSearchParams(location.search);
+    const execUrl = (params.get('app') || DEFAULT_EXEC_URL).trim();
+    const formKey = (params.get('formKey') || DEFAULT_FORM_KEY).trim();
+
+    // doGet(e)에서 action=builder 분기가 있어야 합니다.
+    const src = execUrl + "?action=builder&formKey=" + encodeURIComponent(formKey);
+
+    const iframe = document.getElementById('appFrame');
+    iframe.src = src;
+
+    // 로더 제어
+    iframe.addEventListener('load', () => {
+      const loader = document.getElementById('loader');
+      if (loader) loader.style.display = 'none';
+    });
+
+    // 안전망: 8초 넘게 로딩되면 안내 표시(대개 ALLOWALL 미설정/권한 문제)
+    setTimeout(() => {
+      const loader = document.getElementById('loader');
+      if (loader && loader.style.display !== 'none') {
+        loader.innerHTML =
+          '<div style="text-align:center">' +
+          '<div class="spinner" style="margin:0 auto 10px"></div>' +
+          '<div>로딩이 지연되고 있습니다.<br>웹앱 권한/배포 상태 및 X-Frame-Options(ALLOWALL) 설정을 확인해 주세요.</div>' +
+          '</div>';
+      }
+    }, 8000);
+  </script>
+</body>
+</html>
