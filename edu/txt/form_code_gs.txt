@@ -3,9 +3,9 @@
  * - 서명 저장 옵션(드라이브)
  */
 const CONFIG = {
-  SHEET_ID: '구글시트의 ID를 여기에 입력하세요.', // ← 스프레드시트 ID
-  SCHEMA_SHEET: 'schema',   // 구글시트 생성
-  DATA_SHEET: 'join',  // 구글시트에 생성
+  SHEET_ID: '여기에 구글스프레드시트의 ID입력 ', // ← 스프레드시트 ID
+  SCHEMA_SHEET: 'schema',  // 이것은 그대로 사용 시트생성
+  DATA_SHEET: 'join',  // 이것은 그대로 시트생성
   SIGNATURE: {
     saveToDrive: true,
     folderId: '12THGJyuF6paq79VFtHrPVnDXD-9hntcT',      // 드라이브 폴더 ID(없으면 My Drive)
@@ -221,20 +221,44 @@ function loadMeta_(formKey) {
 /** ========= WEB APP: GET =========
  * ?action=schema&formKey=...
  */
+
 function doGet(e) {
   try {
     const action = (e.parameter.action || '').toLowerCase();
+
+    // 1) JSON API: 스키마 조회
     if (action === 'schema') {
       const formKey = e.parameter.formKey || '';
       if (!formKey) return respondJson_({ ok:false, error:'formKey required' });
       const { fields, meta } = loadSchema_(formKey);
       return respondJson_({ ok:true, schema: fields, meta });
     }
+
+    // 2) HTML 페이지: SchemaBuild.html (iframe 임베드용)
+    if (action === 'builder') {
+      const t = HtmlService.createTemplateFromFile('SchemaBuild');
+      // 필요 시 쿼리로 전달: ?action=builder&formKey=join2025
+      t.formKey = e.parameter.formKey || '';
+
+      return t.evaluate()
+        .setTitle('Schema Builder')
+        .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL) // 외부 도메인 iframe 허용
+        .addMetaTag('viewport', 'width=device-width, initial-scale=1');
+    }
+
+    // (선택) 기본값을 HTML로 돌리고 싶다면 아래 한 줄로 교체해도 됩니다.
+    // return HtmlService.createHtmlOutput('no action').setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
     return respondJson_({ ok:false, error: 'no action' });
   } catch (err) {
     return respondJson_({ ok:false, error:String(err) });
   }
 }
+
+// 템플릿 include 사용 시
+function include(name) {
+  return HtmlService.createHtmlOutputFromFile(name).getContent();
+}
+
 
 /** ========= WEB APP: POST =========
  * JSON 또는 x-www-form-urlencoded(payload=JSON) 모두 지원
@@ -282,9 +306,9 @@ function getNotifyConfig() {
     ENABLE_ALIMTALK_NOTIFY:  _CFG_BOOL(sp.getProperty('ENABLE_ALIMTALK_NOTIFY') || 'true'),
 
     ADMIN_EMAILS:            sp.getProperty('ADMIN_EMAILS') || '',
-    EMAIL_SUBJECT_PREFIX:    sp.getProperty('EMAIL_SUBJECT_PREFIX') || '[신청 접수] ',
-    EMAIL_SENDER_NAME:       sp.getProperty('EMAIL_SENDER_NAME') || '폼 알림',
-    SUBMITTER_PHONE_FIELD:   sp.getProperty('SUBMITTER_PHONE_FIELD') || 'phone',
+    EMAIL_SUBJECT_PREFIX:    sp.getProperty('EMAIL_SUBJECT_PREFIX') || '',
+    EMAIL_SENDER_NAME:       sp.getProperty('EMAIL_SENDER_NAME') || '',
+    SUBMITTER_PHONE_FIELD:   sp.getProperty('SUBMITTER_PHONE_FIELD') || '',
 
     PPURIO_ACCOUNT:          sp.getProperty('PPURIO_ACCOUNT') || '',
     PPURIO_SENDER_KEY:       sp.getProperty('PPURIO_SENDER_KEY') || '',
@@ -305,9 +329,9 @@ function saveNotifyConfig(cfg) {
 
   const setIfProvided = (k, def='') => { if (k in cfg) sp.setProperty(k, String(cfg[k] || def)); };
   setIfProvided('ADMIN_EMAILS');
-  setIfProvided('EMAIL_SUBJECT_PREFIX', '[신청 접수] ');
-  setIfProvided('EMAIL_SENDER_NAME', '폼 알림');
-  setIfProvided('SUBMITTER_PHONE_FIELD', 'phone');
+  setIfProvided('EMAIL_SUBJECT_PREFIX', '');
+  setIfProvided('EMAIL_SENDER_NAME', '');
+  setIfProvided('SUBMITTER_PHONE_FIELD', '');
 
   setIfProvided('PPURIO_ACCOUNT');
   setIfProvided('PPURIO_SENDER_KEY');
@@ -333,9 +357,9 @@ function getRuntimeConfig_() {
     ENABLE_EMAIL_NOTIFY:     _CFG_BOOL(sp.getProperty('ENABLE_EMAIL_NOTIFY') || 'true'),
     ENABLE_ALIMTALK_NOTIFY:  _CFG_BOOL(sp.getProperty('ENABLE_ALIMTALK_NOTIFY') || 'true'),
     ADMIN_EMAILS:            (sp.getProperty('ADMIN_EMAILS') || '').split(',').map(s=>s.trim()).filter(Boolean),
-    EMAIL_SUBJECT_PREFIX:    sp.getProperty('EMAIL_SUBJECT_PREFIX') || '[신청 접수] ',
-    EMAIL_SENDER_NAME:       sp.getProperty('EMAIL_SENDER_NAME') || '폼 알림',
-    SUBMITTER_PHONE_FIELD:   sp.getProperty('SUBMITTER_PHONE_FIELD') || 'phone',
+    EMAIL_SUBJECT_PREFIX:    sp.getProperty('EMAIL_SUBJECT_PREFIX') || '',
+    EMAIL_SENDER_NAME:       sp.getProperty('EMAIL_SENDER_NAME') || '',
+    SUBMITTER_PHONE_FIELD:   sp.getProperty('SUBMITTER_PHONE_FIELD') || '',
     PPURIO: {
       ACCOUNT:               sp.getProperty('PPURIO_ACCOUNT') || '',
       PASSWORD:              sp.getProperty('PPURIO_PASSWORD') || '',
@@ -481,7 +505,7 @@ const ALLOWED_TYPES = [
   'text','tel','email','number','textarea','select','address','signature',
   'date','time','datetime','month',
   'radio','checkbox','checkboxes',
-  'url','password'
+  'url','password','meta'
 ];
 
 function onOpen() {
@@ -489,13 +513,104 @@ function onOpen() {
     .createMenu('📌 사용자메뉴')
     .addItem('🛠️Form 작성기', 'showSchemaBuilderDialog')
     .addItem('🔂타이틀 동기화', 'syncAndStyleJoinHeaders')
+    .addItem('🔗연락처변환', 'promptAndFormatColumnLetter_')
     .addToUi();
 }
-function showSchemaBuilderDialog() {
-  const html = HtmlService.createHtmlOutputFromFile('SchemaBuild')
-    .setWidth(1000).setHeight(800);
-  SpreadsheetApp.getUi().showModalDialog(html, '🧩 스키마 작성기');
+
+// 숫자만 남기기
+function digitsOnly_(s) {
+  return String(s == null ? '' : s).replace(/[^0-9]/g, '');
 }
+
+
+// 010 형식 변환
+function formatPhoneKRMobile_(raw) {
+  const orig = String(raw == null ? '' : raw).trim();
+  let s = digitsOnly_(orig);
+
+  // 10자리인데 0으로 시작 안 하면 앞에 0 붙이기
+  if (s.length === 10 && s[0] !== '0') {
+    s = '0' + s;
+  }
+
+  // 11자리 01x → 3-4-4 패턴
+  if (s.length === 11 && /^01\d/.test(s)) {
+    return s.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
+  }
+
+  return orig;
+}
+
+// 열 이름(A, B, C...)을 번호로 변환
+function columnLetterToNumber_(letter) {
+  let col = 0;
+  letter = letter.toUpperCase();
+  for (let i = 0; i < letter.length; i++) {
+    col = col * 26 + (letter.charCodeAt(i) - 64);
+  }
+  return col;
+}
+
+// 프롬프트로 열 이름 입력 → 해당 열 전체 변환
+function promptAndFormatColumnLetter_() {
+  const ui = SpreadsheetApp.getUi();
+  const sh = SpreadsheetApp.getActiveSheet();
+
+  const resp = ui.prompt('연락처 변환', '변환할 열 이름을 입력하세요 (예: C, D, AA)', ui.ButtonSet.OK_CANCEL);
+  if (resp.getSelectedButton() !== ui.Button.OK) return;
+
+  const colLetter = resp.getResponseText().trim().toUpperCase();
+  if (!/^[A-Z]+$/.test(colLetter)) {
+    ui.alert('올바른 열 이름을 입력하세요. 예: C, D, AA');
+    return;
+  }
+
+  const col = columnLetterToNumber_(colLetter);
+  const lastRow = sh.getLastRow();
+  if (lastRow < 2) {
+    ui.alert('데이터가 없습니다.');
+    return;
+  }
+
+  const rng = sh.getRange(2, col, lastRow - 1, 1); // 2행부터 마지막 행까지
+  const vals = rng.getValues();
+
+  for (let i = 0; i < vals.length; i++) {
+    vals[i][0] = formatPhoneKRMobile_(vals[i][0]);
+  }
+
+  rng.setValues(vals);
+  ui.alert(`열 ${colLetter} 변환 완료`);
+}
+
+/***** schema 시트 헤더 보장 (없으면 생성) *****/
+if (typeof ensureSchemaHeader_ !== 'function') {
+  function ensureSchemaHeader_() {
+    var sh = getSheet_(SCHEMA_SHEET_NAME);
+    var header = ['formKey','order','label','type','name','options','required'];
+    var lastCol = Math.max(sh.getLastColumn(), header.length);
+    var firstRow = sh.getRange(1,1,1,lastCol).getValues()[0].map(String);
+    var hasAny = firstRow.some(function(v){ return String(v).trim(); });
+    if (!hasAny) {
+      sh.getRange(1,1,1,header.length).setValues([header]);
+      try { sh.setFrozenRows(1); } catch(_) {}
+    }
+    return header;
+  }
+}
+
+/***** 다이얼로그 열기 (파일명 확인용 try/catch) *****/
+function showSchemaBuilderDialog() {
+  try {
+    // ⚠️ 파일명이 정확히 "SchemaBuild" 인 HTML 파일이 프로젝트에 있어야 합니다.
+    var html = HtmlService.createHtmlOutputFromFile('SchemaBuild')
+      .setWidth(1000).setHeight(800);
+    SpreadsheetApp.getUi().showModalDialog(html, '🧩 스키마 작성기');
+  } catch (e) {
+    SpreadsheetApp.getUi().alert('SchemaBuild 파일을 찾지 못했거나 로드 실패:\n' + e);
+  }
+}
+
 
 // schema UI용: 스키마 읽기
 function sb_getSchema(formKey) {

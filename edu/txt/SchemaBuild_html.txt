@@ -53,7 +53,7 @@
           <label class="form-check-label" for="f_required">required</label>
         </div>
         <div class="col-6 mt-2 text-end">
-          <button type="button" class="btn btn-primary" id="btnAdd">추가</button>
+          <button type="button" class="btn btn-primary" id="btnAdd">➕추가</button>
         </div>
       </div>
       <div class="small-muted mt-2">
@@ -84,8 +84,8 @@
 
   <!-- 액션 -->
   <div class="sticky-actions d-flex gap-2 mt-2">
-    <button type="button" class="btn btn-success flex-fill" id="btnSave">저장</button>
-    <button type="button" class="btn btn-outline-secondary" id="btnSync">join 헤더 동기화</button>
+    <button type="button" class="btn btn-success flex-fill" id="btnSave">📤스키마설정 저장</button>
+    <button type="button" class="btn btn-outline-secondary" id="btnSync">🔃join 헤더 동기화</button>
   </div>
 
   <div class="small-muted mt-2">허용 type:
@@ -147,12 +147,11 @@
     </div>
 
     <div class="text-end mt-3">
-      <button type="button" class="btn btn-outline-secondary me-2" id="btnCfgReload">설정 불러오기</button>
-      <button type="button" class="btn btn-primary" id="btnCfgSave">설정 저장</button>
+      <button type="button" class="btn btn-outline-secondary me-2" id="btnCfgReload">🔃설정 불러오기</button>
+      <button type="button" class="btn btn-primary" id="btnCfgSave">📤설정 저장</button>
     </div>
   </div>
 </div>
-
 
   <script>
     /* ---------- 안전 유틸 ---------- */
@@ -300,6 +299,7 @@
         }
       }
       if (!(window.google && google.script && google.script.run)) { toast('Apps Script 환경에서만 저장됩니다.'); return; }
+      alert('🤷‍♂️설정하신대로 저장됩니다. 잠시만 기다려 주세요');
       google.script.run.withSuccessHandler(res=>{
         if (!res.ok) { toast(res.error||'저장 실패'); return; }
         toast(`저장 완료: ${res.count}행`);
@@ -308,6 +308,7 @@
 
     function syncJoin(){
       if (!(window.google && google.script && google.script.run)) { toast('Apps Script 환경에서만 동기화됩니다.'); return; }
+      alert('🤷‍♂️접수 시트의 타이틀을 동기화 합니다. 잠시만 기다려 주세요');
       google.script.run.withSuccessHandler(()=>toast('헤더 동기화/서식 완료'))
         .withFailureHandler(err=>toast(err && err.message ? err.message : String(err)))
         .syncAndStyleJoinHeaders();
@@ -342,31 +343,49 @@
   </script>
   <script>
   // ===== 알림 설정 UI 로드/저장 =====
-  function loadNotifyConfigUI() {
-    if (!(window.google && google.script && google.script.run)) return;
-    google.script.run.withSuccessHandler(res=>{
-      if (!res || !res.ok) { toast('설정 로드 실패'); return; }
-      const c = res.cfg || {};
-      req('cfg_enable_email').checked = !!c.ENABLE_EMAIL_NOTIFY;
-      req('cfg_enable_at').checked    = !!c.ENABLE_ALIMTALK_NOTIFY;
-      req('cfg_admin_emails').value   = c.ADMIN_EMAILS || '';
-      req('cfg_email_prefix').value   = c.EMAIL_SUBJECT_PREFIX || '';
-      req('cfg_email_sender').value   = c.EMAIL_SENDER_NAME || '';
-      req('cfg_phone_field').value    = c.SUBMITTER_PHONE_FIELD || 'phone';
+function setIfPresent(id, v) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const s = (v == null ? '' : String(v).trim());
+  el.value = s;             // 값이 빈 문자열이면 그대로 비워둠 → placeholder가 보임
+}
 
-      req('cfg_ppurio_account').value   = c.PPURIO_ACCOUNT || '';
-      req('cfg_ppurio_senderkey').value = c.PPURIO_SENDER_KEY || '';
-      req('cfg_ppurio_from').value      = c.PPURIO_FROM || '';
-      req('cfg_ppurio_tpl_code').value  = c.PPURIO_TEMPLATE_CODE || '';
-      req('cfg_ppurio_tpl_msg').value   = c.PPURIO_TEMPLATE_MESSAGE || '';
+function loadNotifyConfigUI() {
+  if (!(window.google && google.script && google.script.run)) return;
+  google.script.run.withSuccessHandler(res=>{
+    if (!res || !res.ok) { toast('설정 로드 실패'); return; }
+    const c = res.cfg || {};
 
-      req('cfg_pwd_hint').textContent = c.has_PPURIO_PASSWORD ? '저장된 비밀번호가 있습니다(미표시). 새 값을 입력하면 교체됩니다.' : '비밀번호가 아직 저장되어 있지 않습니다.';
-      req('cfg_ppurio_password').value = ''; // 항상 비움
-    }).withFailureHandler(err=>toast(err && err.message ? err.message : String(err)))
-      .getNotifyConfig();
-  }
+    // 스위치
+    req('cfg_enable_email').checked = !!c.ENABLE_EMAIL_NOTIFY;
+    req('cfg_enable_at').checked    = !!c.ENABLE_ALIMTALK_NOTIFY;
 
-  function saveNotifyConfigUI() {
+    // 텍스트 입력들 (값 있을 때만)
+    setIfPresent('cfg_admin_emails',  c.ADMIN_EMAILS);
+    setIfPresent('cfg_email_prefix',  c.EMAIL_SUBJECT_PREFIX);
+    setIfPresent('cfg_email_sender',  c.EMAIL_SENDER_NAME);
+
+    // ⚠️ 기본값 넣지 마세요. placeholder만 안내하고 값은 비워둡니다.
+    setIfPresent('cfg_phone_field',   c.SUBMITTER_PHONE_FIELD);
+
+    setIfPresent('cfg_ppurio_account',   c.PPURIO_ACCOUNT);
+    setIfPresent('cfg_ppurio_senderkey', c.PPURIO_SENDER_KEY);
+    setIfPresent('cfg_ppurio_from',      c.PPURIO_FROM);
+    setIfPresent('cfg_ppurio_tpl_code',  c.PPURIO_TEMPLATE_CODE);
+
+    // 템플릿 본문도 placeholder로 안내하고, 저장된 값만 채움
+    setIfPresent('cfg_ppurio_tpl_msg',   c.PPURIO_TEMPLATE_MESSAGE);
+
+    req('cfg_pwd_hint').textContent =
+      c.has_PPURIO_PASSWORD
+        ? '저장된 비밀번호가 있습니다(미표시). 새 값을 입력하면 교체됩니다.'
+        : '비밀번호가 아직 저장되어 있지 않습니다.';
+    req('cfg_ppurio_password').value = ''; // 항상 비움
+  }).withFailureHandler(err=>toast(err && err.message ? err.message : String(err)))
+    .getNotifyConfig();
+}
+
+ function saveNotifyConfigUI() {
     if (!(window.google && google.script && google.script.run)) { toast('Apps Script 환경에서만 가능합니다.'); return; }
     const cfg = {
       ENABLE_EMAIL_NOTIFY:    req('cfg_enable_email').checked,
@@ -383,6 +402,7 @@
       PPURIO_TEMPLATE_CODE:    req('cfg_ppurio_tpl_code').value.trim(),
       PPURIO_TEMPLATE_MESSAGE: req('cfg_ppurio_tpl_msg').value.trim()
     };
+    alert("📤이메일(알림톡) 설정이 저장됩니다.");
     google.script.run.withSuccessHandler(res=>{
       if (!res || !res.ok) { toast(res && res.error ? res.error : '설정 저장 실패'); return; }
       toast('설정 저장 완료');

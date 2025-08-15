@@ -8,6 +8,8 @@
   <style>
     body{background:#f8f9fa}
     .toast-container{position:fixed;bottom:1rem;right:1rem;z-index:1080}
+     /* 캔버스 제스처가 스크롤/핀치로 전달되지 않도록 */
+    canvas.signature-pad { touch-action: none; }
   </style>
 </head>
 <body>
@@ -24,7 +26,7 @@
 
 <script>
 // ===== 설정 =====
-const GAS_ENDPOINT = '여기를 구글앱스크립트 GAS의 실행URL로 변경하세요';  // 실제 GAS실행 URL로 변경
+const GAS_ENDPOINT = '여기에 GAS실행 URL을 입력하세요. ';
 const FORM_KEY = 'join2025';
 
 let SCHEMA = [];
@@ -57,19 +59,31 @@ function openPostcode(name) {
 }
 
 // ===== 서명 캔버스 =====
-const signaturePads = {}; // name -> {canvas, ctx, drawing, dirty, ratio}
+const signaturePads = {}; // name -> {canvas, ctx, drawing, dirty, ratio, ro}
+
 function setupSignature(name) {
   const wrap = document.getElementById(`sigwrap_${name}`);
   const canvas = document.getElementById(`sig_${name}`);
   if (!canvas || !wrap) return;
 
-  function resizeCanvas() {
+  canvas.classList.add('signature-pad');
+
+  function resizeCanvas(preserve = false) {
+    // 1) 이전 그림을 데이터 URL로 보관
+    let prevURL = null;
+    if (preserve && canvas.width && canvas.height) {
+      try { prevURL = canvas.toDataURL('image/png'); } catch (e) {}
+    }
+
+    // 2) 고해상도 대응
     const ratio = Math.max(window.devicePixelRatio || 1, 1);
     const rect = wrap.getBoundingClientRect();
-    canvas.width = Math.floor(rect.width * ratio);
+
+    canvas.width  = Math.floor(rect.width * ratio);
     canvas.height = Math.floor(180 * ratio);
-    canvas.style.width = '100%';
+    canvas.style.width  = '100%';
     canvas.style.height = '180px';
+
     const ctx = canvas.getContext('2d');
     ctx.setTransform(1,0,0,1,0,0);
     ctx.scale(ratio, ratio);
@@ -77,34 +91,82 @@ function setupSignature(name) {
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     ctx.strokeStyle = '#000';
-    signaturePads[name] = { canvas, ctx, drawing:false, dirty:false, ratio };
+
+    signaturePads[name] = { ...signaturePads[name], canvas, ctx, drawing:false, ratio };
+
+    // 3) 이전 그림 복원 (컨텍스트를 ratio로 스케일했으니 CSS px 기준으로 그립니다)
+    if (prevURL) {
+      const img = new Image();
+      img.onload = () => {
+        // CSS px 기준 너비/높이 = 디바이스 픽셀 / ratio
+        ctx.drawImage(img, 0, 0, canvas.width / ratio, canvas.height / ratio);
+      };
+      img.src = prevURL;
+    }
   }
-  resizeCanvas();
-  window.addEventListener('resize', resizeCanvas);
+
+  // 최초 1회
+  resizeCanvas(false);
+
+  // window.resize 대신 래퍼의 실제 크기 변화를 관찰
+  const ro = new ResizeObserver(() => resizeCanvas(true));
+  ro.observe(wrap);
+
+  // 상태 저장
+  signaturePads[name] = { canvas, ctx: canvas.getContext('2d'), drawing:false, dirty:false, ratio: Math.max(window.devicePixelRatio||1,1), ro };
 
   const pad = () => signaturePads[name];
-  function getPos(evt){ const r = canvas.getBoundingClientRect(); const p = evt.touches ? evt.touches[0] : evt; return { x:p.clientX - r.left, y:p.clientY - r.top }; }
-  function start(e){ e.preventDefault(); const p=pad(); p.drawing=true; const {x,y}=getPos(e); p.ctx.beginPath(); p.ctx.moveTo(x,y); }
-  function move(e){ if(!pad().drawing) return; e.preventDefault(); const {x,y}=getPos(e); const p=pad(); p.ctx.lineTo(x,y); p.ctx.stroke(); p.dirty=true; }
-  function end(e){ if(!pad().drawing) return; e.preventDefault(); pad().drawing=false; }
 
+  function getPos(evt) {
+    const r = canvas.getBoundingClientRect();
+    // 포인터 이벤트만 사용 (evt.clientX/Y)
+    return { x: evt.clientX - r.left, y: evt.clientY - r.top };
+    // 터치 이벤트를 함께 쓰지 않습니다.
+  }
+
+  function start(e) {
+    e.preventDefault();
+    const p = pad();
+    p.drawing = true;
+    const {x,y} = getPos(e);
+    p.ctx.beginPath();
+    p.ctx.moveTo(x, y);
+  }
+
+  function move(e) {
+    const p = pad();
+    if (!p.drawing) return;
+    e.preventDefault();
+    const {x,y} = getPos(e);
+    p.ctx.lineTo(x, y);
+    p.ctx.stroke();
+    p.dirty = true;
+  }
+
+  function end(e) {
+    const p = pad();
+    if (!p || !p.drawing) return;
+    e.preventDefault();
+    p.drawing = false;
+  }
+
+  // 포인터 이벤트만 등록
   canvas.addEventListener('pointerdown', start);
   canvas.addEventListener('pointermove', move);
   canvas.addEventListener('pointerup', end);
   canvas.addEventListener('pointerleave', end);
-  canvas.addEventListener('touchstart', start, {passive:false});
-  canvas.addEventListener('touchmove', move, {passive:false});
-  canvas.addEventListener('touchend', end);
+  canvas.addEventListener('pointercancel', end);
 
   const clearBtn = document.getElementById(`sigclear_${name}`);
   if (clearBtn) clearBtn.onclick = () => {
     const p = pad();
-    p.ctx.clearRect(0,0,p.canvas.width,p.canvas.height);
+    p.ctx.clearRect(0, 0, p.canvas.width, p.canvas.height);
     p.dirty = false;
     const hidden = document.getElementById(`f_${name}`);
     if (hidden) hidden.value = '';
   };
 }
+
 function saveSignatureToInput(name) {
   const p = signaturePads[name];
   const hidden = document.getElementById(`f_${name}`);
@@ -379,26 +441,38 @@ function buildConfirmText(payload){
   });
   return (META.confirmText || '🤷‍♂️아래와 같이 제출하시겠습니까?\n\n') + lines.join('\n');
 }
+
 async function submitForm(){
   const submitBtn = document.getElementById('submitBtn');
   const normalLabel = META.submitText || '✔신청(제출)하기';
-  try{
-    if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = '🔄제출(신청)중...잠시만 기다려주세요'; }
-    setStatus('전송 중…');
+  try {
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = '🔄제출(신청)중...잠시만 기다려주세요';
+    }
+    setStatus('🔄전송(제출) 중…');
 
-    // 서명 hidden에 직렬화
+    // 📝 서명 저장
     SCHEMA.filter(f => f.type === 'signature').forEach(f => saveSignatureToInput(f.name));
 
     const payload = collect();
 
-    // 확인
-    const ok = window.confirm(buildConfirmText(payload));
-    if (!ok) { setStatus('⛔제출이 취소되었습니다', 'warning'); return; }
-
-    // 필수 검증
+    // ✅ 먼저 필수 입력값 검증
     const missing = validateRequired(payload);
-    if (missing.length) { setStatus(`⚠️필수 입력 누락: ${missing.join(', ')}`, 'danger'); return; }
+    if (missing.length) {
+  alert('⚠ 다음 누락된 항목을 입력(체크)해 주세요:\n\n - ' + missing.join('\n- '));
+  setStatus(`⚠️필수 입력 누락: ${missing.join(', ')}`, 'danger');
+  return;
+}
 
+    // ✅ 그 다음 사용자 확인
+    const ok = window.confirm(buildConfirmText(payload));
+    if (!ok) {
+      setStatus('⛔제출이 취소되었습니다', 'warning');
+      return;
+    }
+
+    // ✅ 서버 제출
     const idk = (self.crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now());
     const body = { formKey: FORM_KEY, payload, idempotencyKey: idk };
 
@@ -406,12 +480,16 @@ async function submitForm(){
     if (!j.ok) throw new Error(j.error || '저장 실패');
 
     setStatus('✅제출(신청)이 완료되었습니다!', 'success');
-  }catch(err){
+  } catch (err) {
     setStatus(`오류: ${err.message}`, 'danger');
-  }finally{
-    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = normalLabel; }
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = normalLabel;
+    }
   }
 }
+
 
 // ===== 스키마 로드 & 초기화 =====
 async function fetchSchema(){
