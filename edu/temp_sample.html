@@ -36,6 +36,13 @@
     width: 80px;
     height: 80px;
   }
+  .codebox{
+    background:#0f172a; color:#e2e8f0; border-radius:10px; padding:14px 16px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    font-size:.85rem; line-height:1.4; overflow:auto;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.06);
+  }
+  .accordion-button:not(.collapsed){ background:#f8fafc; }
   </style>
 </head>
 <body>
@@ -48,8 +55,13 @@
   <div id="toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
     <div class="toast-body">상태 메시지</div>
   </div>
+ </div>
+  <!-- 어디든 배치 -->
+   <div style="text-align: center;">
+<button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#formHelpModal">
+  🧩 커스터마이징 Form 생성 가이드
+</button>
 </div>
-
 <!-- Footer Section-->
 <footer class="site-footer mt-5">
   <div class="container py-4">
@@ -105,6 +117,102 @@
   </div>
 </footer>
 <!-- Footer Section-->
+
+
+
+<!-- Modal -->
+<div class="modal fade" id="formHelpModal" tabindex="-1" aria-labelledby="formHelpModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header">
+        <h5 class="modal-title" id="formHelpModalLabel">🧩폼 생성 가이드 (4단계)</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button>
+      </div>
+
+      <div class="modal-body">
+        <div class="alert alert-info small mb-3">
+          아래 순서대로 진행하세요. 예시 코드는 그대로 복사해 넣고, <b>굵게 표시된 값</b>만 실제 값으로 교체하면 됩니다.
+        </div>
+
+        <!-- STEP 1 -->
+        <h6 class="mt-2">① 구글 시트 생성</h6>
+        <ol class="small">
+          <li>새 스프레드시트를 생성합니다.</li>
+          <li>시트 이름 <code>schema</code>, <code>join</code> 2개를 만듭니다.</li>
+        <hr>
+
+        <!-- STEP 2 -->
+        <h6>② Code.gs에서 스프레드시트/시트 설정</h6>
+        <p class="small mb-1">아래를 <b>Code.gs</b> 최상단이나 설정 블록에 추가/수정하세요.</p>
+        <pre class="codebox" id="code_gs_config">const CONFIG = {
+  SHEET_ID: '🔁스프레드시트ID로_교체',   // 예: 1AbC...xyz
+  SCHEMA_SHEET: 'schema',
+  DATA_SHEET: 'join',
+  SIGNATURE: { saveToDrive: true, store: 'url' }, // 선택
+  FILE: { store: 'url' }                          // 선택: 'url'|'id'|'json'
+};
+</pre>
+
+        <div class="text-muted small mb-3">
+          * 스프레드시트 ID는 주소의 <code>/d/…/edit</code> 사이 문자열입니다.<br>
+          * <code>schema</code>는 스키마 정의용, <code>join</code>은 접수 데이터 저장용입니다.
+        </div>
+
+        <hr>
+
+        <!-- STEP 3 -->
+        <h6>③ HTML(외부)에서 GAS Web App URL & FORM_KEY 설정</h6>
+        <p class="small">프런트의 HTML 파일(외부 페이지)에 다음 상수를 추가/수정하세요.</p>
+        <pre class="codebox" id="code_front_constants">&lt;script&gt;
+  const GAS_ENDPOINT = 'https://script.google.com/macros/s/🔁배포URL_ID/exec'; // 🔁 Web App 배포URL
+  const FORM_KEY = 'join2025'; // 🔁 스키마의 formKey와 동일
+&lt;/script&gt;
+</pre>
+        <div class="text-muted small mb-2">
+          * GAS에서 <b>배포 &gt; 새 배포 &gt; 유형: 웹 앱</b>으로 배포 후 나온 URL을 넣으세요.<br>
+          * 프런트에서 이 값을 사용해 <code>fetch</code>로 스키마/제출을 호출합니다.
+        </div>
+
+        <hr>
+
+        <!-- STEP 4 -->
+        <h6>④ 3개의 코드 복사 + 붙여넣기</h6>
+        <div class="accordion" id="accCopy">
+         <div class="list-group list-group-flush">
+    <!-- (선택) 전체 모음 -->
+    <a href="https://seolpro.github.io/home/edu/create_form_code.html"
+       target="_blank" rel="noopener"
+       class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+      <div>
+        <div class="fw-semibold">📦 전체 코드 모음</div>
+        <div class="text-muted small">한 페이지에서 전부 복사/붙여넣기</div>
+      </div>
+      <span class="btn btn-sm btn-outline-primary rounded-pill">🔗열기</span>
+    </a>
+
+  </div> 
+       </div>
+</div>
+
+<script>
+  document.addEventListener('click', async (e)=>{
+    const btn = e.target.closest('.copy-btn');
+    if(!btn) return;
+    const sel = btn.getAttribute('data-copy');
+    const el = document.querySelector(sel);
+    if(!el) return alert('대상 코드를 찾지 못했습니다.');
+    const text = el.textContent || el.innerText || '';
+    try{
+      await navigator.clipboard.writeText(text);
+      const old = btn.textContent;
+      btn.textContent = '복사됨!';
+      setTimeout(()=>btn.textContent = old, 900);
+    }catch(err){
+      alert('복사 실패: '+err.message);
+    }
+  });
+</script>
+
 <script>
   // 현재 연도 자동
   (function(){ const y=document.getElementById('copyYear'); if(y) y.textContent=new Date().getFullYear(); })();
