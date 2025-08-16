@@ -351,6 +351,16 @@ function renderForm(schema, status='ok') {
         </div>`;
     }
 
+    // 10) 파일 업로드 (이미지 등)
+if (f.type === 'file') {
+  const accept = (f.options || '').includes('images') ? 'accept="image/*"' : '';
+  return `
+    <div class="mb-3">
+      <label class="form-label">${f.label}${requiredAsterisk}</label>
+      <input id="${id}" type="file" class="form-control" ${accept} ${req}>
+    </div>`;
+}
+
     // 9) 일반 인풋 (fallback)
     const t = ['text','tel','email','number','url','password'].includes(f.type) ? f.type : 'text';
     return `
@@ -394,6 +404,23 @@ function collect(){
       if (hidden) hidden.value = data[f.name];
       return;
     }
+//file 입력시
+    if (f.type === 'file') {
+  const el = document.getElementById(baseId);
+  if (el && el.files && el.files[0]) {
+    const file = el.files[0];
+    data[f.name] = {
+      name: file.name,
+      type: file.type,
+      size: file.size
+      // 실제 전송은 submitForm에서 FileReader로 Base64 인코딩
+    };
+  } else {
+    data[f.name] = '';
+  }
+  return;
+}
+
     const el = document.getElementById(baseId);
     data[f.name] = el ? String(el.value || '').trim() : '';
   });
@@ -433,13 +460,48 @@ async function postWithFallback(body){
     return await parseJsonSafe(res2);
   }
 }
+
+function formatBytes(n){
+  if (!n && n !== 0) return '';
+  const u = ['B','KB','MB','GB','TB'];
+  let i = 0, v = Number(n);
+  while (v >= 1024 && i < u.length-1) { v /= 1024; i++; }
+  return `${v.toFixed(v >= 100 ? 0 : v >= 10 ? 1 : 2)} ${u[i]}`;
+}
+
+function fmtValueForDisplay(f, v){
+  // 서명은 기존처럼
+  if (f.type === 'signature') return v ? '(📝서명 이미지 있음)' : '(⛔미서명)';
+
+  // 파일인 경우
+  if (f.type === 'file') {
+    if (!v) return '(파일 없음)';
+    if (typeof v === 'string') return v; // URL이나 파일명 문자열일 수도 있음
+    const name = v.name || '(이름 없음)';
+    const size = v.size ? ` • ${formatBytes(v.size)}` : '';
+    return name + size;
+  }
+
+  // 그 외
+  return String(v ?? '');
+}
+
 function buildConfirmText(payload){
   const lines = SCHEMA.map(f => {
-    let val = payload[f.name] || '';
-    if (f.type === 'signature') val = val ? '(📝서명 이미지 있음)' : '(⛔미서명)';
+    const raw = payload[f.name];
+    const val = fmtValueForDisplay(f, raw);
     return `${f.label}: ${val}`;
   });
   return (META.confirmText || '🤷‍♂️아래와 같이 제출하시겠습니까?\n\n') + lines.join('\n');
+}
+
+async function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result.split(',')[1]); // "data:...;base64," 잘라냄
+    reader.onerror = err => reject(err);
+    reader.readAsDataURL(file);
+  });
 }
 
 async function submitForm(){
@@ -457,22 +519,31 @@ async function submitForm(){
 
     const payload = collect();
 
-    // ✅ 먼저 필수 입력값 검증
+    // ✅ 파일(Base64) 변환
+    for (const f of SCHEMA) {
+      if (f.type === 'file') {
+        const el = document.getElementById(`f_${f.name}`);
+        if (el && el.files && el.files[0]) {
+          payload[f.name].base64 = await fileToBase64(el.files[0]);
+        }
+      }
+    }
+
+    // ✅ 필수값 검증
     const missing = validateRequired(payload);
     if (missing.length) {
-  alert('⚠ 다음 누락된 항목을 입력(체크)해 주세요:\n\n - ' + missing.join('\n- '));
-  setStatus(`⚠️필수 입력 누락: ${missing.join(', ')}`, 'danger');
-  return;
-}
+      alert('⚠ 다음 누락된 항목을 입력(체크)해 주세요:\n\n - ' + missing.join('\n- '));
+      setStatus(`⚠️필수 입력 누락: ${missing.join(', ')}`, 'danger');
+      return;
+    }
 
-    // ✅ 그 다음 사용자 확인
+    // ✅ 사용자 확인
     const ok = window.confirm(buildConfirmText(payload));
     if (!ok) {
       setStatus('⛔제출이 취소되었습니다', 'warning');
       return;
     }
 
-    // ✅ 서버 제출
     const idk = (self.crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now());
     const body = { formKey: FORM_KEY, payload, idempotencyKey: idk };
 
@@ -489,7 +560,6 @@ async function submitForm(){
     }
   }
 }
-
 
 // ===== 스키마 로드 & 초기화 =====
 async function fetchSchema(){
