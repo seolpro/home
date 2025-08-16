@@ -1,0 +1,15 @@
+# ---- .html 확장자 생략 접속 설정 ----
+# Rewrite 기능 활성화
+Options +FollowSymLinks
+RewriteEngine On
+
+# 요청이 실제 파일/폴더가 아닐 때만 처리
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-f
+
+# 같은 이름의 .html 파일이 있으면 매핑
+RewriteCond %{REQUEST_FILENAME}.html -f
+RewriteRule ^(.+)$ $1.html [L]
+
+# 기본 인덱스 페이지 설정
+DirectoryIndex index.html index.php
