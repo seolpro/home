@@ -3,14 +3,15 @@
  * - 서명 저장 옵션(드라이브)
  */
 const CONFIG = {
-  SHEET_ID: '여기에 구글스프레드시트의 ID입력 ', // ← 스프레드시트 ID
-  SCHEMA_SHEET: 'schema',  // 이것은 그대로 사용 시트생성
-  DATA_SHEET: 'join',  // 이것은 그대로 시트생성
+  SHEET_ID: '여기에 당신의 구글스프레드시트 ID입력', // ← 스프레드시트 ID
+  SCHEMA_SHEET: 'schema'   // 구글스프레드 시트 이름 설정
+  DATA_SHEET: 'join',  // 구글스프레드 시트 이름 설정
   SIGNATURE: {
     saveToDrive: true,
     folderId: '12THGJyuF6paq79VFtHrPVnDXD-9hntcT',      // 드라이브 폴더 ID(없으면 My Drive)
     store: 'url'                                       // 'url' | 'id' | 'base64'
-  }
+  },
+  FILE: { store: 'url' } // 'url' | 'id' | 'json'
 };
 
 /** ========= COMMON UTIL ========= */
@@ -159,16 +160,31 @@ function saveData_(formKey, payload, idempotencyKey) {
   const dataSh = getSheet_(CONFIG.DATA_SHEET);
   const { fields: schema } = loadSchema_(formKey);
 
-  // 필수 검증
-  schema.filter(f=>f.required).forEach(f=>{
+  // === 타입 Map ===
+  const typeMap = {};
+  schema.forEach(f => typeMap[f.name] = (f.type || '').toLowerCase());
+
+  // === 필수 검증 (file은 id/url/base64 중 1개 이상 필수) ===
+  schema.filter(f => f.required).forEach(f => {
     const key = f.name || f.label;
-    if (!v_(payload[key])) throw new Error(`필수 입력 누락: ${f.label}`);
+    const t = (f.type || '').toLowerCase();
+    const val = payload[key];
+
+    if (t === 'file') {
+      const ok = val && typeof val === 'object' && (val.id || val.url || val.base64);
+      if (!ok) throw new Error(`필수 입력 누락(파일): ${f.label}`);
+    } else if (t === 'checkbox') {
+      if (String(val || '') !== 'Y') throw new Error(`필수 입력 누락: ${f.label}`);
+    } else if (t === 'checkboxes') {
+      if (!String(val || '').trim()) throw new Error(`필수 입력 누락: ${f.label}`);
+    } else {
+      if (!v_(val)) throw new Error(`필수 입력 누락: ${f.label}`);
+    }
   });
 
-  // type 맵 + 서명 처리
-  const typeMap = {}; schema.forEach(f => typeMap[f.name] = (f.type||'').toLowerCase());
+  // === 서명 처리 (기존 그대로) ===
   Object.keys(payload).forEach(k => {
-    if (typeMap[k] === 'signature' && /^data:image\/(png|jpeg);base64,/.test(String(payload[k]||''))) {
+    if (typeMap[k] === 'signature' && /^data:image\/(png|jpeg);base64,/.test(String(payload[k] || ''))) {
       if (CONFIG.SIGNATURE.saveToDrive) {
         const saved = saveSignatureToDrive_(payload[k], 'sig_' + k + '.png');
         payload[k] = (CONFIG.SIGNATURE.store === 'id')  ? saved.id
@@ -180,18 +196,111 @@ function saveData_(formKey, payload, idempotencyKey) {
     }
   });
 
-  // 헤더 보장 후 append
+  // === 파일 처리: base64가 남아있다면 드라이브에 저장하고, 저장형식(url/id/json)에 맞게 치환 ===
+  Object.keys(payload).forEach(k => {
+    if (typeMap[k] !== 'file') return;
+    payload[k] = normalizeFileField_(formKey, k, payload[k]); // 문자열 or JSON으로 치환
+  });
+
+  // === 헤더 보장 후 append ===
   const header = ensureHeader_(dataSh, schema, payload);
   const now = new Date();
   const rowValues = header.map((h, i) => {
     const key = String(h || '').trim();
     if (!key) return '';
     if (i === 0 && key.toLowerCase() === 'timestamp') return now;
-    return v_(payload[key]);
+
+    const t = typeMap[key];
+    const val = payload[key];
+
+    if (t === 'file') {
+      // 이미 normalizeFileField_에서 문자열/JSON으로 변환됨
+      return val || '';
+    }
+    return v_(val);
   });
+
   dataSh.appendRow(rowValues);
   return { rowNumber: dataSh.getLastRow() };
 }
+
+/* ===================== 헬퍼 ===================== */
+
+/** 파일 셀값을 설정값에 맞게 문자열/JSON으로 정규화
+ *  - {base64,name,type,size}만 온 경우: Drive 저장 후 {id,url,...} 확보
+ *  - CONFIG.FILE.store: 'url' | 'id' | 'json' (기본 'url')
+ */
+function normalizeFileField_(formKey, fieldName, fileVal) {
+  if (!fileVal) return '';
+
+  // 이미 문자열인 경우(하위 호환)
+  if (typeof fileVal === 'string') return fileVal;
+
+  // 객체가 아니면 문자열화
+  if (typeof fileVal !== 'object') return String(fileVal);
+
+  // base64가 있으면 지금 저장
+  if (fileVal.base64) {
+    try {
+      const saved = saveBase64FileToDrive_(formKey, fileVal, fieldName);
+      fileVal = Object.assign({}, fileVal, saved); // {id,url,name,type,size} 병합
+      // base64는 무거우므로 제거
+      delete fileVal.base64;
+    } catch (e) {
+      return JSON.stringify({ error: 'file_save_failed', message: String(e) });
+    }
+  }
+
+  // 저장 형태 선택
+  const mode = (CONFIG.FILE && CONFIG.FILE.store) || 'url';
+  if (mode === 'id')   return fileVal.id || '';
+  if (mode === 'json') return JSON.stringify(fileVal);
+  // 기본: url
+  return fileVal.url || fileVal.id || fileVal.name || '';
+}
+
+/** Base64 파일을 Drive에 저장하고 {id,url,name,type,size} 반환 */
+function saveBase64FileToDrive_(formKey, fileObj, fieldName) {
+  const name = sanitizeFilename_(
+    fileObj.name ||
+    (fieldName + '_' + Utilities.formatDate(new Date(), Session.getScriptTimeZone() || 'Asia/Seoul', 'yyyyMMdd_HHmmss') + '.bin')
+  );
+  const mime = fileObj.type || MimeType.BINARY;
+  const bytes = Utilities.base64Decode(String(fileObj.base64));
+  const blob = Utilities.newBlob(bytes, mime, name);
+
+  const folder = getOrCreateUploadFolder_(formKey);
+  const file = folder.createFile(blob);
+
+  // 필요 시 공개 설정
+  // file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+
+  return {
+    id: file.getId(),
+    url: 'https://drive.google.com/file/d/' + file.getId() + '/view',
+    name: file.getName(),
+    type: mime,
+    size: fileObj.size || file.getSize()
+  };
+}
+
+/** 업로드 폴더 획득/생성: 루트/FormsUpload/<formKey> */
+function getOrCreateUploadFolder_(formKey) {
+  const rootName = 'FormsUpload';
+  const parents = DriveApp.getFoldersByName(rootName);
+  const root = parents.hasNext() ? parents.next() : DriveApp.createFolder(rootName);
+
+  const kids = root.getFoldersByName(formKey);
+  const folder = kids.hasNext() ? kids.next() : root.createFolder(formKey);
+  return folder;
+}
+
+/** 파일명 안전화 */
+function sanitizeFilename_(name) {
+  name = String(name || 'upload.bin');
+  return name.replace(/[\\\/:*?"<>|#\r\n\t]/g, '_').slice(0, 120);
+}
+
 
 /** ========= RESPOND HELPERS ========= */
 function respondJson_(obj) {
@@ -505,7 +614,7 @@ const ALLOWED_TYPES = [
   'text','tel','email','number','textarea','select','address','signature',
   'date','time','datetime','month',
   'radio','checkbox','checkboxes',
-  'url','password','meta'
+  'url','password','file','meta'
 ];
 
 function onOpen() {

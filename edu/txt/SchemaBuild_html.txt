@@ -40,6 +40,8 @@
             <option>date</option><option>time</option><option>datetime</option><option>month</option>
             <option>radio</option><option>checkboxes</option><option>checkbox</option>
             <option>url</option><option>password</option>
+            <!-- ✅ 추가 -->
+            <option>file</option>
             <option>meta</option>
           </select>
         </div>
@@ -57,9 +59,12 @@
         </div>
       </div>
       <div class="small-muted mt-2">
-        * name은 영문/숫자/밑줄 권장. <b>select/radio/checkboxes</b> 에서만 options 사용(예: <code>예금,적금,대출</code>).<br>
-        * <b>checkbox</b>는 단일 체크(동의 등), <b>checkboxes</b>는 다중 선택.
-      </div>
+  * name은 영문/숫자/밑줄 권장. <b>select/radio/checkboxes</b> 에서만 options 사용(예: <code>예금,적금,대출</code>).<br>
+  * <b>checkbox</b>는 단일 체크(동의 등), <b>checkboxes</b>는 다중 선택.<br>
+  <!-- ✅ 추가 -->
+  * <b>file</b>은 옵션이 선택 사항이며, <code>images</code>를 넣으면 이미지 전용(accept="image/*")으로 제한됩니다.
+</div>
+
     </div>
   </div>
 
@@ -95,6 +100,8 @@
     <span class="chip">date</span> <span class="chip">time</span> <span class="chip">datetime</span> <span class="chip">month</span>
     <span class="chip">radio</span> <span class="chip">checkboxes</span> <span class="chip">checkbox</span>
     <span class="chip">url</span> <span class="chip">password</span>
+     <!-- ✅ 추가 -->
+    <span class="chip">file</span>
     <span class="chip">meta</span>
   </div>
 
@@ -174,7 +181,7 @@
       'text','tel','email','number','textarea','select','address','signature',
       'date','time','datetime','month',
       'radio','checkboxes','checkbox',
-      'url','password',
+      'url','password','file',
       'meta'
     ];
     let HEADER_FROM_ROW = 5;
@@ -205,16 +212,25 @@
           </td>
         `;
         tr.querySelectorAll('input,select').forEach(el=>{
-          el.onchange = ()=>{
-            const k = el.dataset.k;
-            let v = (k==='required') ? el.checked : el.value;
-            if (k==='type') {
-              const optInput = tr.querySelector('[data-k="options"]');
-              optInput.disabled = !(['select','radio','checkboxes'].includes(v));
-            }
-            r[k] = (k==='order') ? Number(v) : v;
-          };
-        });
+  el.onchange = ()=>{
+    const k = el.dataset.k;
+    let v = (k==='required') ? el.checked : el.value;
+    if (k==='type') {
+      const optInput = tr.querySelector('[data-k="options"]');
+      const enableFor = ['select','radio','checkboxes','file']; // ✅ file 포함
+      optInput.disabled = !enableFor.includes(v);
+      // ✅ 타입별 placeholder 안내
+      if (v === 'file') {
+        optInput.placeholder = 'options (예: images) — images를 입력하면 이미지 전용';
+      } else if (v === 'select' || v === 'radio' || v === 'checkboxes') {
+        optInput.placeholder = 'options (쉼표 구분, 예: 예금,적금,대출)';
+      } else {
+        optInput.placeholder = 'options (select/radio/checkboxes/file에서만 사용)';
+      }
+    }
+    r[k] = (k==='order') ? Number(v) : v;
+  };
+});
         tr.querySelectorAll('button[data-act]').forEach(btn=>{
           btn.onclick = ()=>{
             const act = btn.dataset.act;
@@ -253,7 +269,9 @@
       labelEl.value = ''; nameEl.value = ''; optionsEl.value = '';
       reqEl.checked = false;
       orderEl.value = String(Number(r.order)+1);
-      typeEl.value = 'text'; optionsEl.disabled = true;
+      typeEl.value = 'text';
+      optionsEl.disabled = true; // file/선택형 아닐 때는 비활성
+      optionsEl.placeholder = 'options (select/radio/checkboxes/file에서만 사용)';
       redraw();
     }
 
@@ -324,9 +342,26 @@
       req('f_label').addEventListener('blur', ()=>{
         if (!req('f_name').value.trim()) req('f_name').value = slugify(req('f_label').value);
       });
-      req('f_type').addEventListener('change', ()=>{
+   /*    req('f_type').addEventListener('change', ()=>{
         req('f_options').disabled = !(['select','radio','checkboxes'].includes(req('f_type').value));
-      });
+      }); */
+      
+      req('f_type').addEventListener('change', ()=>{
+  const t = req('f_type').value;
+  const enableFor = ['select','radio','checkboxes','file']; // ✅ file 포함
+  const optEl = req('f_options');
+  optEl.disabled = !enableFor.includes(t);
+
+  // ✅ placeholder 안내
+  if (t === 'file') {
+    optEl.placeholder = 'options (예: images) — images를 입력하면 이미지 전용';
+  } else if (t === 'select' || t === 'radio' || t === 'checkboxes') {
+    optEl.placeholder = 'options (쉼표 구분, 예: 예금,적금,대출)';
+  } else {
+    optEl.placeholder = 'options (select/radio/checkboxes/file에서만 사용)';
+  }
+});
+
 
       // 초기 로드
       if (window.google && google.script && google.script.run) {
