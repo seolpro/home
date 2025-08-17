@@ -135,14 +135,32 @@
         </div>
 
         <!-- STEP 1 -->
-        <h6 class="mt-2">① 구글 시트 생성</h6>
+        <h6>① html 및 구글스프레드 sheet 생성(App script 시작) => 3개의 코드 복사 + 붙여넣기</h6>
+        <div class="accordion" id="accCopy">
+         <div class="list-group list-group-flush">
+    <!-- (선택) 전체 모음 -->
+    <a href="https://seolpro.github.io/home/edu/create_form_code.html"
+       target="_blank" rel="noopener"
+       class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+      <div>
+        <div class="fw-semibold">📦 전체 코드 모음</div>
+        <div class="text-muted small">한 페이지에서 전부 복사/붙여넣기</div>
+      </div>
+      <span class="btn btn-sm btn-outline-primary rounded-pill">🔗열기</span>
+    </a>
+
+  </div> 
+       </div>
+
+        <!-- STEP 2 -->
+        <h6 class="mt-2">② 구글 시트 생성</h6>
         <ol class="small">
           <li>새 스프레드시트를 생성합니다.</li>
           <li>시트 이름 <code>schema</code>, <code>join</code> 2개를 만듭니다.</li>
         <hr>
 
-        <!-- STEP 2 -->
-        <h6>② Code.gs에서 스프레드시트/시트 설정</h6>
+        <!-- STEP 3 -->
+        <h6>③ Code.gs에서 스프레드시트/시트 설정</h6>
         <p class="small mb-1">아래를 <b>Code.gs</b> 최상단이나 설정 블록에 추가/수정하세요.</p>
         <pre class="codebox" id="code_gs_config">const CONFIG = {
   SHEET_ID: '🔁스프레드시트ID로_교체',   // 예: 1AbC...xyz
@@ -160,8 +178,8 @@
 
         <hr>
 
-        <!-- STEP 3 -->
-        <h6>③ HTML(외부)에서 GAS Web App URL & FORM_KEY 설정</h6>
+        <!-- STEP 4 -->
+        <h6>④ HTML(외부)에서 GAS Web App URL & FORM_KEY 설정</h6>
         <p class="small">프런트의 HTML 파일(외부 페이지)에 다음 상수를 추가/수정하세요.</p>
         <pre class="codebox" id="code_front_constants">&lt;script&gt;
   const GAS_ENDPOINT = 'https://script.google.com/macros/s/🔁배포URL_ID/exec'; // 🔁 Web App 배포URL
@@ -175,23 +193,7 @@
 
         <hr>
 
-        <!-- STEP 4 -->
-        <h6>④ 3개의 코드 복사 + 붙여넣기</h6>
-        <div class="accordion" id="accCopy">
-         <div class="list-group list-group-flush">
-    <!-- (선택) 전체 모음 -->
-    <a href="https://seolpro.github.io/home/edu/create_form_code.html"
-       target="_blank" rel="noopener"
-       class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-      <div>
-        <div class="fw-semibold">📦 전체 코드 모음</div>
-        <div class="text-muted small">한 페이지에서 전부 복사/붙여넣기</div>
-      </div>
-      <span class="btn btn-sm btn-outline-primary rounded-pill">🔗열기</span>
-    </a>
-
-  </div> 
-       </div>
+        
 </div>
 
 <script>
