@@ -3,9 +3,9 @@
  * - 서명 저장 옵션(드라이브)
  */
 const CONFIG = {
-  SHEET_ID: '여기에 당신의 구글스프레드시트 ID입력', // ← 스프레드시트 ID
-  SCHEMA_SHEET: 'schema'   // 구글스프레드 시트 이름 설정
-  DATA_SHEET: 'join',  // 구글스프레드 시트 이름 설정
+  SHEET_ID: 'schema & join 구글 스프레드 아이디를 여기에 붙여넣어세요', // ← 스프레드시트 ID
+  SCHEMA_SHEET: 'schema',
+  DATA_SHEET: 'join',
   SIGNATURE: {
     saveToDrive: true,
     folderId: '12THGJyuF6paq79VFtHrPVnDXD-9hntcT',      // 드라이브 폴더 ID(없으면 My Drive)
@@ -139,7 +139,7 @@ function dedupe(arr) {
 }
 
 /** ========= SIGNATURE HELPERS ========= */
-function dataUrlToBlob_(dataUrl) {
+/* function dataUrlToBlob_(dataUrl) {
   const m = String(dataUrl||'').match(/^data:(.+);base64,(.+)$/);
   if (!m) throw new Error('서명 데이터 형식 오류');
   const contentType = m[1], base64 = m[2];
@@ -153,6 +153,79 @@ function saveSignatureToDrive_(dataUrl, filename) {
     ? DriveApp.getFolderById(CONFIG.SIGNATURE.folderId).createFile(blob)
     : DriveApp.createFile(blob);
   return { id: file.getId(), url: 'https://drive.google.com/uc?id=' + file.getId() };
+} */
+
+/**
+ * data:image/*;base64,.... 형태의 dataURL -> Blob 변환
+ */
+function dataUrlToBlob_(dataUrl, fallbackMime) {
+  if (typeof dataUrl !== 'string') throw new Error('dataUrl must be a string');
+  const m = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
+  if (!m) throw new Error('Invalid data URL. Expect "data:<mime>;base64,<data>"');
+  const mime = m[1] || fallbackMime || 'image/png';
+  const bytes = Utilities.base64Decode(m[2]);
+  return Utilities.newBlob(bytes, mime);
+}
+
+/**
+ * 파일명에서 드라이브 금지/문제 문자 제거
+ */
+function sanitizeFileName_(name) {
+  const safe = String(name || '')
+    .replace(/[\x00-\x1f"*/:<>?\\|]+/g, '-') // 금지문자
+    .replace(/\s+/g, ' ')
+    .trim();
+  return safe || 'signature';
+}
+
+/**
+ * 서명 이미지를 드라이브에 저장하고 미리보기 가능한 URL 반환
+ * @param {string} dataUrl - data:image/png;base64,... 형식
+ * @param {string=} filename - 확장자 없이 넣어도 자동으로 .png 부여
+ * @param {Object=} opts
+ * @param {string=} opts.folderId - 저장 폴더
+ * @param {boolean=} opts.makePublic - true면 링크공개(Anyone with link)
+ * @param {string=} opts.timezone - 기본: Script TZ
+ */
+function saveSignatureToDrive_(dataUrl, filename, opts) {
+  opts = opts || {};
+  const tz = opts.timezone || Session.getScriptTimeZone() || 'Asia/Seoul';
+
+  // 1) Blob 생성 (mime 지정)
+  const blob = dataUrlToBlob_(dataUrl, 'image/png');
+
+  // 2) 파일명 구성(+ 확장자)
+  const ts = Utilities.formatDate(new Date(), tz, 'yyyyMMdd_HHmmss');
+  const base = sanitizeFileName_(filename) || ('signature_' + ts);
+  const ext = blob.getContentType() && blob.getContentType().indexOf('png') >= 0 ? '.png' : '';
+  blob.setName(base + ext);
+
+  // 3) 파일 생성
+  const file = opts.folderId
+    ? DriveApp.getFolderById(opts.folderId).createFile(blob)
+    : DriveApp.createFile(blob);
+
+  // 4) (선택) 링크공개 -> <img src="..."> 바로 사용 가능
+  if (opts.makePublic) {
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  }
+
+  // 5) 리턴 값 구성
+  const id = file.getId();
+  // 미리보기/임베드 용도(권한 필요 시 표시 안 됨)
+  const viewUrl = 'https://drive.google.com/uc?export=view&id=' + id;
+  // UI(드라이브 웹) 링크
+  const uiUrl = file.getUrl();
+
+  return {
+    id,
+    name: file.getName(),
+    mimeType: file.getMimeType(),
+    createdTime: Utilities.formatDate(new Date(file.getDateCreated()), tz, 'yyyy-MM-dd HH:mm:ss'),
+    // <img src="...">에 바로 쓰려면 makePublic=true 이어야 합니다.
+    url: viewUrl,          // 임베드/미리보기 권장 URL
+    uiUrl: uiUrl           // 드라이브 UI 페이지
+  };
 }
 
 /** ========= SAVE ========= */
