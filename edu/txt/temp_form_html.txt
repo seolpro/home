@@ -239,7 +239,7 @@ html.noscroll {
 
 <script>
 // ===== 설정 GAS서버 Url 및 formkey =====
-const GAS_ENDPOINT = 'https://script.google.com/macros/s/AKfycby8ByYThpa6geTY0FoiXMDuCKuLAC6EE-RgNsU60TzBE6azi3DBhlB_RiSFHGEDx82izw/exec';
+const GAS_ENDPOINT = 'https://script.google.com/macros/s/YOUR_GAS_고유URL코드/exec'; // 여기에 붙여 넣으세요
 const FORM_KEY = 'join2025';
 
 let SCHEMA = [];
