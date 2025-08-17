@@ -44,6 +44,19 @@
     box-shadow: inset 0 0 0 1px rgba(255,255,255,.06);
   }
   .accordion-button:not(.collapsed){ background:#f8fafc; }
+  /* 서명 영역/래퍼에서 제스처 차단 */
+.signature-pad { touch-action: none; }
+.sig-wrap      { touch-action: none; }
+
+/* 드로잉 중 전역 스크롤 잠금용 */
+body.noscroll {
+  overflow: hidden;
+  position: fixed;   /* iOS에서 더 확실하게 잠금 */
+  width: 100%;
+}
+html.noscroll {
+  overscroll-behavior: none;  /* 풀투리프레시/바운스 방지 */
+}
   </style>
 </head>
 <body>
@@ -317,7 +330,7 @@ function setupSignature(name) {
     const ctx = canvas.getContext('2d');
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.scale(ratio, ratio); // 이후 좌표는 CSS px 기준
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 3;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     ctx.strokeStyle = '#000';
@@ -355,6 +368,55 @@ function setupSignature(name) {
     return { x: evt.clientX - r.left, y: evt.clientY - r.top };
   }
 
+   // 🔒 스크롤 잠금/해제 유틸
+  const lockScroll = () => {
+    document.body.classList.add('noscroll');
+    document.documentElement.classList.add('noscroll');
+    // iOS Safari에서 캔버스 밖 드래그 시도 대비
+    window.addEventListener('touchmove', preventTouchScroll, { passive: false });
+  };
+  const unlockScroll = () => {
+    document.body.classList.remove('noscroll');
+    document.documentElement.classList.remove('noscroll');
+    window.removeEventListener('touchmove', preventTouchScroll, { passive: false });
+  };
+  const preventTouchScroll = (e) => {
+    // 드로잉 중에는 전역 스크롤 차단
+    if (signaturePads[name]?.drawing) e.preventDefault();
+  };
+
+  // ... getPos, 등 등 기존 함수들 그대로 ...
+
+  function start(e) {
+    e.preventDefault();
+    const p = pad();
+    p.drawing = true;
+
+    // ✅ 드로잉 시작 시 스크롤 잠금
+    lockScroll();
+
+    if (e.pointerId != null && canvas.setPointerCapture) {
+      try { canvas.setPointerCapture(e.pointerId); } catch (_) {}
+    }
+    const { x, y } = getPos(e);
+    p.ctx.beginPath();
+    p.ctx.moveTo(x, y);
+  }
+
+  function end(e) {
+    const p = pad();
+    if (!p || !p.drawing) return;
+    e.preventDefault();
+    p.drawing = false;
+
+    // ✅ 드로잉 종료 시 스크롤 해제
+    unlockScroll();
+
+    if (e.pointerId != null && canvas.releasePointerCapture) {
+      try { canvas.releasePointerCapture(e.pointerId); } catch (_) {}
+    }
+  }
+ 
   // 이벤트 핸들러
   function start(e) {
     e.preventDefault();
