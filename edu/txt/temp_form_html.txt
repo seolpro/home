@@ -35,7 +35,15 @@
   .logoimg {
     width: 80px;
     height: 80px;
+    border-radius: 0.85;
   }
+  .codebox{
+    background:#0f172a; color:#e2e8f0; border-radius:10px; padding:14px 16px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    font-size:.85rem; line-height:1.4; overflow:auto;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.06);
+  }
+  .accordion-button:not(.collapsed){ background:#f8fafc; }
   </style>
 </head>
 <body>
@@ -48,60 +56,168 @@
   <div id="toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
     <div class="toast-body">상태 메시지</div>
   </div>
+ </div>
+  <!-- 어디든 배치 -->
+   <div style="text-align: center;">
+<button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#formHelpModal">
+  🧩 커스터마이징 Form 생성 Guide
+</button>
 </div>
-<footer class="site-footer mt-5">
+<!-- Footer Section-->
+<footer class="site-footer mt-5 border-top">
   <div class="container py-4">
-    <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3">
-      <!-- 브랜드/저작권 -->
-      <div class="d-flex align-items-center gap-3">
-        <div class="rounded-3 bg-white/50 border p-2 shadow-sm">
-          <!-- 로고 자리 (원하면 img로 교체) -->
-          <img src="img/logo_shinhyup.jpg" class="logoimg">
-         <!--  <span class="fw-bold">LOGO</span> -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-4">
+
+      <!-- 좌측: 로고 + 정보 -->
+      <div class="d-flex align-items-start gap-3">
+        <div class="rounded-3 bg-white/50 border p-0 shadow-sm"
+         style="cursor:pointer" 
+         onclick="window.open('https://ajou9770.github.io/usertip','_blank')" 
+         title="🖱클릭시 홈페이지 이동">
+          <!-- 로고 -->
+          <img src="img/logo_shinhyup.jpg" alt="조합 로고" class="logoimg">
         </div>
         <div>
-          <div class="fw-semibold">아주대학교의료원신용협동조합</div>
-          <div class="text-secondary small mb-1">
-            © <span id="copyYear"></span>이 Form(Page)은 Seolpro 님의 저작물입니다. 무단 복제·배포는 삼가 부탁드립니다.”
+          <div class="fw-semibold" 
+           style="cursor:pointer"
+           onclick="window.open('https://ajou9770.github.io/usertip','_blank')" title="🖱클릭시 홈페이지 이동">아주대학교의료원신용협동조합
+           </div>
+          <div class="text-secondary small">
+            © <span id="copyYear"></span> 이 Form(Page)은 Seolpro 님의 저작물입니다.<br>
+            무단 복제·배포는 삼가 부탁드립니다.
           </div>
           <div class="text-muted small">
-            주소: 수원시 영통구 월드컵로164(아주대병원)
+            🚩 주소: 수원시 영통구 월드컵로 164 (아주대학교 병원內)
           </div>
         </div>
       </div>
 
-      <!-- 퀵 링크 -->
-      <!-- <nav class="footer-nav d-flex flex-wrap gap-3">
-        <a href="#" class="footer-link">이용약관</a>
-        <a href="#" class="footer-link">개인정보처리방침</a>
-        <a href="#" class="footer-link">고객센터</a>
-        <a href="#" class="footer-link">오시는길</a>
-      </nav> -->
-
-      <!-- 소셜/채널 -->
-
+      <!-- 우측: 소셜/채널 -->
       <div class="d-flex flex-wrap gap-2">
-  <!-- 전화 -->
-  <a class="btn btn-sm btn-outline-secondary rounded-pill"
-     href="tel:031-219-6438"
-     aria-label="전화 걸기 031-219-6438">
-    📞 유선상담
-  </a>
-
-  <!-- 이메일 -->
-  <a class="btn btn-sm btn-outline-secondary rounded-pill"
-     href="mailto:sktseolho@gmail.com"
-     aria-label="이메일 보내기 sktseolho@gmail.com">
-    ✉️ Email
-  </a>
-
-   <a class="btn btn-sm btn-outline-secondary rounded-pill" href="https://seolpro.github.io/home" target="_blank" aria-label="home">Home</a>
-        <a class="btn btn-sm btn-outline-secondary rounded-pill" href="http://pf.kakao.com/_dfhkK" target="_blank" aria-label="Kakao Channel">Kakao</a>   
-</div>
-
+        <a class="btn btn-sm btn-outline-secondary rounded-pill"
+           href="tel:031-219-6438"
+           aria-label="전화 걸기 031-219-6438">
+          📞 유선상담
+        </a>
+        <a class="btn btn-sm btn-outline-secondary rounded-pill"
+           href="mailto:sktseolho@gmail.com"
+           aria-label="이메일 보내기 sktseolho@gmail.com">
+          ✉️ Email
+        </a>
+        <a class="btn btn-sm btn-outline-secondary rounded-pill"
+           href="https://seolpro.github.io/home"
+           target="_blank"
+           aria-label="home">
+          Home
+        </a>
+        <a class="btn btn-sm btn-outline-secondary rounded-pill"
+           href="http://pf.kakao.com/_dfhkK"
+           target="_blank"
+           aria-label="Kakao Channel">
+          Kakao
+        </a>
+      </div>
     </div>
   </div>
 </footer>
+<!-- Footer Section-->
+
+
+
+<!-- Modal -->
+<div class="modal fade" id="formHelpModal" tabindex="-1" aria-labelledby="formHelpModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header">
+        <h5 class="modal-title" id="formHelpModalLabel">🧩폼 생성 가이드 (4단계)</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button>
+      </div>
+
+      <div class="modal-body">
+        <div class="alert alert-info small mb-3">
+          아래 순서대로 진행하세요. 예시 코드는 그대로 복사해 넣고, <b>굵게 표시된 값</b>만 실제 값으로 교체하면 됩니다.
+        </div>
+
+        <!-- STEP 1 -->
+        <h6>① html 및 구글스프레드 sheet 생성(App script 시작) => 3개의 코드 복사 + 붙여넣기</h6>
+        <div class="accordion" id="accCopy">
+         <div class="list-group list-group-flush">
+    <!-- (선택) 전체 모음 -->
+    <a href="https://seolpro.github.io/home/edu/create_form_code.html"
+       target="_blank" rel="noopener"
+       class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+      <div>
+        <div class="fw-semibold">📦 전체 코드 모음</div>
+        <div class="text-muted small">한 페이지에서 전부 복사/붙여넣기</div>
+      </div>
+      <span class="btn btn-sm btn-outline-primary rounded-pill">🔗열기</span>
+    </a>
+
+  </div> 
+       </div>
+
+        <!-- STEP 2 -->
+        <h6 class="mt-2">② 구글 시트 생성</h6>
+        <ol class="small">
+          <li>새 스프레드시트를 생성합니다.</li>
+          <li>시트 이름 <code>schema</code>, <code>join</code> 2개를 만듭니다.</li>
+        <hr>
+
+        <!-- STEP 3 -->
+        <h6>③ Code.gs에서 스프레드시트/시트 설정</h6>
+        <p class="small mb-1">아래를 <b>Code.gs</b> 최상단이나 설정 블록에 추가/수정하세요.</p>
+        <pre class="codebox" id="code_gs_config">const CONFIG = {
+  SHEET_ID: '🔁스프레드시트ID로_교체',   // 예: 1AbC...xyz
+  SCHEMA_SHEET: 'schema',
+  DATA_SHEET: 'join',
+  SIGNATURE: { saveToDrive: true, store: 'url' }, // 선택
+  FILE: { store: 'url' }                          // 선택: 'url'|'id'|'json'
+};
+</pre>
+
+        <div class="text-muted small mb-3">
+          * 스프레드시트 ID는 주소의 <code>/d/…/edit</code> 사이 문자열입니다.<br>
+          * <code>schema</code>는 스키마 정의용, <code>join</code>은 접수 데이터 저장용입니다.
+        </div>
+
+        <hr>
+
+        <!-- STEP 4 -->
+        <h6>④ HTML(외부)에서 GAS Web App URL & FORM_KEY 설정</h6>
+        <p class="small">프런트의 HTML 파일(외부 페이지)에 다음 상수를 추가/수정하세요.</p>
+        <pre class="codebox" id="code_front_constants">&lt;script&gt;
+  const GAS_ENDPOINT = 'https://script.google.com/macros/s/🔁배포URL_ID/exec'; // 🔁 Web App 배포URL
+  const FORM_KEY = 'join2025'; // 🔁 스키마의 formKey와 동일
+&lt;/script&gt;
+</pre>
+        <div class="text-muted small mb-2">
+          * GAS에서 <b>배포 &gt; 새 배포 &gt; 유형: 웹 앱</b>으로 배포 후 나온 URL을 넣으세요.<br>
+          * 프런트에서 이 값을 사용해 <code>fetch</code>로 스키마/제출을 호출합니다.
+        </div>
+
+        <hr>
+
+        
+</div>
+
+<script>
+  document.addEventListener('click', async (e)=>{
+    const btn = e.target.closest('.copy-btn');
+    if(!btn) return;
+    const sel = btn.getAttribute('data-copy');
+    const el = document.querySelector(sel);
+    if(!el) return alert('대상 코드를 찾지 못했습니다.');
+    const text = el.textContent || el.innerText || '';
+    try{
+      await navigator.clipboard.writeText(text);
+      const old = btn.textContent;
+      btn.textContent = '복사됨!';
+      setTimeout(()=>btn.textContent = old, 900);
+    }catch(err){
+      alert('복사 실패: '+err.message);
+    }
+  });
+</script>
 
 <script>
   // 현재 연도 자동
@@ -110,8 +226,7 @@
 
 <script>
 // ===== 설정 GAS서버 Url 및 formkey =====
-const GAS_ENDPOINT = '구글앱스크립트 GAS의 최신배포URL을 삽입해주세요';  
-// 예시(대문자가 고유ID) : "https://script.google.com/macros/s/AKfycbyRANDOM_ID_STRING_LONG/exec"
+const GAS_ENDPOINT = 'https://script.google.com/macros/s/AKfycby8ByYThpa6geTY0FoiXMDuCKuLAC6EE-RgNsU60TzBE6azi3DBhlB_RiSFHGEDx82izw/exec';
 const FORM_KEY = 'join2025';
 
 let SCHEMA = [];
@@ -144,17 +259,44 @@ function openPostcode(name) {
 }
 
 // ===== 서명 캔버스 =====
+// 개선판: 서명 패드 상태 저장
 const signaturePads = {}; // name -> {canvas, ctx, drawing, dirty, ratio, ro}
 
+/**
+ * 서명 패드 초기화
+ * - 고해상도(scale) 대응
+ * - 리사이즈 시 기존 선 보존
+ * - 포인터 캡처(드래그 중 벗어나도 선 끊김 방지)
+ * - 모바일 스크롤/줌 방지 (touch-action: none)
+ */
 function setupSignature(name) {
   const wrap = document.getElementById(`sigwrap_${name}`);
   const canvas = document.getElementById(`sig_${name}`);
   if (!canvas || !wrap) return;
 
+  // 스타일적으로 스크롤/줌 방지
   canvas.classList.add('signature-pad');
+  canvas.style.touchAction = 'none';
 
+  // 상태 준비
+  signaturePads[name] = {
+    canvas,
+    ctx: null,
+    drawing: false,
+    dirty: false,
+    ratio: Math.max(window.devicePixelRatio || 1, 1),
+    ro: null
+  };
+
+  const pad = () => signaturePads[name];
+
+  // 리사이즈 (그림 보존)
+  let resizeRAF = null;
   function resizeCanvas(preserve = false) {
-    // 1) 이전 그림을 데이터 URL로 보관
+    const p = pad();
+    if (!p) return;
+
+    // 1) 이전 그림 백업
     let prevURL = null;
     if (preserve && canvas.width && canvas.height) {
       try { prevURL = canvas.toDataURL('image/png'); } catch (e) {}
@@ -163,27 +305,31 @@ function setupSignature(name) {
     // 2) 고해상도 대응
     const ratio = Math.max(window.devicePixelRatio || 1, 1);
     const rect = wrap.getBoundingClientRect();
+    const cssHeight = 360;  // 또는 360
+    canvas.style.height = cssHeight + 'px';
 
-    canvas.width  = Math.floor(rect.width * ratio);
-    canvas.height = Math.floor(180 * ratio);
-    canvas.style.width  = '100%';
-    canvas.style.height = '180px';
+    canvas.width = Math.floor(rect.width * ratio);
+    canvas.height = Math.floor(cssHeight * ratio);
+    canvas.style.width = '100%';
+    canvas.style.height = cssHeight + 'px';
 
+    // 3) 컨텍스트(스케일/펜설정)
     const ctx = canvas.getContext('2d');
-    ctx.setTransform(1,0,0,1,0,0);
-    ctx.scale(ratio, ratio);
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.scale(ratio, ratio); // 이후 좌표는 CSS px 기준
     ctx.lineWidth = 2;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     ctx.strokeStyle = '#000';
 
-    signaturePads[name] = { ...signaturePads[name], canvas, ctx, drawing:false, ratio };
+    // 상태 반영 (여기를 마지막에 단 한 번만 갱신)
+    p.ctx = ctx;
+    p.ratio = ratio;
 
-    // 3) 이전 그림 복원 (컨텍스트를 ratio로 스케일했으니 CSS px 기준으로 그립니다)
+    // 4) 이전 그림 복원
     if (prevURL) {
       const img = new Image();
       img.onload = () => {
-        // CSS px 기준 너비/높이 = 디바이스 픽셀 / ratio
         ctx.drawImage(img, 0, 0, canvas.width / ratio, canvas.height / ratio);
       };
       img.src = prevURL;
@@ -193,27 +339,32 @@ function setupSignature(name) {
   // 최초 1회
   resizeCanvas(false);
 
-  // window.resize 대신 래퍼의 실제 크기 변화를 관찰
-  const ro = new ResizeObserver(() => resizeCanvas(true));
+  // 래퍼의 실제 크기 변화 관찰 + 디바운스
+  const ro = new ResizeObserver(() => {
+    cancelAnimationFrame(resizeRAF);
+    resizeRAF = requestAnimationFrame(() => resizeCanvas(true));
+  });
   ro.observe(wrap);
 
-  // 상태 저장
-  signaturePads[name] = { canvas, ctx: canvas.getContext('2d'), drawing:false, dirty:false, ratio: Math.max(window.devicePixelRatio||1,1), ro };
+  // 관찰자 저장
+  pad().ro = ro;
 
-  const pad = () => signaturePads[name];
-
+  // 좌표 계산 (CSS px 기준)
   function getPos(evt) {
     const r = canvas.getBoundingClientRect();
-    // 포인터 이벤트만 사용 (evt.clientX/Y)
     return { x: evt.clientX - r.left, y: evt.clientY - r.top };
-    // 터치 이벤트를 함께 쓰지 않습니다.
   }
 
+  // 이벤트 핸들러
   function start(e) {
     e.preventDefault();
     const p = pad();
     p.drawing = true;
-    const {x,y} = getPos(e);
+    // 포인터 캡처: 드래그 중 캔버스 밖으로 나가도 추적
+    if (e.pointerId != null && canvas.setPointerCapture) {
+      try { canvas.setPointerCapture(e.pointerId); } catch (_) {}
+    }
+    const { x, y } = getPos(e);
     p.ctx.beginPath();
     p.ctx.moveTo(x, y);
   }
@@ -222,7 +373,7 @@ function setupSignature(name) {
     const p = pad();
     if (!p.drawing) return;
     e.preventDefault();
-    const {x,y} = getPos(e);
+    const { x, y } = getPos(e);
     p.ctx.lineTo(x, y);
     p.ctx.stroke();
     p.dirty = true;
@@ -233,15 +384,19 @@ function setupSignature(name) {
     if (!p || !p.drawing) return;
     e.preventDefault();
     p.drawing = false;
+    if (e.pointerId != null && canvas.releasePointerCapture) {
+      try { canvas.releasePointerCapture(e.pointerId); } catch (_) {}
+    }
   }
 
-  // 포인터 이벤트만 등록
-  canvas.addEventListener('pointerdown', start);
-  canvas.addEventListener('pointermove', move);
-  canvas.addEventListener('pointerup', end);
-  canvas.addEventListener('pointerleave', end);
-  canvas.addEventListener('pointercancel', end);
+  // 포인터 이벤트(패시브 false로 preventDefault 허용)
+  canvas.addEventListener('pointerdown', start, { passive: false });
+  canvas.addEventListener('pointermove', move, { passive: false });
+  canvas.addEventListener('pointerup', end, { passive: false });
+  canvas.addEventListener('pointerleave', end, { passive: false });
+  canvas.addEventListener('pointercancel', end, { passive: false });
 
+  // 지우기 버튼
   const clearBtn = document.getElementById(`sigclear_${name}`);
   if (clearBtn) clearBtn.onclick = () => {
     const p = pad();
@@ -252,12 +407,44 @@ function setupSignature(name) {
   };
 }
 
+/**
+ * 저장: 히든 입력값에 PNG dataURL 기록
+ * - 흰 배경 포함(투명 배경 검게 보이는 문제 예방)
+ */
 function saveSignatureToInput(name) {
   const p = signaturePads[name];
   const hidden = document.getElementById(`f_${name}`);
   if (!p || !hidden) return;
-  hidden.value = p.dirty ? p.canvas.toDataURL('image/png') : '';
+  hidden.value = p.dirty ? getSignatureDataURL(p) : '';
+  // (옵션) 미리보기 텍스트 박스가 있다면 동기화
+  const preview = document.getElementById(`f_${name}_preview`);
+  if (preview) preview.value = hidden.value;
 }
+
+/* 내부 유틸: 현재 패드를 흰 배경 포함 PNG로 변환 */
+function getSignatureDataURL(p) {
+  // 원하는 내보내기 종횡비(예: 정사각형)
+  const outW = Math.max(p.canvas.width, p.canvas.height);
+  const outH = outW; // 정사각형
+  const t = document.createElement('canvas');
+  t.width = outW; t.height = outH;
+  const ctx = t.getContext('2d');
+
+  // 흰 배경
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0,0,outW,outH);
+
+  // 원본을 비율 유지해 중앙 배치
+  const scale = Math.min(outW / p.canvas.width, outH / p.canvas.height);
+  const dw = p.canvas.width * scale;
+  const dh = p.canvas.height * scale;
+  const dx = (outW - dw) / 2;
+  const dy = (outH - dh) / 2;
+  ctx.drawImage(p.canvas, dx, dy, dw, dh);
+
+  return t.toDataURL('image/png');
+}
+
 
 // ===== 공통 유틸 =====
 function onReady(fn){ if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fn); else fn(); }
