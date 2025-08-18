@@ -57,6 +57,21 @@ body.noscroll {
 html.noscroll {
   overscroll-behavior: none;  /* 풀투리프레시/바운스 방지 */
 }
+.transition-icon {
+    transition: transform 0.3s ease;
+  }
+  .collapse.show + .transition-icon,
+  .btn[aria-expanded="true"] .transition-icon {
+    transform: rotate(90deg); /* 펼치면 화살표 ▶ 가 ▼ 로 회전 */
+  }
+    .arrow-icon {
+    display: inline-block;
+    transition: transform 0.3s ease;
+  }
+  /* 버튼이 열렸을 때 (aria-expanded=true) 화살표 회전 */
+  button[aria-expanded="true"] .arrow-icon {
+    transform: rotate(180deg); /* ▶ → ▼ 로 회전 */
+  }
   </style>
 </head>
 <body>
@@ -72,12 +87,24 @@ html.noscroll {
       #장소: 청계산 자락<br>
       #참가비: 5천원(인당)<br>
     </p>
-    <span>🔒 개인정보 제공 및 활용 동의</span>
-    <p class="small text-muted">
-      입력하신 성명,연락처 등의 개인정보는 목적 외에는 사용되지 않으며,<br>
+    <!-- 개인정보 제공 및 활용 동의 (펼치기/접기) -->
+<!-- 개인정보 제공 및 활용 동의 (펼치기/접기 + 아이콘 표시) -->
+<div class="mb-3">
+  <button class="btn btn-link d-flex align-items-center text-decoration-none p-0" 
+          type="button" data-bs-toggle="collapse" data-bs-target="#privacyCollapse" 
+          aria-expanded="false" aria-controls="privacyCollapse">
+    <span class="me-2">🔒 개인정보 제공 및 활용 동의 보기/닫기</span>
+    <span class="arrow-icon">🔽</span>
+  </button>
+  <div class="collapse mt-2" id="privacyCollapse">
+    <div class="card card-body small text-muted">
+      입력하신 성명, 연락처 등의 개인정보는 목적 외에는 사용되지 않으며,<br>
       관련 법령에 따라 안전하게 관리됩니다.
-    </p>
+    </div>
   </div>
+</div>
+
+</div>
 
   <div id="formArea" class="card shadow-sm p-3">
     🔄폼을 로딩 중입니다...잠시만 기다려 주세요
