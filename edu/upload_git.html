@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>파일 업로드 (고정경로)</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+<style>
+  body { background:#f8f9fa; }
+  .dropzone {
+    border: 2px dashed #ced4da; border-radius: 12px; background: #fff;
+    padding: 40px; text-align: center; transition: background .15s ease;
+  }
+  .dropzone.dragover { background: #f1f8ff; }
+</style>
+</head>
+<body>
+<div class="container py-5">
+  <h3 class="mb-4">📤 GitHub Pages 업로드</h3>
+
+  <div id="drop" class="dropzone mb-3">
+    <p class="mb-2">여기로 파일을 끌어다 놓으세요</p>
+    <p class="text-muted">또는</p>
+    <button id="btnPick" class="btn btn-primary">파일 선택</button>
+    <input id="fileInput" type="file" multiple hidden />
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label">서버 업로드 URL</label>
+    <input type="text" class="form-control" id="endpoint" 
+           value="https://ajoucu.mycafe24.com/push_to_github.php"/>
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label">업로드 토큰</label>
+    <input type="text" class="form-control" id="token" 
+           value="ghp_f1a7e6c2d47b9a85e3190b1f54c7d63f98e0a24d7b5c63f2d85c7a19e3f04a61"/>
+  </div>
+
+  <div class="progress mb-3" role="progressbar" style="height:20px;">
+    <div id="bar" class="progress-bar" style="width:0%">0%</div>
+  </div>
+
+  <div id="log" class="small"></div>
+</div>
+
+<script>
+const drop = document.getElementById('drop');
+const fileInput = document.getElementById('fileInput');
+const btnPick = document.getElementById('btnPick');
+const bar = document.getElementById('bar');
+const log = document.getElementById('log');
+
+btnPick.addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', () => uploadFiles(fileInput.files));
+
+['dragenter','dragover'].forEach(evt => {
+  drop.addEventListener(evt, e => { e.preventDefault(); drop.classList.add('dragover'); });
+});
+['dragleave','drop'].forEach(evt => {
+  drop.addEventListener(evt, e => { e.preventDefault(); drop.classList.remove('dragover'); });
+});
+drop.addEventListener('drop', e => {
+  e.preventDefault();
+  const files = e.dataTransfer.files;
+  if (files && files.length) uploadFiles(files);
+});
+
+function appendLog(html) { log.insertAdjacentHTML('beforeend', `<div>${html}</div>`); }
+function updateProgress(pct) { bar.style.width = pct + '%'; bar.textContent = pct + '%'; }
+
+async function uploadFiles(files) {
+  const endpoint = document.getElementById('endpoint').value.trim();
+  const token    = document.getElementById('token').value.trim();
+  if (!endpoint || !token) { alert('업로드 URL과 토큰을 확인하세요.'); return; }
+
+  updateProgress(0);
+
+  const fd = new FormData();
+  Array.from(files).forEach(f => fd.append('files[]', f));
+
+  try {
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'X-Upload-Token': token },
+      body: fd,
+    });
+
+    updateProgress(100);
+
+    const data = await res.json().catch(() => null);
+    if (!res.ok || !data) { appendLog(`<span class="text-danger">업로드 실패: HTTP ${res.status}</span>`); return; }
+
+    if (data.ok) {
+      data.results.forEach(r => {
+        if (r.ok) {
+          appendLog(`✅ ${r.name} → <a href="https://seolpro.github.io/home/uploads/${r.name}" target="_blank">보기</a>`);
+        } else {
+          appendLog(`❌ ${r.name} → ${r.error}`);
+        }
+      });
+    } else {
+      appendLog(`<span class="text-danger">오류: ${data.error||'unknown'}</span>`);
+    }
+  } catch (err) {
+    appendLog(`<span class="text-danger">에러: ${err.message}</span>`);
+  }
+}
+</script>
+</body>
+</html>
