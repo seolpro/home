@@ -157,15 +157,30 @@
         <!-- 예약 조회/취소 섹션 -->
         <hr class="my-2">
         <div class="card shadow-sm mt-4">
-          <div class="card-body">
-            <h5 class="fw-semibold mb-3">📋 예약 조회 및 취소</h5>
+        <!-- 휴대폰번호조회 또는 예약번호 조회 옵션-->
+            <!-- <h5 class="fw-semibold mb-3">📋 휴대폰 번호로 예약 조회 및 취소</h5>
             <div class="input-group mb-3">
               <span class="input-group-text">📱 휴대폰번호</span>
               <input type="tel" id="lookupPhone" class="form-control" placeholder="숫자만 입력" />
               <button class="btn btn-outline-primary" id="btnLookup">조회</button>
             </div>
-            <div id="lookupResult" class="mt-3"></div>
-          </div>
+            <div id="lookupResult" class="mt-3"></div> -->
+
+            <!-- ✅ 예약번호 조회 -->
+<div class="card shadow-sm mt-3">
+  <div class="card-body">
+    <h5 class="fw-semibold mb-3">🔎 예약번호로 조회 및 취소</h5>
+    <div class="input-group mb-3">
+      <span class="input-group-text"># 예약번호</span>
+      <input type="text" id="lookupBookingId" class="form-control" placeholder="6자리 숫자" inputmode="numeric" />
+      <button class="btn btn-outline-primary" id="btnLookupId">조회</button>
+    </div>
+    <div class="form-text">예: 384927 (예약 완료 시 안내된 6자리 번호)</div>
+    <div id="lookupResultId" class="mt-3"></div>
+  </div>
+</div>
+
+         
         </div>
       </div>
     </div>
@@ -609,6 +624,161 @@ wrap.innerHTML = `
   });
 })();
 
+/* ========== 공통: 조회 결과 테이블 렌더링 (취소 버튼 포함) ========== */
+function renderLookupTable(entries, targetElId){
+  const wrap = document.getElementById(targetElId);
+  if (!entries || entries.length === 0) {
+    wrap.innerHTML = `<div class="alert alert-warning">예약 내역이 없습니다.</div>`;
+    return;
+  }
+  let rows = '';
+  entries.forEach(e => {
+    const dtLabel = formatKRDateTime(e.date ?? e.dateLabel, e.time ?? e.timeLabel);
+    const feeKR   = formatFeeKR(e.fee ?? e.feeLabel);
+    const stRaw   = String(e.status || '').trim();
+
+    const statusBadge =
+      stRaw === '예약됨' ? '<span class="badge bg-success-subtle text-success">예약됨</span>' :
+      stRaw === '취소됨' ? '<span class="badge bg-secondary">취소됨</span>' :
+                           `<span class="badge bg-light text-muted">${esc(stRaw || '상태없음')}</span>`;
+
+    const cancelBtn = (stRaw === '예약됨')
+      ? `<button id="cancelBtn_${esc(e.dateId)}" class="btn btn-sm btn-outline-danger"
+           onclick="cancelBooking('${esc(e.dateId)}')">취소</button>`
+      : '';
+
+    rows += `<tr>
+      <td>${esc(e.bookingId || '')}</td>
+      <td>${esc(e.name || '')}</td>
+      <td>${esc(dtLabel)}</td>
+      <td>${esc(e.course || '')}</td>
+      <td>${esc(feeKR)}</td>
+      <td>${statusBadge}</td>
+      <td>${cancelBtn}</td>
+    </tr>`;
+  });
+
+  wrap.innerHTML = `
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <strong>조회 결과</strong>
+      <span class="badge bg-secondary">${entries.length}건</span>
+    </div>
+    <table class="table table-sm align-middle">
+      <thead>
+        <tr><th>예약번호</th><th>예약자</th><th>일정</th><th>코스</th><th>그린피</th><th>상태</th><th></th></tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+}
+
+/* ========== 예약번호로 조회 (6자리) ========== */
+let _lookupIdAC = null;
+
+async function lookupByBookingIdUI(bookingId){
+  const wrap = document.getElementById('lookupResultId');
+  const btn  = document.getElementById('btnLookupId');
+
+  if (!/^\d{6}$/.test(String(bookingId||''))) {
+    showToast("예약번호(6자리 숫자)를 정확히 입력하세요.", "warning");
+    return;
+  }
+
+  // 이전 요청 취소
+  if (_lookupIdAC) _lookupIdAC.abort();
+  _lookupIdAC = new AbortController();
+
+  // 로딩 UI
+  const oldBtnHTML = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '조회중... <span class="spinner-border spinner-border-sm ms-1" role="status" aria-hidden="true"></span>';
+  wrap.innerHTML = `<div class="text-muted">
+    <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+    조회 중입니다...
+  </div>`;
+
+  const fetchOnce = async () => {
+    const url = `${GAS_URL}?route=lookup&bookingId=${encodeURIComponent(bookingId)}&t=${Date.now()}`;
+    const resp = await fetch(url, { signal: _lookupIdAC.signal, cache: 'no-store' });
+    const ct = resp.headers.get('content-type') || '';
+    if (!ct.includes('application/json')) throw new Error('Non-JSON response');
+    const data = await resp.json();
+    if (!data || !Array.isArray(data.entries)) throw new Error(data?.error || 'Invalid payload');
+    return data.entries;
+  };
+
+  try {
+    let entries;
+    try {
+      entries = await fetchOnce();
+    } catch {
+      await new Promise(r => setTimeout(r, 300)); // 1회 재시도
+      entries = await fetchOnce();
+    }
+    renderLookupTable(entries, 'lookupResultId');
+  } catch (err) {
+    if (err.name !== 'AbortError') {
+      wrap.innerHTML = '';
+      showToast("조회 실패: " + (err.message || err), "danger");
+    }
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = oldBtnHTML;
+    _lookupIdAC = null;
+  }
+}
+
+/* ========== 이벤트: 예약번호 조회 버튼 클릭 ========== */
+document.addEventListener('DOMContentLoaded', () => {
+  const input = document.getElementById('lookupBookingId');
+  const btn   = document.getElementById('btnLookupId');
+  if (!input || !btn) return;
+
+  // 숫자만 유지
+  input.addEventListener('input', () => {
+    input.value = input.value.replace(/[^\d]/g, '').slice(0, 6);
+  });
+
+  btn.addEventListener('click', (e) => {
+    e.preventDefault();
+    const bid = input.value.replace(/\D/g, '');
+    lookupByBookingIdUI(bid);
+  });
+});
+
+async function cancelBooking(dateId) {
+  if (!confirm("🤷‍♂️해당 예약을 취소하시겠습니까?")) return;
+
+  const btn = document.querySelector(`#cancelBtn_${dateId}`);
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>취소중...`;
+  }
+
+  try {
+    const resp = await fetch(GAS_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+      body: JSON.stringify({ route: "cancel", dateId })
+    });
+    const data = await resp.json();
+
+    if (data.success) {
+      showToast("❌ 예약이 취소되었습니다.", "warning");
+      if (_lastLookupPhone) lookupBooking(_lastLookupPhone); // 재조회
+      setTimeout(() => loadDates(), 250); // ✅ 200~300ms 지연 후 재로드
+    } else {
+      showToast("취소 실패: " + (data.error || ""), "danger");
+    }
+  } catch {
+    showToast("네트워크 오류로 취소 실패", "danger");
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = "취소";
+    }
+  }
+}
   </script>
 </body>
 </html>
