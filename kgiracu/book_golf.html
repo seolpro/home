@@ -37,6 +37,43 @@
 .note-chip{
   padding:.15rem .5rem; border-radius:.5rem; background:#f8f9fa; color:#6c757d;
 }
+/* 라디오 버튼 기본 크기 확대 */
+.form-check-input[type="radio"] {
+  width: 22px;
+  height: 22px;
+  border: 2px solid #888;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+/* 포커스(탭키 이동 시) */
+.form-check-input[type="radio"]:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59,130,246,.5); /* 파란 테두리 */
+  border-color: #3b82f6;
+}
+
+/* 선택 안 된 상태 */
+.form-check-input[type="radio"] {
+  background-color: #fff;
+}
+
+/* 선택된 상태 */
+.form-check-input[type="radio"]:checked {
+  background-color: #22c55e;   /* 선명한 초록 */
+  border-color: #16a34a;
+}
+
+/* 선택 시 동그라미 대신 체크 표시 */
+.form-check-input[type="radio"]:checked::before {
+  content: "✔";
+  color: #fff;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
   </style>
 </head>
 <body>
@@ -80,7 +117,7 @@
 
           <!-- Tee time: 라디오 그룹 -->
           <div class="mb-3">
-            <label class="form-label"><span>📅</span> 확보된 Tee time 리스트 <span class="text-danger">*</span></label>
+            <label class="form-label"><span>✅</span> 아래 Tee time 리스트에서 선택하세요 <span class="text-danger">*</span></label>
             <div id="dateRadioGroup" class="d-flex flex-column gap-2">
               <!-- JS에서 라디오 버튼 목록 생성 -->
             </div>
@@ -189,8 +226,9 @@
     toast._element.addEventListener('hidden.bs.toast', () => node.remove());
   }
 
+  
   /* ========= Tee time 로드 (라디오) ========= */
-  async function loadDates() {
+   async function loadDates() {
     const wrap = document.getElementById('dateRadioGroup');
     wrap.innerHTML = `<div class="text-muted">🔄 신청 가능 TeeTime을 불러오는 중...</div>`;
     try {
