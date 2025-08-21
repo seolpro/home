@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>골프장 예약요청</title>
+  <title>⛳ 골프장 예약요청</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
   <style>
     body { background:#f8f9fa; }
@@ -11,21 +11,23 @@
     .btn-lg { border-radius: 12px; }
     .spinner-border { width:1.2rem; height:1.2rem; }
     .small-muted{ font-size:.9rem; color:#6c757d; }
+    h2 span { font-size: 1.8rem; }
+    label span { margin-right:6px; }
   </style>
 </head>
 <body>
   <div class="container py-4">
     <div class="text-center mb-4">
-      <h2 class="fw-bold">⛳ 골프장 예약요청</h2>
-      <p class="text-muted mb-0">아래 일정을 선택해 예약을 요청해 주세요. 담당자가 확인 후 개별 안내드립니다.</p>
+      <h2 class="fw-bold"><span>⛳</span> 골프장 예약요청</h2>
+      <p class="text-muted mb-0">📌 아래 일정을 선택해 예약을 요청해 주세요.<br>담당자가 확인 후 개별 안내드립니다.</p>
     </div>
 
-    <div class="card shadow-sm mb-4">
+    <div class="card shadow-sm mb-4 border-success">
       <div class="card-body">
-        <h5 class="fw-semibold mb-2">예약 안내</h5>
+        <h5 class="fw-semibold mb-2 text-success">📢 예약 안내</h5>
         <ul class="mb-0 small-muted">
-          <li>표시된 일정은 현재 확보된 티타임입니다. 선착순 확인·배정 후 확정 안내가 발송됩니다.</li>
-          <li>요청 접수만으로 최종 확정이 되지 않으며, 담당자의 확인 연락을 꼭 기다려 주세요.</li>
+          <li>🟢 <strong>표시된 일정</strong>은 현재 확보된 티타임입니다.</li>
+          <li>🚨 접수만으로 <strong>최종 확정</strong>은 아니며, 담당자의 확인 연락을 꼭 기다려 주세요.</li>
         </ul>
       </div>
     </div>
@@ -34,19 +36,19 @@
       <div class="card-body">
         <form id="reqForm" novalidate>
           <div class="mb-3">
-            <label class="form-label">성명 <span class="text-danger">*</span></label>
+            <label class="form-label"><span>👤</span> 성명 <span class="text-danger">*</span></label>
             <input type="text" class="form-control" id="name" placeholder="예: 홍길동" required />
             <div class="invalid-feedback">성명을 입력해 주세요.</div>
           </div>
 
           <div class="mb-3">
-            <label class="form-label">연락처 <span class="text-danger">*</span></label>
+            <label class="form-label"><span>📞</span> 연락처 <span class="text-danger">*</span></label>
             <input type="tel" class="form-control" id="phone" placeholder="예: 010-1234-5678" required />
             <div class="invalid-feedback">연락처를 정확히 입력해 주세요.</div>
           </div>
 
           <div class="mb-3">
-            <label class="form-label">신청 날짜/시간 <span class="text-danger">*</span></label>
+            <label class="form-label"><span>📅</span> 신청 일정 <span class="text-danger">*</span></label>
             <select class="form-select" id="dateSelect" required>
               <option value="" selected disabled>예약 가능 일정을 불러오는 중...</option>
             </select>
@@ -54,32 +56,32 @@
           </div>
 
           <div class="mb-3">
-            <label class="form-label">기타 코멘트</label>
+            <label class="form-label"><span>📝</span> 기타 코멘트</label>
             <textarea class="form-control" id="comment" rows="3" placeholder="요청 사항을 적어 주세요 (선택)"></textarea>
           </div>
 
           <div class="form-check mb-3">
             <input class="form-check-input" type="checkbox" id="agree" required />
             <label class="form-check-label" for="agree">
-              (필수) 개인정보 수집·이용에 동의합니다.
+              ✅ (필수) 개인정보 수집·이용에 동의합니다.
             </label>
             <div class="invalid-feedback">개인정보 수집·이용 동의가 필요합니다.</div>
           </div>
           <div class="small-muted mb-4">
             <details>
-              <summary class="mb-2">개인정보 수집·이용 동의 전문 보기</summary>
+              <summary class="mb-2">📜 개인정보 수집·이용 동의 전문 보기</summary>
               <div>
-                수집항목: 성명, 연락처, 신청일정, 코멘트<br/>
-                이용목적: 예약요청 확인, 안내 및 민원처리<br/>
-                보유기간: 목적 달성 시까지 또는 관련 법령에 따른 기간<br/>
-                귀하는 동의를 거부할 권리가 있으며, 미동의 시 서비스 제공이 제한될 수 있습니다.
+                - 수집항목: 성명, 연락처, 신청일정, 코멘트<br/>
+                - 이용목적: 예약요청 확인, 안내 및 민원처리<br/>
+                - 보유기간: 목적 달성 시까지 또는 관련 법령에 따른 기간<br/>
+                ※ 귀하는 동의를 거부할 권리가 있으며, 미동의 시 서비스 제공이 제한될 수 있습니다.
               </div>
             </details>
           </div>
 
           <div class="d-grid">
-            <button type="submit" id="btnSubmit" class="btn btn-primary btn-lg">
-              <span class="btn-label">예약 요청하기</span>
+            <button type="submit" id="btnSubmit" class="btn btn-success btn-lg">
+              <span class="btn-label">📨 예약 요청하기</span>
               <span class="spinner-border d-none ms-2" role="status" aria-hidden="true"></span>
             </button>
           </div>
@@ -91,23 +93,19 @@
   </div>
 
   <script>
-    // 🔧 GAS Web App URL (배포 후 복사한 /exec URL로 교체)
-    const GAS_URL = 'https://script.google.com/macros/s/여기에_웹앱_URL_붙여넣기/exec';
+    // ✅ GAS Web App URL
+    const GAS_URL = "https://script.google.com/macros/s/AKfycby1kEiVG4SVoFydOdxnC7-M6jCleV0ApudE8q-lObW6zTyLfr4iP2yTO-tIV62HP99C/exec";
 
-    // 도우미: 토스트 알림
     function showToast(message, type='success') {
       const wrap = document.getElementById('toastWrap');
       const id = 't' + Math.random().toString(36).slice(2);
       const node = document.createElement('div');
       node.className = 'toast align-items-center text-bg-' + (type==='success'?'success': (type==='warning'?'warning':'danger')) + ' border-0';
       node.id = id;
-      node.role = 'alert';
-      node.ariaLive = 'assertive';
-      node.ariaAtomic = 'true';
       node.innerHTML = `
         <div class="d-flex">
           <div class="toast-body">${message}</div>
-          <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+          <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
         </div>`;
       wrap.appendChild(node);
       const toast = new bootstrap.Toast(node, { delay: 3500 });
@@ -115,73 +113,34 @@
       toast._element.addEventListener('hidden.bs.toast', () => node.remove());
     }
 
-    // 날짜 라벨 포맷 (ko-KR)
-    function formatKoreanDateLabel(isoStr) {
-      // isoStr -> '2025-09-03T08:10:00.000+09:00' 등
-      const d = new Date(isoStr);
-      if (isNaN(d)) return isoStr;
-      const day = d.toLocaleDateString('ko-KR', { year:'numeric', month:'2-digit', day:'2-digit', weekday:'short' });
-      const time = d.toLocaleTimeString('ko-KR', { hour:'2-digit', minute:'2-digit', hour12:false });
-      return `${day} ${time}`;
-    }
-
     async function loadDates() {
       const sel = document.getElementById('dateSelect');
       sel.innerHTML = `<option value="" selected disabled>불러오는 중...</option>`;
       try {
-        // GET으로 확보 일정 가져오기
-        const resp = await fetch(GAS_URL + '?route=dates', { method: 'GET' });
-        // 일부 환경에서 CORS 정책으로 JSON 파싱이 막히는 경우가 있어 try/catch로 보강
-        let data = null;
-        try { data = await resp.json(); } catch (e) { /* opaque 응답 대비 */ }
-        if (!data || !data.success) throw new Error('일정을 불러오지 못했습니다.');
+        const resp = await fetch(GAS_URL + '?route=dates');
+        const data = await resp.json();
+        if (!data.success) throw new Error();
 
-        if (!Array.isArray(data.entries) || data.entries.length === 0) {
-          sel.innerHTML = `<option value="" selected disabled>예약 가능한 일정이 없습니다</option>`;
-          return;
-        }
-
-        sel.innerHTML = `<option value="" selected disabled>일정을 선택해 주세요</option>`;
+        sel.innerHTML = `<option value="" selected disabled>일정을 선택하세요</option>`;
         data.entries.forEach(item => {
           const opt = document.createElement('option');
-          opt.value = item.value; // ISO 문자열
-          opt.textContent = formatKoreanDateLabel(item.value);
+          opt.value = item.id;
+          opt.textContent = `📅 ${item.date} ⏰ ${item.time} 🏌️ ${item.course} - 💰 ${item.fee.toLocaleString()}원`;
           sel.appendChild(opt);
         });
-      } catch (err) {
-        sel.innerHTML = `<option value="" selected disabled>일정 불러오기 실패</option>`;
-        showToast('일정 불러오기에 실패했습니다. 새로고침해 주세요.', 'danger');
+      } catch {
+        sel.innerHTML = `<option value="" selected disabled>불러오기 실패</option>`;
+        showToast('일정 불러오기 실패!', 'danger');
       }
     }
 
-    function onlyDigits(s){ return String(s||'').replace(/[^0-9]/g, ''); }
-    function formatPhoneDisplay(num) {
-      const s = onlyDigits(num);
-      if (s.startsWith('02') && s.length===10) return s.replace(/(\d{2})(\d{4})(\d{4})/, '$1-$2-$3');
-      if (s.length===11) return s.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
-      if (s.length===10) return s.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
-      return num;
-    }
-
-    // 폼 핸들링
-    (function init() {
-      // 부트스트랩 JS
+    (function init(){
       const s = document.createElement('script');
       s.src = "https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js";
       document.body.appendChild(s);
 
-      // 연락처 자동 포맷
-      const phone = document.getElementById('phone');
-      phone.addEventListener('input', (e) => {
-        const cur = e.target.value;
-        const digits = onlyDigits(cur).slice(0, 11);
-        e.target.value = formatPhoneDisplay(digits);
-      });
-
-      // 일정 불러오기
       loadDates();
 
-      // 제출
       const form = document.getElementById('reqForm');
       const btn = document.getElementById('btnSubmit');
       const btnLabel = btn.querySelector('.btn-label');
@@ -190,69 +149,41 @@
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
         e.stopPropagation();
-
-        // 기본 HTML5 검증 표시
         form.classList.add('was-validated');
         if (!form.checkValidity()) return;
 
-        // 값 수집
-        const name = document.getElementById('name').value.trim();
-        const phone = document.getElementById('phone').value.trim();
-        const dateVal = document.getElementById('dateSelect').value;
-        const comment = document.getElementById('comment').value.trim();
-        const agree = document.getElementById('agree').checked;
-
-        // 추가 검증
-        const phoneDigits = onlyDigits(phone);
-        if (name.length < 2 || phoneDigits.length < 9 || !dateVal || !agree) {
-          showToast('입력값을 다시 확인해 주세요.', 'warning');
-          return;
-        }
-
-        // 버튼 상태 전환
         btn.disabled = true;
         btnLabel.textContent = '전송 중...';
         btnSpin.classList.remove('d-none');
 
-        const payload = { name, phone, date: dateVal, comment, consent: agree ? 'Y' : 'N' };
+        const payload = {
+          name: document.getElementById('name').value.trim(),
+          phone: document.getElementById('phone').value.trim(),
+          dateId: document.getElementById('dateSelect').value,
+          comment: document.getElementById('comment').value.trim(),
+          consent: document.getElementById('agree').checked ? 'Y' : 'N'
+        };
 
-        // ⚠️ CORS 환경에 대비: 우선 일반 JSON으로 시도하고, 실패하면 no-cors 백업 시도
         try {
-          // (1) 일반 요청: 대부분 환경에서 동작
           const resp = await fetch(GAS_URL, {
             method: 'POST',
-            headers: { 'Content-Type': 'text/plain; charset=utf-8' }, // simple 요청으로 사전검사 회피
+            headers: { 'Content-Type': 'text/plain; charset=utf-8' },
             body: JSON.stringify(payload)
           });
-          let data = null;
-          try { data = await resp.json(); } catch(e) { /* opaque 대응 */ }
-          if (data && data.success) {
-            showToast('예약 요청이 접수되었습니다. 확인 후 안내드리겠습니다. (접수ID: ' + data.requestId.slice(0,8) + ')', 'success');
+          const data = await resp.json();
+          if (data.success) {
+            showToast('✅ 예약 요청이 접수되었습니다!', 'success');
             form.reset();
             form.classList.remove('was-validated');
-            loadDates(); // 최신 일정보기(선택)
+            loadDates();
           } else {
-            // 응답 파싱 실패 또는 success=false
-            showToast('전송은 되었을 수 있으나 응답 확인에 실패했습니다. 관리자 확인을 기다려 주세요.', 'warning');
+            showToast('⚠️ 전송 실패: ' + (data.error || ''), 'warning');
           }
-        } catch (err) {
-          // (2) 백업: no-cors (응답 읽기 불가, 서버 기록만 신뢰)
-          try {
-            await fetch(GAS_URL, {
-              method: 'POST',
-              mode: 'no-cors',
-              headers: { 'Content-Type': 'text/plain; charset=utf-8' },
-              body: JSON.stringify(payload)
-            });
-            showToast('예약 요청을 보냈습니다. 담당자 확인 후 안내 예정입니다.', 'success');
-            form.reset();
-            form.classList.remove('was-validated');
-          } catch (e2) {
-            showToast('전송에 실패했습니다. 네트워크 상태를 확인해 주세요.', 'danger');
-          }
+        } catch {
+          showToast('🚨 전송 중 오류가 발생했습니다.', 'danger');
         } finally {
           btn.disabled = false;
-          btnLabel.textContent = '예약 요청하기';
+          btnLabel.textContent = '📨 예약 요청하기';
           btnSpin.classList.add('d-none');
         }
       });
