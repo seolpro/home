@@ -13,6 +13,9 @@
     .small-muted{ font-size:.9rem; color:#6c757d; }
     h2 span { font-size: 1.8rem; }
     label span { margin-right:6px; }
+    .kv { display:flex; gap:.5rem; }
+    .kv .k { width:6rem; color:#6c757d; }
+    .kv .v { flex:1; }
   </style>
 </head>
 <body>
@@ -43,16 +46,16 @@
 
           <div class="mb-3">
             <label class="form-label"><span>📞</span> 연락처 <span class="text-danger">*</span></label>
-            <input type="tel" class="form-control" id="phone" placeholder="예: 010-1234-5678" required />
+            <input type="tel" class="form-control" id="phone" placeholder="예: 01012345678" required />
             <div class="invalid-feedback">연락처를 정확히 입력해 주세요.</div>
           </div>
 
           <div class="mb-3">
-            <label class="form-label"><span>📅</span> 신청 일정 <span class="text-danger">*</span></label>
+            <label class="form-label"><span>📅</span> Tee time <span class="text-danger">*</span></label>
             <select class="form-select" id="dateSelect" required>
-              <option value="" selected disabled>예약 가능 일정을 불러오는 중...</option>
+              <option value="" selected disabled>🔄신청 가능 TeeTime을 불러오는 중...</option>
             </select>
-            <div class="invalid-feedback">원하는 일정을 선택해 주세요.</div>
+            <div class="invalid-feedback">원하는 Tee타임을 선택해 주세요.</div>
           </div>
 
           <div class="mb-3">
@@ -63,7 +66,7 @@
           <div class="form-check mb-3">
             <input class="form-check-input" type="checkbox" id="agree" required />
             <label class="form-check-label" for="agree">
-              ✅ (필수) 개인정보 수집·이용에 동의합니다.
+              (필수) 개인정보 수집·이용에 동의합니다.
             </label>
             <div class="invalid-feedback">개인정보 수집·이용 동의가 필요합니다.</div>
           </div>
@@ -80,9 +83,8 @@
           </div>
 
           <div class="d-grid">
-            <button type="submit" id="btnSubmit" class="btn btn-success btn-lg">
+            <button type="submit" id="btnOpenConfirm" class="btn btn-primary btn-lg">
               <span class="btn-label">📨 예약 요청하기</span>
-              <span class="spinner-border d-none ms-2" role="status" aria-hidden="true"></span>
             </button>
           </div>
         </form>
@@ -92,9 +94,42 @@
     <div id="toastWrap" class="toast-container position-fixed bottom-0 end-0 p-3"></div>
   </div>
 
+  <!-- ✅ 확인(Confirm) 모달 -->
+  <div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">✍️ 제출 전 확인</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button>
+        </div>
+        <div class="modal-body">
+          <div class="kv"><span class="k">성명</span><span class="v" id="cfName"></span></div>
+          <div class="kv"><span class="k">연락처</span><span class="v" id="cfPhone"></span></div>
+          <div class="kv"><span class="k">신청 일정</span><span class="v" id="cfDateText"></span></div>
+          <div class="kv"><span class="k">코멘트</span><span class="v" id="cfComment"></span></div>
+          <div class="alert alert-warning mt-3 mb-0 small">
+            위 내용으로 예약요청을 보내시겠습니까? 담당자 확인 후 개별 안내됩니다.
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" id="btnSubmit" class="btn btn-primary">
+            <span class="btn-label">확인 및 제출</span>
+            <span class="spinner-border d-none ms-2" role="status" aria-hidden="true"></span>
+          </button>
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">수정하기</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script>
     // ✅ GAS Web App URL
     const GAS_URL = "https://script.google.com/macros/s/AKfycby1kEiVG4SVoFydOdxnC7-M6jCleV0ApudE8q-lObW6zTyLfr4iP2yTO-tIV62HP99C/exec";
+
+    // Bootstrap JS
+    const _bs = document.createElement('script');
+    _bs.src = "https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js";
+    document.body.appendChild(_bs);
 
     function showToast(message, type='success') {
       const wrap = document.getElementById('toastWrap');
@@ -113,81 +148,110 @@
       toast._element.addEventListener('hidden.bs.toast', () => node.remove());
     }
 
-  async function loadDates() {
-  const sel = document.getElementById('dateSelect');
-  sel.innerHTML = `<option value="" selected disabled>불러오는 중...</option>`;
-  try {
-    const resp = await fetch(GAS_URL + '?route=dates');
-    const data = await resp.json();
-    if (!data.success) throw new Error();
+    async function loadDates() {
+      const sel = document.getElementById('dateSelect');
+      sel.innerHTML = `<option value="" selected disabled>🔄Tee Time불러오는 중...</option>`;
+      try {
+        const resp = await fetch(GAS_URL + '?route=dates');
+        const data = await resp.json();
+        if (!data.success) throw new Error();
 
-    sel.innerHTML = `<option value="" selected disabled>일정을 선택하세요</option>`;
-    data.entries.forEach(item => {
-      const opt = document.createElement('option');
-      opt.value = item.id;
-      opt.textContent = "📅 " + item.label;  // 한국식 포맷된 문자열
-      sel.appendChild(opt);
-    });
-  } catch {
-    sel.innerHTML = `<option value="" selected disabled>불러오기 실패</option>`;
-    showToast('일정 불러오기 실패!', 'danger');
-  }
-}
+        sel.innerHTML = `<option value="" selected disabled>✔Tee Time을 선택하세요</option>`;
+        data.entries.forEach(item => {
+          const opt = document.createElement('option');
+          opt.value = item.id;               // 일련번호
+          // label은 서버에서 한국식으로 생성: "2025년 9월 2일 (화) 15:00 / 벨리코스 / 15만원"
+          opt.textContent = "📅 " + item.label;
+          sel.appendChild(opt);
+        });
+      } catch {
+        sel.innerHTML = `<option value="" selected disabled>불러오기 실패</option>`;
+        showToast('일정 불러오기 실패!', 'danger');
+      }
+    }
 
-    (function init(){
-      const s = document.createElement('script');
-      s.src = "https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js";
-      document.body.appendChild(s);
+    // 값 검증 보조
+    function onlyDigits(s){ return String(s||'').replace(/[^0-9]/g, ''); }
+    function formatPhoneDisplay(num) {
+      const s = onlyDigits(num);
+      if (s.startsWith('02') && s.length===10) return s.replace(/(\d{2})(\d{4})(\d{4})/, '$1-$2-$3');
+      if (s.length===11) return s.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
+      if (s.length===10) return s.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
+      return num;
+    }
 
+    // 초기화
+    window.addEventListener('DOMContentLoaded', () => {
       loadDates();
 
-      const form = document.getElementById('reqForm');
-      const btn = document.getElementById('btnSubmit');
-      const btnLabel = btn.querySelector('.btn-label');
-      const btnSpin  = btn.querySelector('.spinner-border');
+      // 연락처 자동 포맷(표시용)
+      const phoneEl = document.getElementById('phone');
+      phoneEl.addEventListener('input', (e) => {
+        const digits = onlyDigits(e.target.value).slice(0, 11);
+        e.target.value = formatPhoneDisplay(digits);
+      });
 
-      form.addEventListener('submit', async (e) => {
+      const form = document.getElementById('reqForm');
+      const btnSubmitFinal = document.getElementById('btnSubmit');
+      const btnSubmitSpin  = btnSubmitFinal.querySelector('.spinner-border');
+
+      // 1) 폼 제출 클릭 → 모달 열기(확인 단계)
+      form.addEventListener('submit', (e) => {
         e.preventDefault();
         e.stopPropagation();
         form.classList.add('was-validated');
         if (!form.checkValidity()) return;
 
-        btn.disabled = true;
-        btnLabel.textContent = '전송 중...';
-        btnSpin.classList.remove('d-none');
+        // 확인용 값 채우기
+        const sel = document.getElementById('dateSelect');
+        document.getElementById('cfName').textContent     = document.getElementById('name').value.trim();
+        document.getElementById('cfPhone').textContent    = document.getElementById('phone').value.trim();
+        document.getElementById('cfDateText').textContent = sel.selectedOptions[0]?.textContent?.replace(/^📅\s*/, '') || '';
+        document.getElementById('cfComment').textContent  = document.getElementById('comment').value.trim() || '-';
 
-        const payload = {
-          name: document.getElementById('name').value.trim(),
-          phone: document.getElementById('phone').value.trim(),
-          dateId: document.getElementById('dateSelect').value,
-          comment: document.getElementById('comment').value.trim(),
-          consent: document.getElementById('agree').checked ? 'Y' : 'N'
-        };
+        // 모달 오픈
+        const m = new bootstrap.Modal(document.getElementById('confirmModal'));
+        m.show();
 
-        try {
-          const resp = await fetch(GAS_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'text/plain; charset=utf-8' },
-            body: JSON.stringify(payload)
-          });
-          const data = await resp.json();
-          if (data.success) {
-            showToast('✅ 예약 요청이 접수되었습니다!', 'success');
-            form.reset();
-            form.classList.remove('was-validated');
-            loadDates();
-          } else {
-            showToast('⚠️ 전송 실패: ' + (data.error || ''), 'warning');
+        // 2) 모달에서 최종 제출
+        btnSubmitFinal.onclick = async () => {
+          // 버튼 로딩 상태
+          btnSubmitFinal.disabled = true;
+          btnSubmitSpin.classList.remove('d-none');
+
+          const payload = {
+            name: document.getElementById('name').value.trim(),
+            phone: document.getElementById('phone').value.trim(),
+            dateId: document.getElementById('dateSelect').value, // 일련번호
+            comment: document.getElementById('comment').value.trim(),
+            consent: document.getElementById('agree').checked ? 'Y' : 'N'
+          };
+
+          try {
+            const resp = await fetch(GAS_URL, {
+              method: 'POST',
+              headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+              body: JSON.stringify(payload)
+            });
+            const data = await resp.json();
+            if (data.success) {
+              showToast('✅ 예약 요청이 접수되었습니다!', 'success');
+              form.reset();
+              form.classList.remove('was-validated');
+              loadDates();
+              bootstrap.Modal.getInstance(document.getElementById('confirmModal')).hide();
+            } else {
+              showToast('⚠️ 전송 실패: ' + (data.error || ''), 'warning');
+            }
+          } catch {
+            showToast('🚨 전송 중 오류가 발생했습니다.', 'danger');
+          } finally {
+            btnSubmitFinal.disabled = false;
+            btnSubmitSpin.classList.add('d-none');
           }
-        } catch {
-          showToast('🚨 전송 중 오류가 발생했습니다.', 'danger');
-        } finally {
-          btn.disabled = false;
-          btnLabel.textContent = '📨 예약 요청하기';
-          btnSpin.classList.add('d-none');
-        }
+        };
       });
-    })();
+    });
   </script>
 </body>
 </html>
