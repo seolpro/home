@@ -1,85 +1,73 @@
 <?php
-header("Content-Type: application/json; charset=utf-8");
+header('Content-Type: application/json; charset=utf-8');
 
-// ✅ 계정 정보 설정
-$accountId = 'ajou9770';
-$authKey = '7bfe9eefc98c868431e0c3ca58c534ea37bbea9174a311c90be09636502ee296';
-$templateCode = 'ppur_2025082209372932533965518';
-$senderProfile = '@아주대의료원신협';
-$tokenFile     = __DIR__ . '/token.json';
-$tokenExpireMinutes = 55; // 60분보다 약간 짧게
+/* =====================================================
+ *  Ppurio 알림톡(ALT) 발송 - senderProfile 방식
+ *  - 토큰:   POST https://message.ppurio.com/v1/token   (Basic: Base64(accountId:authKey))
+ *  - 발송:   POST https://message.ppurio.com/v1/kakao   (Bearer: token)
+ *  - 요구:   payload에 senderProfile 필수 (예: '@cu03247')
+ *  - 변수:   targets[].changeWord.{var1..varN}
+ * ===================================================== */
 
-/** ====== 공통 유틸 ====== */
-function getValidToken($accountId, $authKey, $tokenFile, $tokenExpireMinutes = 55) {
-  // 캐시 사용
-  if (file_exists($tokenFile)) {
-    $data = json_decode(file_get_contents($tokenFile), true);
-    $token = $data['token'] ?? '';
-    $createdAt = strtotime($data['created_at'] ?? '');
-    if ($token && $createdAt && (time() - $createdAt) < ($tokenExpireMinutes * 60)) {
-      return $token;
-    }
-  }
-  // 재발급
-  $url = 'https://message.ppurio.com/v1/token';
-  $credentials = base64_encode("$accountId:$authKey");
+$ACCOUNT_ID    = 'cu03247';
+$AUTH_KEY      = '625b430045660862ab66697ef05b78965a46c546602b782dea0d24ad37a77777';
+$SENDER_PROFILE= '@cu03247'; // ★ 카카오 채널 아이디(@포함)
+$TEMPLATE_CODE = 'ppur_2025082208155432533063175';
 
-  $ch = curl_init($url);
-  curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-  curl_setopt($ch, CURLOPT_POST, true);
-  curl_setopt($ch, CURLOPT_HTTPHEADER, [
-    "Authorization: Basic $credentials",
-    "Content-Type: application/json"
-  ]);
-  curl_setopt($ch, CURLOPT_POSTFIELDS, '{}');
+$TOKEN_FILE    = __DIR__ . '/token.cache.json';
+$TOKEN_TTL_SEC = 55 * 60; // 55분 캐시
 
-  $response = curl_exec($ch);
-  $err = curl_error($ch);
-  curl_close($ch);
+$TOKEN_URL = 'https://message.ppurio.com/v1/token';
+$SEND_URL  = 'https://message.ppurio.com/v1/kakao';
 
-  if ($err) { http_response_code(500); echo json_encode(["error"=>"토큰 발급 오류","detail"=>$err]); exit; }
-
-  $result = json_decode($response, true);
-  if (!isset($result['token'])) { http_response_code(500); echo json_encode(["error"=>"토큰 응답 오류","response"=>$response]); exit; }
-
-  file_put_contents($tokenFile, json_encode([
-    'token'      => $result['token'],
-    'created_at' => date("Y-m-d H:i:s")
-  ]));
-
-  return $result['token'];
-}
-
-function formatPhone($number) {
-  $num = preg_replace('/[^0-9]/', '', $number);
+function formatPhone($number){
+  $num = preg_replace('/[^0-9]/', '', (string)$number);
   if ($num && $num[0] !== '0') $num = '0' . $num;
   return $num;
 }
-
-function formatKRW($v) {
-  // "145000" -> "145,000원"
+function formatKRW($v){
   if ($v === null || $v === '') return '';
   if (is_numeric($v)) return number_format((float)$v) . '원';
-  // 숫자가 아닌 문자열이 들어오면 숫자만 추출 후 포맷
-  $n = preg_replace('/[^0-9.]/', '', $v);
-  if ($n === '') return $v;
+  $n = preg_replace('/[^0-9.]/', '', (string)$v);
+  if ($n === '') return (string)$v;
   return number_format((float)$n) . '원';
 }
 
-/** ====== 입력 파라미터 ======
- *  GAS에서 보내는 JSON 구조 (예시):
- *  {
- *    "name":"홍길동",
- *    "to":"01012345678",
- *    "bookingId":"384219",
- *    "date":"2025-09-17",
- *    "time":"07:30",
- *    "course":"Out / IN",
- *    "fee":"145000",
- *    "note":"카트 희망"
- *  }
- */
-$input = json_decode(file_get_contents("php://input"), true);
+function getPpurioToken($accountId, $authKey, $tokenFile, $ttlSec, $tokenUrl){
+  if (file_exists($tokenFile)){
+    $data = json_decode(file_get_contents($tokenFile), true);
+    if (!empty($data['token']) && !empty($data['created_at'])){
+      if (time() - strtotime($data['created_at']) < $ttlSec){
+        return $data['token'];
+      }
+    }
+  }
+  $basic = base64_encode($accountId . ':' . $authKey);
+  $ch = curl_init($tokenUrl);
+  curl_setopt_array($ch, [
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_POST           => true,
+    CURLOPT_HTTPHEADER     => [ 'Authorization: Basic ' . $basic, 'Content-Type: application/json; charset=utf-8' ],
+    CURLOPT_POSTFIELDS     => '{}',
+  ]);
+  $res  = curl_exec($ch);
+  $err  = curl_error($ch);
+  $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+  curl_close($ch);
+  if ($err) throw new Exception('토큰 요청 오류: ' . $err);
+  $json = json_decode($res, true);
+  if ($code !== 200 || empty($json['token'])){
+    throw new Exception('토큰 응답 오류(' . $code . '): ' . $res);
+  }
+  file_put_contents($tokenFile, json_encode([
+    'token'      => $json['token'],
+    'created_at' => date('Y-m-d H:i:s')
+  ], JSON_UNESCAPED_UNICODE));
+  return $json['token'];
+}
+
+// ===== 입력 =====
+$input = json_decode(file_get_contents('php://input'), true);
 $name      = trim($input['name']      ?? '');
 $to        = trim($input['to']        ?? '');
 $bookingId = trim($input['bookingId'] ?? '');
@@ -89,94 +77,83 @@ $course    = trim($input['course']    ?? '');
 $fee       = trim($input['fee']       ?? '');
 $note      = trim($input['note']      ?? '');
 
-if (!$name || !$to || !$bookingId || !$date || !$time || !$course) {
+if (!$name || !$to || !$bookingId || !$date || !$time || !$course){
   http_response_code(400);
-  echo json_encode(["error"=>"필수값 누락(name,to,bookingId,date,time,course)"]);
+  echo json_encode(['error' => '필수값 누락(name,to,bookingId,date,time,course)'], JSON_UNESCAPED_UNICODE);
   exit;
 }
 
-// 수신자(신청자)
-$userTarget = [[
-  "to" => formatPhone($to),
-  "name" => $name,
-  // ※ 템플릿 변수: [*1*]~[*6*] (이름 제외, 6개만 사용)
-  "changeWord" => [
-    "var1" => $bookingId,           // [*1*] 예약번호
-    "var2" => $date,                // [*2*] 이용일자
-    "var3" => $time,                // [*3*] 이용시간
-    "var4" => $course,              // [*4*] 예약 코스
-    "var5" => formatKRW($fee),      // [*5*] 그린피
-    "var6" => ($note !== '' ? $note : '-') // [*6*] 특이사항
+$targets = [];
+$targets[] = [
+  'to'   => formatPhone($to),
+  'name' => $name,
+  // ALT: changeWord에 var1..varN 사용
+  'changeWord' => [
+    'var1' => $bookingId,
+    'var2' => $date,
+    'var3' => $time,
+    'var4' => $course,
+    'var5' => formatKRW($fee),
+    'var6' => ($note !== '' ? $note : '-')
   ]
-]];
+];
 
-// 평일 08~22시엔 관리자도 동보
-$now = new DateTime("now", new DateTimeZone("Asia/Seoul"));
-$day = (int)$now->format('N');   // 1(월)~7(일)
-$hour = (int)$now->format('G');  // 0~23
-$isWorkTime = ($day >= 1 && $day <= 5 && $hour >= 8 && $hour < 22);
-
-$staffTargets = [];
-if ($isWorkTime) {
-  $staffTargets = [
-/*     [
-      "to" => formatPhone("01063542163"),
-      "name" => "[담당자] $name",
-      "changeWord" => [
-        "var1" => $bookingId,
-        "var2" => $date,
-        "var3" => $time,
-        "var4" => $course,
-        "var5" => formatKRW($fee),
-        "var6" => ($note !== '' ? $note : '-')
-      ]
-    ], */
-    [
-      "to" => formatPhone("01071186639"),
-      "name" => "[책임자] $name",
-      "changeWord" => [
-        "var1" => $bookingId,
-        "var2" => $date,
-        "var3" => $time,
-        "var4" => $course,
-        "var5" => formatKRW($fee),
-        "var6" => ($note !== '' ? $note : '-')
-      ]
+// 평일 08~22시 관리자 동보
+$now = new DateTime('now', new DateTimeZone('Asia/Seoul'));
+$day = (int)$now->format('N');
+$hour= (int)$now->format('G');
+if ($day >= 1 && $day <= 5 && $hour >= 8 && $hour < 22){
+  $targets[] = [
+    'to'   => formatPhone('01071186639'),
+    'name' => '[책임자] ' . $name,
+    'changeWord' => [
+      'var1' => $bookingId,
+      'var2' => $date,
+      'var3' => $time,
+      'var4' => $course,
+      'var5' => formatKRW($fee),
+      'var6' => ($note !== '' ? $note : '-')
     ]
   ];
 }
 
-$targets = array_merge($userTarget, $staffTargets);
+// ===== 토큰 =====
+try {
+  $token = getPpurioToken($ACCOUNT_ID, $AUTH_KEY, $TOKEN_FILE, $TOKEN_TTL_SEC, $TOKEN_URL);
+} catch (Exception $e){
+  http_response_code(500);
+  echo json_encode(['error' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
+  exit;
+}
 
-// 요청 페이로드
+// ===== 발송 페이로드 (senderProfile 필수) =====
 $payload = [
-  "account"       => $accountId,
-  "messageType"   => "ALT",
-  "senderProfile" => $senderProfile,
-  "templateCode"  => $templateCode,
-  "duplicateFlag" => "Y",
-  "isResend"      => "N",
-  "targetCount"   => count($targets),
-  "targets"       => $targets,
-  "refKey"        => "alt_" . time()
+  'account'       => $ACCOUNT_ID,
+  'messageType'   => 'ALT',            // Ppurio 문서 기준 알림톡 코드
+  'senderProfile' => $SENDER_PROFILE,  // 예: '@cu03247'
+  'templateCode'  => $TEMPLATE_CODE,
+  'duplicateFlag' => 'Y',
+  'isResend'      => 'N',
+  'targetCount'   => count($targets),
+  'targets'       => $targets,
+  'refKey'        => 'alt_' . time(),
 ];
 
-$token = getValidToken($accountId, $authKey, $tokenFile, $tokenExpireMinutes);
-
-// 전송
-$ch = curl_init("https://message.ppurio.com/v1/kakao");
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_POST, true);
-curl_setopt($ch, CURLOPT_HTTPHEADER, [
-  "Authorization: Bearer $token",
-  "Content-Type: application/json; charset=utf-8"
+$ch = curl_init($SEND_URL);
+curl_setopt_array($ch, [
+  CURLOPT_RETURNTRANSFER => true,
+  CURLOPT_POST           => true,
+  CURLOPT_HTTPHEADER     => [
+    'Authorization: Bearer ' . $token,
+    'Content-Type: application/json; charset=utf-8'
+  ],
+  CURLOPT_POSTFIELDS     => json_encode($payload, JSON_UNESCAPED_UNICODE),
 ]);
-curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload, JSON_UNESCAPED_UNICODE));
 $response = curl_exec($ch);
-$err = curl_error($ch);
+$err      = curl_error($ch);
 $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 curl_close($ch);
 
-if ($err) { http_response_code(500); echo json_encode(["error"=>$err]); exit; }
+if ($err) { http_response_code(500); echo json_encode(['error'=>$err], JSON_UNESCAPED_UNICODE); exit; }
 http_response_code($httpCode);
 echo $response;

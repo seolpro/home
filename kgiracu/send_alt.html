@@ -182,7 +182,7 @@ copyBtn.addEventListener("click", async () => {
       submitBtn.innerText = "📤 전송 중...";
 
       try {
-        const res = await fetch("https://kgiracu.mycafe24.com/send_alt.php", {
+        const res = await fetch("https://ajoucu.mycafe24.com/send_alt.php", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ name, to, var1, var3, var4, var2 })
