@@ -14,6 +14,7 @@ const CONFIG = {
   FILE: { store: 'url' } // 'url' | 'id' | 'json'
 };
 
+
 /** ========= COMMON UTIL ========= */
 function getSS_() {
   return CONFIG.SHEET_ID ? SpreadsheetApp.openById(CONFIG.SHEET_ID)
@@ -832,9 +833,8 @@ function notifyOnSubmit_(formKey, payload, savedRow) {
 }
 
 /** ========= 이메일 발송 ========= */
-
 function sendEmailNotification_(formKey, payload, savedRow, CFG) {
-  const subject = (CFG.EMAIL_SUBJECT_PREFIX || '') + formKey;
+  const subject = (CFG.EMAIL_SUBJECT_PREFIX || '') + formKey;   // 이메일 제목
   const html = buildEmailHtml_(formKey, payload, savedRow);
 
   // 1) 이메일 발송
@@ -845,13 +845,18 @@ function sendEmailNotification_(formKey, payload, savedRow, CFG) {
     name: CFG.EMAIL_SENDER_NAME || '폼 알림'
   });
 
-  // 2) 이메일 성공 후 테스트 알림톡 발송 (payload에서 성명/연락처 추출)
+  // 2) 같은 제목을 var1로 써서 알림톡도 발송
   try {
-    sendAltInlineFromPayload_(payload);
+    // 만약 제목 앞접두어(예: [알림])를 var1에 빼고 싶으면 아래 주석 해제
+    // const titleForAlt = subject.replace(CFG.EMAIL_SUBJECT_PREFIX || '', '').trim();
+    const titleForAlt = subject;
+
+    sendAltInlineFromPayload_(payload, titleForAlt); // ← 제목 전달
   } catch (e) {
     console.error('[ALT_TEST] 실패:', e);
   }
 }
+
 
 /** ========= 이메일 HTML ========= */
 function buildEmailHtml_(formKey, payload, savedRow) {
@@ -888,36 +893,43 @@ function buildEmailHtml_(formKey, payload, savedRow) {
  * - payload에서 성명/연락처를 추출해 고정 계정으로 ALT 발송
  * - 템플릿 변수는 var1/var2/var3 사용
  */
-function sendAltInlineFromPayload_(payload) {
-  // 고정값(운영 시 Script Properties 권장)
+
+/** ========= 테스트 알림톡(인라인) =========
+ * - payload에서 성명/연락처 추출
+ * - titleForAlt(이메일 제목)를 var1로 사용
+ */
+function sendAltInlineFromPayload_(payload, titleForAlt) {
+  // 고정 설정(필요시 Script Properties로 이동 권장)
   const RELAY_URL      = 'https://ajoucu.mycafe24.com/relay_alimtalk.php';
   const ACCOUNT        = 'ajou9770';
   const AUTH_KEY       = '7bfe9eefc98c868431e0c3ca58c534ea37bbea9174a311c90be09636502ee296';
   const SENDER_PROFILE = '@아주대의료원신협';
   const TEMPLATE_CODE  = 'ppur_2025082420111632533837508';
-  const VAR1_TITLE     = '**** 신청서'; // var1 고정
 
-  // payload에서 성명/연락처 얻기
+  // 제목: 이메일에서 받은 값 사용(없으면 안전한 기본값)
+  const VAR1_TITLE = String(titleForAlt || '**** 신청서');
+
+  // payload에서 성명/연락처 추출
   const nameRaw = pickNameFromPayload_(payload) || '';
   let phoneRaw  = pickPhoneFromPayload_(payload, '') || '';
 
-  // 연락처: 숫자만
+  // 연락처는 숫자만
   phoneRaw = String(phoneRaw).replace(/[^\d]/g, '');
   if (!nameRaw || !phoneRaw) {
     console.warn('[ALT_TEST] 이름/연락처 누락으로 발송 생략', { nameRaw, phoneRaw });
     return;
   }
 
-  // 템플릿 변수 매핑 (객체 형태)
+  // ※ 이름 앞에 [알림톡 알림 샘플]을 붙이는 처리는 PHP에서 normalize_change_word()로 보장하는 것을 권장
+  //   (GAS에서 붙이면 PHP에서도 붙일 때 중복될 수 있음)
   const changeWord = {
-    var1: VAR1_TITLE,     // 제목/고정문구
-    var2: nameRaw,        // 신청자 성명
-    var3: phoneRaw        // 신청자 연락처(숫자만)
+    var1: VAR1_TITLE,  // 이메일 제목 → var1
+    var2: nameRaw,     // 이름 → var2 (PHP에서 접두사 붙이도록 구성)
+    var3: phoneRaw     // 연락처 → var3
   };
 
-  // 릴레이 요청 바디
   const body = {
-    title        : VAR1_TITLE,
+    title        : VAR1_TITLE,    // PHP로도 넘겨 둡니다(서버단 기본값/로그용)
     name         : nameRaw,
     to           : phoneRaw,
     account      : ACCOUNT,
@@ -941,5 +953,4 @@ function sendAltInlineFromPayload_(payload) {
     throw new Error('ALT 릴레이 HTTP ' + code + ' ' + text);
   }
 }
-
 
