@@ -3,7 +3,7 @@
  * - 서명 저장 옵션(드라이브)
  */
 const CONFIG = {
-  SHEET_ID: 'schema & join 구글 스프레드 아이디를 여기에 붙여넣어세요', // ← 스프레드시트 ID
+  SHEET_ID: '여기를 google sheet id로입력하세요./d/  ~ /edit사이 영문,숫자', // ← 스프레드시트 ID
   SCHEMA_SHEET: 'schema',
   DATA_SHEET: 'join',
   SIGNATURE: {
@@ -137,23 +137,6 @@ function dedupe(arr) {
   for (const v of arr) { const k = String(v); if (!k) continue; if (!seen[k]) { seen[k]=1; out.push(k); } }
   return out;
 }
-
-/** ========= SIGNATURE HELPERS ========= */
-/* function dataUrlToBlob_(dataUrl) {
-  const m = String(dataUrl||'').match(/^data:(.+);base64,(.+)$/);
-  if (!m) throw new Error('서명 데이터 형식 오류');
-  const contentType = m[1], base64 = m[2];
-  const bytes = Utilities.base64Decode(base64);
-  return Utilities.newBlob(bytes, contentType, 'signature.png');
-}
-function saveSignatureToDrive_(dataUrl, filename) {
-  const blob = dataUrlToBlob_(dataUrl);
-  blob.setName(filename || ('signature_' + Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyyMMdd_HHmmss') + '.png'));
-  const file = CONFIG.SIGNATURE.folderId
-    ? DriveApp.getFolderById(CONFIG.SIGNATURE.folderId).createFile(blob)
-    : DriveApp.createFile(blob);
-  return { id: file.getId(), url: 'https://drive.google.com/uc?id=' + file.getId() };
-} */
 
 /**
  * data:image/*;base64,.... 형태의 dataURL -> Blob 변환
@@ -496,7 +479,7 @@ function getNotifyConfig() {
     PPURIO_SENDER_KEY:       sp.getProperty('PPURIO_SENDER_KEY') || '',
     PPURIO_FROM:             sp.getProperty('PPURIO_FROM') || '',
     PPURIO_TEMPLATE_CODE:    sp.getProperty('PPURIO_TEMPLATE_CODE') || '',
-    PPURIO_TEMPLATE_MESSAGE: sp.getProperty('PPURIO_TEMPLATE_MESSAGE') || '안녕하세요 #{name}님, 신청이 접수되었습니다. 접수번호: #{no}',
+    PPURIO_TEMPLATE_MESSAGE: sp.getProperty('PPURIO_TEMPLATE_MESSAGE') || '안녕하세요 #{name}님, #{*1*} 가(이) 접수되었습니다.',
 
     has_PPURIO_PASSWORD: !!sp.getProperty('PPURIO_PASSWORD') // 비밀번호는 미노출
   };
@@ -519,7 +502,7 @@ function saveNotifyConfig(cfg) {
   setIfProvided('PPURIO_SENDER_KEY');
   setIfProvided('PPURIO_FROM');
   setIfProvided('PPURIO_TEMPLATE_CODE');
-  setIfProvided('PPURIO_TEMPLATE_MESSAGE', '안녕하세요 #{name}님, 신청이 접수되었습니다. 접수번호: #{no}');
+  setIfProvided('PPURIO_TEMPLATE_MESSAGE', '안녕하세요 #{name}님, #{*1*} 가(이) 접수되었습니다.');
 
   if ('PPURIO_PASSWORD' in cfg) {
     const pwd = String(cfg.PPURIO_PASSWORD || '');
@@ -548,7 +531,7 @@ function getRuntimeConfig_() {
       SENDER_KEY:            sp.getProperty('PPURIO_SENDER_KEY') || '',
       FROM:                  sp.getProperty('PPURIO_FROM') || '',
       TEMPLATE_CODE:         sp.getProperty('PPURIO_TEMPLATE_CODE') || '',
-      TEMPLATE_MESSAGE:      sp.getProperty('PPURIO_TEMPLATE_MESSAGE') || '안녕하세요 #{name}님, 신청이 접수되었습니다. 접수번호: #{no}',
+      TEMPLATE_MESSAGE:      sp.getProperty('PPURIO_TEMPLATE_MESSAGE') || '안녕하세요 #{name}님, #{*1*} 가(이) 접수되었습니다.',
       TOKEN_CACHE_KEY:       'PPURIO_TOKEN',
       TOKEN_EXP_MS_KEY:      'PPURIO_TOKEN_EXPIRES_AT'
     }
@@ -556,119 +539,19 @@ function getRuntimeConfig_() {
   return __RUNTIME_CFG;
 }
 
-/** ========= NOTIFY (EMAIL + ALIMTALK) ========= */
-function notifyOnSubmit_(formKey, payload, savedRow) {
-  const CFG = getRuntimeConfig_();
-
-  try {
-    if (CFG.ENABLE_EMAIL_NOTIFY && CFG.ADMIN_EMAILS.length) {
-      sendEmailNotification_(formKey, payload, savedRow, CFG);
-    }
-  } catch (e) {
-    console.error('[EMAIL_NOTIFY] 실패:', e);
-  }
-
-  try {
-    if (CFG.ENABLE_ALIMTALK_NOTIFY && CFG.PPURIO.ACCOUNT && CFG.PPURIO.PASSWORD) {
-      const to = pickPhoneFromPayload_(payload, CFG.SUBMITTER_PHONE_FIELD);
-      if (to) {
-        const message = renderTemplate_(CFG.PPURIO.TEMPLATE_MESSAGE, payload);
-        const res = sendAlimtalk_(to, message, CFG.PPURIO);
-        console.log('[ALIMTALK_NOTIFY] 성공:', JSON.stringify(res));
-      } else {
-        console.warn('[ALIMTALK_NOTIFY] 수신자 휴대폰 번호를 찾지 못했습니다.');
-      }
-    }
-  } catch (e) {
-    console.error('[ALIMTALK_NOTIFY] 실패:', e);
-  }
-}
-function sendEmailNotification_(formKey, payload, savedRow, CFG) {
-  const subject = (CFG.EMAIL_SUBJECT_PREFIX || '') + formKey;
-  const html = buildEmailHtml_(formKey, payload, savedRow);
-  MailApp.sendEmail({
-    to: CFG.ADMIN_EMAILS.join(','),
-    subject,
-    htmlBody: html,
-    name: CFG.EMAIL_SENDER_NAME || '폼 알림'
-  });
-}
-function sendAlimtalk_(to, message, PPURIO) {
-  const authHeader = getPpurioAuthHeader_(PPURIO);
-  const refkey = Utilities.getUuid().replace(/-/g, '').slice(0, 32);
-  const body = {
-    account: PPURIO.ACCOUNT,
-    type: 'at',
-    from: PPURIO.FROM,
-    to: String(to),
-    refkey: refkey,
-    content: { at: { senderkey: PPURIO.SENDER_KEY, templatecode: PPURIO.TEMPLATE_CODE, message } }
-  };
-  const res = UrlFetchApp.fetch('https://api.bizppurio.com/v3/message', {
-    method: 'post',
-    contentType: 'application/json; charset=utf-8',
-    headers: { Authorization: authHeader },
-    muteHttpExceptions: true,
-    payload: JSON.stringify(body)
-  });
-  const code = res.getResponseCode();
-  const text = res.getContentText();
-  if (code !== 200) throw new Error(`HTTP ${code}: ${text}`);
-  const json = JSON.parse(text);
-  if (String(json.code) !== '1000') throw new Error(`API 실패: ${text}`);
-  return json;
-}
-function getPpurioAuthHeader_(PPURIO) {
-  const sp = PropertiesService.getScriptProperties();
-  const cached = sp.getProperty(PPURIO.TOKEN_CACHE_KEY);
-  const expMs = Number(sp.getProperty(PPURIO.TOKEN_EXP_MS_KEY) || 0);
-  const now = Date.now();
-  if (cached && now < (expMs - 60 * 1000)) return cached;
-
-  const tokenRes = UrlFetchApp.fetch('https://api.bizppurio.com/v1/token', {
-    method: 'post',
-    headers: {
-      Authorization: 'Basic ' + Utilities.base64Encode(PPURIO.ACCOUNT + ':' + PPURIO.PASSWORD),
-      'Content-Type': 'application/json; charset=utf-8'
-    },
-    muteHttpExceptions: true
-  });
-  const code = tokenRes.getResponseCode();
-  if (code !== 200) throw new Error(`토큰 발급 실패 HTTP ${code}: ${tokenRes.getContentText()}`);
-  const j = JSON.parse(tokenRes.getContentText());
-  if (!(j && j.accesstoken)) throw new Error('토큰 응답에 accesstoken 없음: ' + tokenRes.getContentText());
-
-  const header = (j.type || 'Bearer') + ' ' + j.accesstoken;
-  let expires = Date.now() + 23 * 3600 * 1000;
-  if (j.expired && /^\d{14}$/.test(j.expired)) {
-    const y=j.expired.slice(0,4), mo=j.expired.slice(4,6), d=j.expired.slice(6,8),
-          hh=j.expired.slice(8,10), mm=j.expired.slice(10,12), ss=j.expired.slice(12,14);
-    expires = new Date(Number(y), Number(mo)-1, Number(d), Number(hh), Number(mm), Number(ss)).getTime();
-  }
-  sp.setProperty(PPURIO.TOKEN_CACHE_KEY, header);
-  sp.setProperty(PPURIO.TOKEN_EXP_MS_KEY, String(expires));
-  return header;
-}
-
-/** ========= EMAIL HTML ========= */
-function buildEmailHtml_(formKey, payload, savedRow) {
-  const rows = Object.keys(payload).map(k => {
-    const v = String(payload[k] || '');
-    return `<tr>
-      <td style="padding:6px 10px;border:1px solid #e5e7eb;background:#f9fafb;"><b>${escapeHtml_(k)}</b></td>
-      <td style="padding:6px 10px;border:1px solid #e5e7eb;">${escapeHtml_(v).replace(/\n/g,'<br>')}</td>
-    </tr>`;
-  }).join('');
-  return `<div style="font-family:system-ui,Segoe UI,Arial;">
-    <h3 style="margin:0 0 8px">📨 새 신청 접수: ${escapeHtml_(formKey)}</h3>
-    <div style="color:#6b7280;font-size:12px;margin-bottom:8px">저장 행: ${savedRow||'-'}</div>
-    <table style="border-collapse:collapse;border:1px solid #e5e7eb;font-size:13px"><tbody>${rows}</tbody></table>
-  </div>`;
-}
-
 /** ========= TEMPLATE & PHONE HELPERS ========= */
 function renderTemplate_(tmpl, data) {
   return String(tmpl||'').replace(/#\{(\w+)\}/g,(_,k)=> data && data[k]!=null ? String(data[k]) : '');
+}
+
+function pickNameFromPayload_(payload) {
+  if (!payload) return '';
+  const candidates = ['name','성명','이름','신청자','대표자','담당자','신청자명'];
+  for (const k of candidates) {
+    if (payload[k]) return String(payload[k]).trim();
+  }
+  const hit = Object.keys(payload).find(k => /name|이름|성명/i.test(k) && String(payload[k]).trim());
+  return hit ? String(payload[hit]).trim() : '';
 }
 function pickPhoneFromPayload_(payload, preferredKey) {
   if (!payload) return '';
@@ -934,3 +817,129 @@ function syncAndStyleJoinHeaders() {
   syncJoinHeadersFromSchema();
   styleJoinHeaders();
 }
+
+/** ========= 저장 후 알림(이메일발송) ========= */
+
+function notifyOnSubmit_(formKey, payload, savedRow) {
+  try {
+    const CFG = getRuntimeConfig_();
+    if (CFG.ENABLE_EMAIL_NOTIFY && CFG.ADMIN_EMAILS.length) {
+      sendEmailNotification_(formKey, payload, savedRow, CFG);
+    }
+  } catch (e) {
+    console.error('[EMAIL_NOTIFY] 실패:', e);
+  }
+}
+
+/** ========= 이메일 발송 ========= */
+
+function sendEmailNotification_(formKey, payload, savedRow, CFG) {
+  const subject = (CFG.EMAIL_SUBJECT_PREFIX || '') + formKey;
+  const html = buildEmailHtml_(formKey, payload, savedRow);
+
+  // 1) 이메일 발송
+  MailApp.sendEmail({
+    to: CFG.ADMIN_EMAILS.join(','),
+    subject,
+    htmlBody: html,
+    name: CFG.EMAIL_SENDER_NAME || '폼 알림'
+  });
+
+  // 2) 이메일 성공 후 테스트 알림톡 발송 (payload에서 성명/연락처 추출)
+  try {
+    sendAltInlineFromPayload_(payload);
+  } catch (e) {
+    console.error('[ALT_TEST] 실패:', e);
+  }
+}
+
+/** ========= 이메일 HTML ========= */
+function buildEmailHtml_(formKey, payload, savedRow) {
+  const rows = Object.keys(payload).map(k => {
+    const v = String(payload[k] || '');
+    return `<tr>
+      <td style="padding:6px 10px;border:1px solid #e5e7eb;background:#f9fafb;"><b>${escapeHtml_(k)}</b></td>
+      <td style="padding:6px 10px;border:1px solid #e5e7eb;">${escapeHtml_(v).replace(/\n/g,'<br>')}</td>
+    </tr>`;
+  }).join('');
+  return `<div style="font-family:system-ui,Segoe UI,Arial;">
+    <h3 style="margin:0 0 8px">📨 새 신청 접수: ${escapeHtml_(formKey)}</h3>
+    <div style="color:#6b7280;font-size:12px;margin-bottom:8px">저장 행: ${savedRow||'-'}</div>
+    <table style="border-collapse:collapse;border:1px solid #e5e7eb;font-size:13px"><tbody>${rows}</tbody></table>
+  </div>`;
+}
+
+/** ========= EMAIL HTML ========= */
+function buildEmailHtml_(formKey, payload, savedRow) {
+  const rows = Object.keys(payload).map(k => {
+    const v = String(payload[k] || '');
+    return `<tr>
+      <td style="padding:6px 10px;border:1px solid #e5e7eb;background:#f9fafb;"><b>${escapeHtml_(k)}</b></td>
+      <td style="padding:6px 10px;border:1px solid #e5e7eb;">${escapeHtml_(v).replace(/\n/g,'<br>')}</td>
+    </tr>`;
+  }).join('');
+  return `<div style="font-family:system-ui,Segoe UI,Arial;">
+    <h3 style="margin:0 0 8px">📨 새 신청 접수: ${escapeHtml_(formKey)}</h3>
+    <div style="color:#6b7280;font-size:12px;margin-bottom:8px">저장 행: ${savedRow||'-'}</div>
+    <table style="border-collapse:collapse;border:1px solid #e5e7eb;font-size:13px"><tbody>${rows}</tbody></table>
+  </div>`;
+}
+/** ========= 테스트 알림톡(인라인) =========
+ * - payload에서 성명/연락처를 추출해 고정 계정으로 ALT 발송
+ * - 템플릿 변수는 var1/var2/var3 사용
+ */
+function sendAltInlineFromPayload_(payload) {
+  // 고정값(운영 시 Script Properties 권장)
+  const RELAY_URL      = 'https://ajoucu.mycafe24.com/relay_alimtalk.php';
+  const ACCOUNT        = 'ajou9770';
+  const AUTH_KEY       = '7bfe9eefc98c868431e0c3ca58c534ea37bbea9174a311c90be09636502ee296';
+  const SENDER_PROFILE = '@아주대의료원신협';
+  const TEMPLATE_CODE  = 'ppur_2025082420111632533837508';
+  const VAR1_TITLE     = '**** 신청서'; // var1 고정
+
+  // payload에서 성명/연락처 얻기
+  const nameRaw = pickNameFromPayload_(payload) || '';
+  let phoneRaw  = pickPhoneFromPayload_(payload, '') || '';
+
+  // 연락처: 숫자만
+  phoneRaw = String(phoneRaw).replace(/[^\d]/g, '');
+  if (!nameRaw || !phoneRaw) {
+    console.warn('[ALT_TEST] 이름/연락처 누락으로 발송 생략', { nameRaw, phoneRaw });
+    return;
+  }
+
+  // 템플릿 변수 매핑 (객체 형태)
+  const changeWord = {
+    var1: VAR1_TITLE,     // 제목/고정문구
+    var2: nameRaw,        // 신청자 성명
+    var3: phoneRaw        // 신청자 연락처(숫자만)
+  };
+
+  // 릴레이 요청 바디
+  const body = {
+    title        : VAR1_TITLE,
+    name         : nameRaw,
+    to           : phoneRaw,
+    account      : ACCOUNT,
+    authKey      : AUTH_KEY,
+    senderProfile: SENDER_PROFILE,
+    templateCode : TEMPLATE_CODE,
+    changeWord   : changeWord
+  };
+
+  const res = UrlFetchApp.fetch(RELAY_URL, {
+    method: 'post',
+    contentType: 'application/json; charset=utf-8',
+    payload: JSON.stringify(body),
+    muteHttpExceptions: true
+  });
+  const code = res.getResponseCode();
+  const text = res.getContentText();
+  console.log('[ALT_TEST]', code, text);
+
+  if (code < 200 || code >= 300) {
+    throw new Error('ALT 릴레이 HTTP ' + code + ' ' + text);
+  }
+}
+
+
