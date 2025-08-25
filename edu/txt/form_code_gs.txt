@@ -834,7 +834,7 @@ function notifyOnSubmit_(formKey, payload, savedRow) {
 
 /** ========= 이메일 발송 ========= */
 function sendEmailNotification_(formKey, payload, savedRow, CFG) {
-  const subject = (CFG.EMAIL_SUBJECT_PREFIX || '') + formKey;   // 이메일 제목
+  const subject = (CFG.EMAIL_SUBJECT_PREFIX || '');   // 이메일 제목
   const html = buildEmailHtml_(formKey, payload, savedRow);
 
   // 1) 이메일 발송
