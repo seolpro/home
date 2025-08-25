@@ -2,53 +2,145 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>파일 업로드 & 배포하기</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>📤 TO Host 파일 업로드 (열기/복사/지우기)</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
 <style>
+  :root{ --ring:#86b7fe; }
   body { background:#f8f9fa; }
-  .dropzone { border:2px dashed #ced4da; border-radius:12px; background:#fff; padding:40px; text-align:center; transition:background .15s; }
-  .dropzone.dragover { background:#f1f8ff; }
+  .wrap { max-width: 980px; margin: 40px auto; }
+  .dropzone {
+    border:2px dashed #ced4da; border-radius:14px; background:#fff;
+    padding:40px; text-align:center; transition:background .15s, border-color .15s, box-shadow .15s;
+  }
+  .dropzone.dragover { background:#f1f8ff; border-color:var(--ring); box-shadow:0 0 0 4px rgba(134,183,254,.25); }
+  .file-hint { font-size:12px; color:#6b7280; }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  .progress { height: 16px; }
+  .result-card { border:1px solid #e5e7eb; border-radius:12px; padding:10px 12px; background:#fff; }
+  .btn-icon { padding: .25rem .5rem; }
+  .settings { background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:12px; }
+  .small-muted { font-size:12px; color:#6b7280; }
 </style>
 </head>
-<body class="container py-5">
-  <h3 class="mb-4">📤TO Host 파일 업로드(배포)</h3>
+<body>
+<div class="wrap">
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <h3 class="mb-0">📤 TO Host 파일 업로드</h3>
+    <button id="btnToggleSettings" class="btn btn-sm btn-outline-secondary" aria-expanded="false" aria-controls="settings">⚙️ 설정</button>
+  </div>
 
-  <div id="drop" class="dropzone mb-3">
-    <p class="mb-2">🧩만들어진 [form_****.html]파일을 여기로 파일을 끌어다 놓으세요</p>
-    <p class="text-muted">또는</p>
-    <button id="btnPick" class="btn btn-primary">📤파일 선택</button>
+  <div class="alert alert-info small">
+    업로드 성공 시 결과 카드에 <b>열기</b>와 <b>복사</b> 버튼이 생기며, 상단에 <b>모두 열기</b> 버튼으로 한 번에 확인할 수 있습니다.
+  </div>
+
+  <!-- 설정 -->
+  <div id="settings" class="settings mb-3" hidden>
+    <div class="row g-2">
+      <div class="col-md-8">
+        <label class="form-label">업로드 엔드포인트</label>
+        <!-- 기본값: 기존 사용중이던 upload.php -->
+        <input id="endpoint" class="form-control" value="https://ajoucu.mycafe24.com/upload.php" />
+        <div class="file-hint">서버의 업로드 PHP 파일을 가리킵니다(예: <span class="mono">upload.php</span>, <span class="mono">upload_toroot.php</span> 등).</div>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">업로드 토큰</label>
+        <input id="token" class="form-control" value="f1a7e6c2d47b9a85e3190b1f54c7d63f98e0a24d7b5c63f2d85c7a19e3f04a61" />
+        <div class="file-hint">서버의 <span class="mono">UPLOAD_TOKEN</span>과 일치해야 합니다.</div>
+      </div>
+      <div class="col-12">
+        <label class="form-label mb-1">허용 확장자(선택)</label>
+        <input id="allowedExt" class="form-control" placeholder="예: html,htm,pdf,css,js (비워두면 모두 허용)" />
+        <div class="file-hint">프론트에서 사전 필터링만 합니다. 서버 정책이 최종 판단합니다.</div>
+      </div>
+      <div class="col-12 text-end">
+        <button id="btnSaveSettings" class="btn btn-primary btn-sm">설정 저장</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 드롭존 -->
+  <div id="drop" class="dropzone mb-3" tabindex="0">
+    <p class="mb-2">여기에 파일을 <b>드래그 앤 드롭</b> 하거나</p>
+    <button id="btnPick" class="btn btn-primary">📁 파일 선택</button>
     <input id="fileInput" type="file" multiple hidden />
-  </div>
-  
- <div style="display: none;">
-  <div class="mb-3">
-    <label class="form-label">서버 업로드 URL</label>
-    <input type="text" class="form-control" id="endpoint" value="https://ajoucu.mycafe24.com/upload.php"/>
+    <div class="file-hint mt-2" id="hintExt"></div>
   </div>
 
-  <div class="mb-3">
-    <label class="form-label">업로드 토큰</label>
-    <input type="text" class="form-control" id="token" value="f1a7e6c2d47b9a85e3190b1f54c7d63f98e0a24d7b5c63f2d85c7a19e3f04a61"/>
-    <div class="form-text">※ 토큰은 서버(upload.php)와 동일해야 합니다.</div>
+  <!-- 전체 진행률 -->
+  <div class="progress mb-3" role="progressbar" aria-label="전체 업로드 진행률">
+    <div id="barTotal" class="progress-bar" style="width:0%">0%</div>
   </div>
+
+  <div class="d-flex align-items-center justify-content-between mb-2">
+    <strong>🚀 업로드 완료 후 배포 URL이 아래에 생성됩니다</strong>
+    <div class="d-flex gap-2">
+      <button id="btnClear" class="btn btn-sm btn-outline-secondary">지우기</button>
+      <button id="btnOpenAll" class="btn btn-sm btn-outline-primary" disabled>모두 열기</button>
+    </div>
+  </div>
+
+  <div id="results" class="vstack gap-2"></div>
+
+  <hr class="my-4" />
+  <details>
+    <summary class="small">도움말</summary>
+    <div class="small mt-2">
+      <ul class="mb-2">
+        <li>여러 파일을 동시에 업로드하면 <b>파일별 진행률</b>이 표시됩니다.</li>
+        <li>엔드포인트/토큰/허용 확장자는 브라우저 <b>localStorage</b>에 저장됩니다.</li>
+        <li>서버에서 절대 URL을 내려주지 않으면, <b>엔드포인트의 오리진 + 서버 반환 경로</b>로 URL을 보정합니다.</li>
+      </ul>
+    </div>
+  </details>
 </div>
 
-  <div class="progress mb-3" role="progressbar" aria-label="Upload progress" style="height: 20px;">
-    <div id="bar" class="progress-bar" style="width: 0%;">0%</div>
-  </div>
-  <strong>🚀업로더 후 배포 URL이 아래에 생성됩니다. Click시 바로 연결됨...</strong>
-  <div id="log" class="small"></div>
-
 <script>
-const drop = document.getElementById('drop');
-const fileInput = document.getElementById('fileInput');
-const btnPick = document.getElementById('btnPick');
-const bar = document.getElementById('bar');
-const log = document.getElementById('log');
+/* ===== 요소 ===== */
+const $ = (id) => document.getElementById(id);
+const drop = $('drop');
+const fileInput = $('fileInput');
+const btnPick = $('btnPick');
+const barTotal = $('barTotal');
+const results = $('results');
+const btnClear = $('btnClear');
+const btnOpenAll = $('btnOpenAll');
+const btnToggleSettings = $('btnToggleSettings');
+const settings = $('settings');
+const endpointEl = $('endpoint');
+const tokenEl = $('token');
+const allowedExtEl = $('allowedExt');
+const btnSaveSettings = $('btnSaveSettings');
+const hintExt = $('hintExt');
 
+/* ===== 유틸 ===== */
+function esc(s){ return String(s).replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])); }
+function fmtSize(n){ if(n<1024) return `${n} B`; const kb=n/1024; if(kb<1024) return `${kb.toFixed(1)} KB`; return `${(kb/1024).toFixed(2)} MB`; }
+function updateTotal(p){ const pct = Math.max(0, Math.min(100, p|0)); barTotal.style.width = pct + '%'; barTotal.textContent = pct + '%'; }
+function getAllowed(){ const x = allowedExtEl.value.trim(); return x? x.split(',').map(s=>s.trim().toLowerCase()).filter(Boolean): []; }
+function matchExt(name){ const allow = getAllowed(); if(!allow.length) return true; const m = name.toLowerCase().match(/\.([a-z0-9]+)$/); return m ? allow.includes(m[1]) : false; }
+function saveSettings(){ localStorage.setItem('uploader.endpoint', endpointEl.value.trim()); localStorage.setItem('uploader.token', tokenEl.value.trim()); localStorage.setItem('uploader.allowed', allowedExtEl.value.trim()); }
+function loadSettings(){
+  const ep = localStorage.getItem('uploader.endpoint'); if(ep) endpointEl.value = ep;
+  const tk = localStorage.getItem('uploader.token'); if(tk) tokenEl.value = tk;
+  const al = localStorage.getItem('uploader.allowed'); if(al!=null) allowedExtEl.value = al;
+  hintExt.textContent = allowedExtEl.value.trim()? `허용 확장자: ${allowedExtEl.value}` : '허용 확장자 제한 없음';
+}
+function copyToClipboard(t){ navigator.clipboard?.writeText(t).catch(()=>{}); }
+
+/* ===== UI 바인딩 ===== */
 btnPick.addEventListener('click', () => fileInput.click());
-fileInput.addEventListener('change', () => uploadFiles(fileInput.files));
+fileInput.addEventListener('change', () => handleFiles(fileInput.files));
+
+btnClear.addEventListener('click', () => { results.innerHTML=''; updateTotal(0); btnOpenAll.disabled = true; });
+
+btnToggleSettings.addEventListener('click', () => {
+  const now = settings.hasAttribute('hidden');
+  settings.hidden = !now;
+  btnToggleSettings.setAttribute('aria-expanded', String(now));
+});
+
+btnSaveSettings.addEventListener('click', () => { saveSettings(); loadSettings(); });
 
 ['dragenter','dragover'].forEach(evt => {
   drop.addEventListener(evt, e => { e.preventDefault(); e.stopPropagation(); drop.classList.add('dragover'); });
@@ -57,58 +149,140 @@ fileInput.addEventListener('change', () => uploadFiles(fileInput.files));
   drop.addEventListener(evt, e => { e.preventDefault(); e.stopPropagation(); drop.classList.remove('dragover'); });
 });
 drop.addEventListener('drop', e => {
-  e.preventDefault(); e.stopPropagation(); // ← 기본 열림 방지
+  e.preventDefault(); e.stopPropagation();
   const files = e.dataTransfer.files;
-  if (files && files.length) uploadFiles(files);
+  if (files && files.length) handleFiles(files);
+});
+drop.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.click(); }
 });
 
-function appendLog(html) { log.insertAdjacentHTML('beforeend', `<div>${html}</div>`); }
-function updateProgress(pct) { bar.style.width = pct + '%'; bar.textContent = pct + '%'; }
-function esc(s){return String(s).replace(/[&<>"']/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
-
-async function uploadFiles(files) {
-  const endpoint = document.getElementById('endpoint').value.trim();
-  const token    = document.getElementById('token').value.trim();
-  if (!endpoint || !token) { alert('업로드 URL과 토큰을 확인하세요.'); return; }
-  if (!files || !files.length) return;
-
-  updateProgress(0);
-
-  const fd = new FormData();
-  Array.from(files).forEach(f => fd.append('files[]', f));
-  fd.append('token', token); // 폼필드로 전송(프리플라이트 회피)
-
-  try {
-    const res = await fetch(endpoint, { method:'POST', body: fd }); // 커스텀 헤더 없음
-    const text = await res.text();
-    let data = null; try { data = JSON.parse(text); } catch(e) {}
-    if (!res.ok || !data) {
-      appendLog(`<span class="text-danger">업로드 실패: HTTP ${res.status} / ${esc(text.slice(0,200))}</span>`);
-      return;
-    }
-
-    if (data.ok) {
-      const baseOrigin = new URL(endpoint).origin; // 예: https://ajoucu.mycafe24.com
-      data.results.forEach(r => {
-        if (r.ok) {
-          // 서버가 절대 URL(r.url)을 주면 그걸 사용, 아니면 endpoint 오리진 + r.path로 보정
-          const fileUrl = r.url
-            || (r.path?.startsWith('http') ? r.path : (baseOrigin + r.path));
-          appendLog(`✅ ${esc(r.name)} → <a href="${fileUrl}" target="_blank">${fileUrl}</a> (${(r.size/1024).toFixed(1)} KB)`);
-        } else {
-          appendLog(`❌ ${esc(r.name)} → ${esc(r.error||'unknown')}`);
-        }
-      });
-      updateProgress(100);
-    } else {
-      appendLog(`<span class="text-danger">오류: ${esc(data.error||'unknown')}</span>`);
-    }
-  } catch (err) {
-    appendLog(`<span class="text-danger">네트워크 오류: ${esc(err.message)}</span>`);
-  } finally {
-    fileInput.value = ''; // 같은 파일 재선택 허용
-  }
+/* ===== 업로드(XHR) ===== */
+function createResultRow(file){
+  const row = document.createElement('div');
+  row.className = 'result-card d-flex align-items-center justify-content-between gap-3';
+  row.innerHTML = `
+    <div class="flex-grow-1">
+      <div class="d-flex align-items-center gap-2">
+        <span class="badge text-bg-secondary">${esc(file.type || 'file')}</span>
+        <b>${esc(file.name)}</b>
+        <span class="text-muted small">(${fmtSize(file.size)})</span>
+      </div>
+      <div class="progress mt-2" style="height:10px;">
+        <div class="progress-bar" style="width:0%"></div>
+      </div>
+      <div class="small mt-1 text-muted status">대기 중…</div>
+    </div>
+    <div class="btn-group btn-group-sm" role="group" aria-label="actions">
+      <a class="btn btn-outline-primary btn-open" href="#" target="_blank" rel="noopener" disabled>열기</a>
+      <button class="btn btn-outline-secondary btn-icon btn-copy" disabled>복사</button>
+    </div>
+  `;
+  return row;
 }
+
+function uploadOne(file, endpoint, token, onProgress){
+  return new Promise((resolve) => {
+    const fd = new FormData();
+    fd.append('files[]', file);
+    fd.append('token', token);
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', endpoint, true);
+
+    xhr.upload.onprogress = (evt) => {
+      if (evt.lengthComputable) {
+        const pct = Math.round((evt.loaded / evt.total) * 100);
+        onProgress(pct);
+      }
+    };
+
+    xhr.onload = () => {
+      const ok = xhr.status >= 200 && xhr.status < 300;
+      let data = null; try { data = JSON.parse(xhr.responseText); } catch(_) {}
+      resolve({ ok, status: xhr.status, data, raw: xhr.responseText });
+    };
+
+    xhr.onerror = () => resolve({ ok:false, status:xhr.status || 0, data:null, raw:'' });
+    xhr.send(fd);
+  });
+}
+
+async function handleFiles(fileList){
+  const endpoint = endpointEl.value.trim();
+  const token = tokenEl.value.trim();
+
+  if (!endpoint || !/^https?:\/\//i.test(endpoint)) { alert('업로드 URL을 확인하세요.'); return; }
+  if (!token) { alert('업로드 토큰을 입력하세요.'); return; }
+
+  const files = Array.from(fileList||[]);
+  if (!files.length) return;
+
+  // 확장자 필터
+  const notAllowed = files.filter(f => !matchExt(f.name));
+  if (notAllowed.length){
+    const names = notAllowed.slice(0,5).map(f=>f.name).join(', ') + (notAllowed.length>5 ? '…' : '');
+    if (!confirm(`허용되지 않는 확장자가 있습니다.\n${names}\n그래도 업로드하시겠습니까?`)) return;
+  }
+
+  // UI 생성 + 업로드
+  let done = 0;
+  updateTotal(0);
+  btnOpenAll.disabled = true;
+
+  const uploadedUrls = [];
+
+  for (const file of files){
+    const row = createResultRow(file);
+    const bar = row.querySelector('.progress-bar');
+    const status = row.querySelector('.status');
+    const btnOpen = row.querySelector('.btn-open');
+    const btnCopy = row.querySelector('.btn-copy');
+    results.prepend(row);
+
+    status.textContent = '업로드 중…';
+
+    const res = await uploadOne(file, endpoint, token, (pct) => { bar.style.width = pct + '%'; });
+    done += 1; updateTotal(Math.round(done / files.length * 100));
+
+    if (!res.ok || !res.data || !Array.isArray(res.data.results) || !res.data.ok){
+      bar.classList.add('bg-danger');
+      status.innerHTML = `<span class="text-danger">실패</span> · HTTP ${res.status} · ${esc((res.raw||'').slice(0,120))}`;
+      continue;
+    }
+
+    // 서버는 여러 파일을 받을 수 있으나, 여기선 1개씩 전송 → 첫 항목 사용
+    const item = res.data.results[0] || {};
+    if (item.ok && (item.url || item.path)) {
+      const url = item.url || (new URL(endpoint).origin + (item.path || ''));
+      uploadedUrls.push(url);
+      bar.style.width = '100%';
+      status.innerHTML = `<span class="text-success">완료</span> · <a href="${url}" target="_blank" rel="noopener">${esc(url)}</a>`;
+
+      btnOpen.href = url;
+      btnOpen.removeAttribute('disabled');
+      btnCopy.removeAttribute('disabled');
+      btnCopy.addEventListener('click', () => { copyToClipboard(url); btnCopy.textContent='복사됨'; setTimeout(()=>btnCopy.textContent='복사',1000); });
+
+      btnOpenAll.disabled = false;
+    } else {
+      bar.classList.add('bg-warning');
+      status.innerHTML = `<span class="text-danger">오류</span> · ${esc(item.error || 'unknown')}`;
+    }
+  }
+
+  // 모두 열기
+  btnOpenAll.onclick = () => { uploadedUrls.forEach(u=>window.open(u, '_blank')); };
+}
+
+/* 초기화 */
+function init(){
+  loadSettings();
+  // 접근성: 키보드로도 드롭존에서 선택 가능
+  drop.setAttribute('role','button');
+  drop.setAttribute('aria-label','파일 선택 또는 드래그 앤 드롭');
+}
+init();
 </script>
 </body>
 </html>
