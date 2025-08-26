@@ -834,29 +834,56 @@ function notifyOnSubmit_(formKey, payload, savedRow) {
 
 /** ========= 이메일 발송 ========= */
 function sendEmailNotification_(formKey, payload, savedRow, CFG) {
-  const subject = (CFG.EMAIL_SUBJECT_PREFIX || '');   // 이메일 제목
+  // 0) 방어 코드: CFG 및 필수 필드
+  if (!CFG) throw new Error('CFG is required');
+  const admins = Array.isArray(CFG.ADMIN_EMAILS) ? CFG.ADMIN_EMAILS.filter(Boolean) : [];
+  if (admins.length === 0) throw new Error('CFG.ADMIN_EMAILS is empty');
+
+  // 1) 제목 구성 (접두어 + 폼키/신청자/행번호 등)
+  const prefix = (CFG.EMAIL_SUBJECT_PREFIX || '').trim(); // 예: "[알림]"
+  const applicant = (payload?.name || payload?.applicant || '').trim();
+  const rowLabel = savedRow ? `#${savedRow}` : '';
+  const pieces = [
+    prefix, 
+    formKey || '',
+    applicant ? `- ${applicant}` : '',
+    rowLabel
+  ].filter(Boolean);
+  const subject = pieces.join(' ').replace(/\s+/g, ' ').trim() || '알림';
+
+  // 2) 본문 HTML
   const html = buildEmailHtml_(formKey, payload, savedRow);
 
-  // 1) 이메일 발송
+  // 3) replyTo(있을 때) 설정
+  const replyTo = (payload?.email || payload?.contactEmail || '').trim();
+
   MailApp.sendEmail({
-    to: CFG.ADMIN_EMAILS.join(','),
+    to: admins.join(','),
     subject,
     htmlBody: html,
-    name: CFG.EMAIL_SENDER_NAME || '폼 알림'
+    name: CFG.EMAIL_SENDER_NAME || '폼 알림',
+    ...(replyTo ? { replyTo } : {})
   });
 
-  // 2) 같은 제목을 var1로 써서 알림톡도 발송
+  // 4) 같은 제목을 var1로 사용해 알림톡 발송
   try {
-    // 만약 제목 앞접두어(예: [알림])를 var1에 빼고 싶으면 아래 주석 해제
-    // const titleForAlt = subject.replace(CFG.EMAIL_SUBJECT_PREFIX || '', '').trim();
-    const titleForAlt = subject;
+    // ALT에서 접두어 제거를 원할 경우 옵션화
+    const stripForAlt = !!CFG.STRIP_PREFIX_IN_ALT; // true면 접두어 제거
+    const titleForAlt = stripForAlt && prefix
+      ? subject.replace(new RegExp('^' + escapeRegExp(prefix) + '\\s*'), '').trim()
+      : subject;
 
-    sendAltInlineFromPayload_(payload, titleForAlt); // ← 제목 전달
+    // payload에 name/phone 등이 들어있어야 함
+    sendAltInlineFromPayload_(payload, titleForAlt);
   } catch (e) {
     console.error('[ALT_TEST] 실패:', e);
   }
 }
 
+// 유틸: 정규식 이스케이프
+function escapeRegExp(s) {
+  return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
 
 /** ========= 이메일 HTML ========= */
 function buildEmailHtml_(formKey, payload, savedRow) {
