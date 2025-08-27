@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>행사 만족도 & 현장 추첨</title>
+
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet"/>
+
+  <style>
+    body { background:#f6f8fb; }
+    .card { border-radius:16px; box-shadow: 0 6px 20px rgba(0,0,0,.06); }
+    .navbar-brand b { letter-spacing:.5px; }
+    .required::after { content:" *"; color:#dc3545; }
+    .winner-row { animation: pop .5s ease; }
+    @keyframes pop { from {transform:scale(.98); opacity:.2} to {transform:scale(1); opacity:1} }
+  </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg bg-white border-bottom sticky-top">
+  <div class="container">
+    <a class="navbar-brand" href="#"><b>만족도 조사 & 추첨</b></a>
+    <div class="ms-auto d-flex align-items-center gap-2">
+      <button id="btnAdmin" class="btn btn-outline-dark btn-sm"><i class="bi bi-shield-lock"></i> 관리자</button>
+    </div>
+  </div>
+</nav>
+
+<main class="container my-4">
+  <div class="row g-4">
+    <!-- 만족도 설문 -->
+    <div class="col-12 col-lg-6">
+      <div class="card">
+        <div class="card-body">
+          <h4 class="mb-3">📋 행사 만족도 조사</h4>
+          <form id="frmSurvey" class="needs-validation" novalidate>
+            <div class="mb-3">
+              <label class="form-label required">성명</label>
+              <input type="text" class="form-control" name="name" placeholder="홍길동" required />
+              <div class="invalid-feedback">성명을 입력해주세요.</div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label required">연락처</label>
+              <input type="tel" class="form-control" name="tel" inputmode="numeric" pattern="[0-9\- ]{9,}" placeholder="01012345678" required />
+              <div class="form-text">숫자만 입력해도 됩니다.</div>
+              <div class="invalid-feedback">연락처(숫자)를 입력해주세요.</div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label required">만족도(1~5)</label>
+              <input type="range" class="form-range" name="score" min="1" max="5" value="5" oninput="document.getElementById('scoreOut').textContent=this.value" />
+              <div><b>선택:</b> <span id="scoreOut">5</span> 점</div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">의견(선택)</label>
+              <textarea class="form-control" name="comment" rows="3" placeholder="좋았던 점/아쉬웠던 점을 남겨주세요."></textarea>
+            </div>
+
+            <div class="d-grid">
+              <button id="btnSubmit" class="btn btn-primary btn-lg" type="submit">
+                <span class="spinner-border spinner-border-sm me-2 d-none" id="spSubmit"></span>
+                제출하기
+              </button>
+            </div>
+            <div class="small text-muted mt-2">제출 즉시 서버에 저장됩니다.</div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- 추첨/관리 -->
+    <div class="col-12 col-lg-6">
+      <div class="card">
+        <div class="card-body">
+          <h4 class="mb-3">🎁 현장 추첨</h4>
+
+          <div id="adminLock" class="alert alert-info d-flex justify-content-between align-items-center">
+            <div><i class="bi bi-lock me-1"></i>관리자 모드가 잠겨 있습니다.</div>
+            <button class="btn btn-outline-primary btn-sm" onclick="openAdminPin()">해제</button>
+          </div>
+
+          <div id="adminPanel" class="d-none">
+            <div class="row g-2 align-items-end">
+              <div class="col-6">
+                <label class="form-label">1차 추첨 인원</label>
+                <input type="number" id="firstCount" class="form-control" min="1" value="3">
+              </div>
+              <div class="col-6 d-grid">
+                <button class="btn btn-success" onclick="openDraw('initial')">
+                  <i class="bi bi-trophy-fill me-1"></i> 1차 추첨
+                </button>
+              </div>
+              <div class="col-6 mt-2">
+                <label class="form-label">추가 추첨 인원</label>
+                <input type="number" id="moreCount" class="form-control" min="1" value="1">
+              </div>
+              <div class="col-6 mt-2 d-grid">
+                <button class="btn btn-warning" onclick="openDraw('additional')">
+                  <i class="bi bi-shuffle me-1"></i> 추가 추첨
+                </button>
+              </div>
+            </div>
+
+            <hr class="my-4" />
+
+            <div class="d-flex gap-2 align-items-center mb-2">
+              <button class="btn btn-outline-secondary btn-sm" onclick="refreshStats()"><i class="bi bi-arrow-clockwise"></i> 통계 새로고침</button>
+              <div id="stats" class="small text-muted">참가자/당첨자/잔여: -</div>
+            </div>
+          </div>
+
+          <div>
+            <h6 class="mt-3 mb-2">📜 당첨 결과</h6>
+            <div id="winnerList" class="table-responsive">
+              <table class="table table-sm align-middle mb-0">
+                <thead>
+                  <tr class="table-light">
+                    <th style="width:70px">회차</th>
+                    <th>성명</th>
+                    <th>연락처</th>
+                    <th style="width:140px">시각</th>
+                  </tr>
+                </thead>
+                <tbody id="winnerBody">
+                  <tr><td colspan="4" class="text-muted">아직 당첨자가 없습니다.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- PIN Modal -->
+<div class="modal fade" id="pinModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title">관리자 PIN</h5></div>
+      <div class="modal-body">
+        <input type="password" id="adminPin" class="form-control" placeholder="PIN 입력" />
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+        <button class="btn btn-primary" onclick="unlockAdmin()">확인</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Draw Confirm Modal -->
+<div class="modal fade" id="drawModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title" id="drawTitle">추첨 확인</h5></div>
+      <div class="modal-body">
+        <div id="drawMsg" class="mb-2"></div>
+        <div class="small text-muted">중복 당첨은 자동으로 제외됩니다.</div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline-secondary" data-bs-dismiss="modal">취소</button>
+        <button class="btn btn-primary" id="btnDoDraw" onclick="doDraw()">진행</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index:1080">
+  <div id="toast" class="toast align-items-center text-bg-dark border-0" role="alert">
+    <div class="d-flex">
+      <div class="toast-body" id="toastMsg">처리되었습니다.</div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+    </div>
+  </div>
+</div>
+
+<!-- Bootstrap JS (bundle: Popper 포함) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+  // === 환경설정: 배포된 GAS 웹앱 URL로 교체 ===
+  const GAS_URL = 'https://script.google.com/macros/s/AKfycbz7ftFQYXomdZV6BTgesZtr4oV-9GvMOHoOSRuII2HUt2cbB6c6DEUGywWtV6ENzNRw/exec'; // ← 바꾸세요!
+  // 관리자 PIN은 서버가 검증합니다(클라이언트 보관만 X).
+
+  // ===== 유틸 =====
+  const $ = (sel) => document.querySelector(sel);
+  const toastEl = $('#toast');
+  const toast = new bootstrap.Toast(toastEl);
+  function showToast(msg){ $('#toastMsg').textContent = msg; toast.show(); }
+
+  function onlyDigits(s){ return String(s||'').replace(/[^0-9]/g,''); }
+  function maskName(n){
+    n = String(n||'').trim();
+    if (n.length <= 1) return '*';
+    if (n.length === 2) return n[0] + '*';
+    return n[0] + '*'.repeat(n.length-2) + n[n.length-1];
+  }
+  function formatPhoneDisplay(num){
+    const d = onlyDigits(num);
+    if (d.startsWith('02') && d.length===10) return d.replace(/(\d{2})(\d{4})(\d{4})/, '$1-$2-$3');
+    if (d.length===11) return d.replace(/(\d{3})(\d{4})(\d{4})/, '$1-****-$3');
+    if (d.length===10) return d.replace(/(\d{3})(\d{3})(\d{4})/, '$1-***-$3');
+    return num;
+  }
+
+  // ===== 설문 제출 (POST no-cors) =====
+  const frm = $('#frmSurvey');
+  frm.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    if(!frm.checkValidity()){ frm.classList.add('was-validated'); return; }
+    const btn = $('#btnSubmit'), sp = $('#spSubmit');
+    btn.disabled = true; sp.classList.remove('d-none');
+
+    const formData = new FormData(frm);
+    const payload = {
+      route: 'submit',
+      name: formData.get('name'),
+      tel: formData.get('tel'),
+      score: formData.get('score'),
+      comment: formData.get('comment')
+    };
+
+    try {
+      // GAS POST는 CORS preflight 이슈가 있어 no-cors로 전송(서버에는 저장됨)
+      // 수정: URLSearchParams 로 간단 POST (no-cors 안전)
+const params = new URLSearchParams(payload);
+await fetch(GAS_URL, {
+  method: 'POST',
+  mode: 'no-cors',
+  body: params
+});
+      showToast('제출되었습니다. 참여해 주셔서 감사합니다!');
+      frm.reset(); $('#scoreOut').textContent = '5';
+      refreshStats(); loadWinners();
+    } catch(err){
+      console.error(err);
+      showToast('제출 중 오류가 발생했습니다.');
+    } finally {
+      btn.disabled = false; sp.classList.add('d-none');
+    }
+  });
+
+  // ===== 관리자/추첨 =====
+  let adminUnlocked = false;
+  let adminPinCache = '';
+  function openAdminPin(){
+    new bootstrap.Modal($('#pinModal')).show();
+    $('#adminPin').focus();
+  }
+  async function unlockAdmin(){
+    adminPinCache = $('#adminPin').value || '';
+    // 서버에 핀 검증 겸 ping
+    const u = new URL(GAS_URL);
+    u.searchParams.set('route','stats');
+    u.searchParams.set('pin', adminPinCache);
+    try {
+      const r = await fetch(u, {method:'GET'});
+      const j = await r.json();
+      if(j && j.ok){
+        adminUnlocked = true;
+        $('#adminPanel').classList.remove('d-none');
+        $('#adminLock').classList.add('d-none');
+        bootstrap.Modal.getInstance($('#pinModal')).hide();
+        showToast('관리자 모드 해제되었습니다.');
+        refreshStats();
+      } else {
+        showToast('PIN이 올바르지 않습니다.');
+      }
+    } catch {
+      showToast('네트워크 오류 또는 PIN 오류입니다.');
+    }
+  }
+
+  let drawType = 'initial';
+  function openDraw(type){
+    drawType = type;
+    const cnt = (type==='initial') ? Number($('#firstCount').value||0) : Number($('#moreCount').value||0);
+    if(cnt<=0){ showToast('인원수를 올바르게 입력하세요.'); return; }
+    $('#drawTitle').textContent = (type==='initial') ? '1차 추첨 진행' : '추가 추첨 진행';
+    $('#drawMsg').innerHTML = `선정 인원: <b>${cnt}</b>명<br>진행할까요?`;
+    new bootstrap.Modal($('#drawModal')).show();
+  }
+
+  async function doDraw(){
+    const cnt = (drawType==='initial') ? Number($('#firstCount').value||0) : Number($('#moreCount').value||0);
+    const u = new URL(GAS_URL);
+    u.searchParams.set('route','draw');
+    u.searchParams.set('type', drawType);
+    u.searchParams.set('count', String(cnt));
+    u.searchParams.set('pin', adminPinCache);
+    try {
+      $('#btnDoDraw').disabled = true;
+      const r = await fetch(u, {method:'GET'});
+      const j = await r.json();
+      if(!j || !j.ok){ showToast(j?.msg || '추첨 실패'); return; }
+      bootstrap.Modal.getInstance($('#drawModal')).hide();
+      showToast(`추첨 완료! (${j.items.length}명)`);
+      appendWinners(j.items);
+      refreshStats();
+    } catch(err){
+      console.error(err);
+      showToast('추첨 중 오류가 발생했습니다.');
+    } finally {
+      $('#btnDoDraw').disabled = false;
+    }
+  }
+
+  // ===== 결과/통계 표시 =====
+  function appendWinners(list){
+    const tb = $('#winnerBody');
+    if(!list || !list.length) return;
+    if(tb.children.length===1 && tb.children[0].children.length===1){
+      tb.innerHTML = '';
+    }
+    for(const w of list){
+      const tr = document.createElement('tr');
+      tr.className = 'winner-row';
+      tr.innerHTML = `
+        <td>${w.batch||'-'}</td>
+        <td>${w.maskedName}</td>
+        <td>${w.maskedTel}</td>
+        <td>${w.ts||''}</td>
+      `;
+      tb.prepend(tr);
+    }
+  }
+
+  async function loadWinners(){
+    const u = new URL(GAS_URL);
+    u.searchParams.set('route','winners');
+    const r = await fetch(u);
+    const j = await r.json().catch(()=>null);
+    const tb = $('#winnerBody');
+    tb.innerHTML = '';
+    if(!j || !j.items || !j.items.length){
+      tb.innerHTML = '<tr><td colspan="4" class="text-muted">아직 당첨자가 없습니다.</td></tr>';
+      return;
+    }
+    j.items.forEach(w=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${w.batch||'-'}</td>
+        <td>${w.maskedName}</td>
+        <td>${w.maskedTel}</td>
+        <td>${w.ts||''}</td>
+      `;
+      tb.append(tr);
+    });
+  }
+
+  async function refreshStats(){
+    const u = new URL(GAS_URL);
+    u.searchParams.set('route','stats');
+    if(adminPinCache) u.searchParams.set('pin', adminPinCache);
+    try {
+      const r = await fetch(u);
+      const j = await r.json();
+      if(j && j.ok){
+        $('#stats').textContent = `참가자 ${j.participants}명 / 당첨자 ${j.winners}명 / 잔여 ${j.remaining}명`;
+      }
+    } catch{}
+  }
+
+  // 초기 로딩
+  window.addEventListener('DOMContentLoaded', ()=>{
+    loadWinners();
+    refreshStats();
+    $('#btnAdmin').addEventListener('click', openAdminPin);
+  });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
