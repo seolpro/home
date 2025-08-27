@@ -359,14 +359,14 @@ function ensureButtons() {
     const wrap = document.createElement('div');
     wrap.className = 'mt-3 d-flex gap-2 align-items-center';
     wrap.innerHTML = `
-      <button id="submitBtn" class="btn btn-primary">${META.submitText || '제출'}</button>
+      <button id="submitBtn" class="btn btn-primary">${META.submitText || '✅신청(제출)하기'}</button>
       <button id="resetBtn" class="btn btn-outline-secondary" type="button">초기화</button>
       <span id="statusMsg" class="ms-2 small text-muted"></span>
     `;
     area.appendChild(wrap);
   } else {
     const sb = area.querySelector('#submitBtn');
-    if (sb) sb.textContent = META.submitText || '제출';
+    if (sb) sb.textContent = META.submitText || '✅신청(제출)하기';
   }
 
   document.getElementById('submitBtn').onclick = submitForm;
