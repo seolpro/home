@@ -3,7 +3,7 @@
  * - 서명 저장 옵션(드라이브)
  */
 const CONFIG = {
-  SHEET_ID: '여기를 google sheet id로입력하세요./d/  ~ /edit사이 영문,숫자', // ← 스프레드시트 ID
+  SHEET_ID: '여기에 구글스프레드 시트의 아이디를 붙여넣으세요', // ← 스프레드시트 ID
   SCHEMA_SHEET: 'schema',
   DATA_SHEET: 'join',
   SIGNATURE: {
@@ -13,7 +13,6 @@ const CONFIG = {
   },
   FILE: { store: 'url' } // 'url' | 'id' | 'json'
 };
-
 
 /** ========= COMMON UTIL ========= */
 function getSS_() {
@@ -821,9 +820,19 @@ function syncAndStyleJoinHeaders() {
 
 /** ========= 저장 후 알림(이메일발송) ========= */
 
+/******************************************************
+ * 📮 이메일 발송 + 📲 알림톡 발송 (단순화 버전)
+ * - PHP에서 account/authKey/senderProfile/templateCode 관리
+ * - GAS는 name / to / var1(이메일제목)만 전달
+ ******************************************************/
+
+/** 🔧 PHP 릴레이 엔드포인트 (성공한 파일 경로로 변경) */
+const RELAY_ALIMTALK_URL = 'https://ajoucu.mycafe24.com/relay_alimtalk.php';
+
+/** ========== 엔트리포인트 ========== */
 function notifyOnSubmit_(formKey, payload, savedRow) {
   try {
-    const CFG = getRuntimeConfig_();
+    const CFG = getRuntimeConfig_(); // 기존 프로젝트의 런타임 설정 함수 가정
     if (CFG.ENABLE_EMAIL_NOTIFY && CFG.ADMIN_EMAILS.length) {
       sendEmailNotification_(formKey, payload, savedRow, CFG);
     }
@@ -832,63 +841,43 @@ function notifyOnSubmit_(formKey, payload, savedRow) {
   }
 }
 
-/** ========= 이메일 발송 ========= */
+/** ========== 이메일 발송 ========== */
 function sendEmailNotification_(formKey, payload, savedRow, CFG) {
-  // 0) 방어 코드: CFG 및 필수 필드
-  if (!CFG) throw new Error('CFG is required');
-  const admins = Array.isArray(CFG.ADMIN_EMAILS) ? CFG.ADMIN_EMAILS.filter(Boolean) : [];
-  if (admins.length === 0) throw new Error('CFG.ADMIN_EMAILS is empty');
+  /* const subject = ((CFG.EMAIL_SUBJECT_PREFIX || '') + formKey).trim(); */
+  // 기존
+// const subject = ((CFG.EMAIL_SUBJECT_PREFIX || '') + formKey).trim();
 
-  // 1) 제목 구성 (접두어 + 폼키/신청자/행번호 등)
-  const prefix = (CFG.EMAIL_SUBJECT_PREFIX || '').trim(); // 예: "[알림]"
-  const applicant = (payload?.name || payload?.applicant || '').trim();
-  const rowLabel = savedRow ? `#${savedRow}` : '';
-  const pieces = [
-    prefix, 
-    formKey || '',
-    applicant ? `- ${applicant}` : '',
-    rowLabel
-  ].filter(Boolean);
-  const subject = pieces.join(' ').replace(/\s+/g, ' ').trim() || '알림';
+// 변경: formKey 제거 + 대괄호 감싸기(이미 []가 들어있어도 중복 방지)
+const subject = (() => {
+  const raw = String(CFG.EMAIL_SUBJECT_PREFIX || '').trim();
+  if (!raw) return '[알림]';                  // 빈 값일 때 기본값
+  const stripped = raw.replace(/^\[+/, '').replace(/\]+$/, ''); // 양끝 [] 제거
+  return `[${stripped}]`;
+})();
 
-  // 2) 본문 HTML
   const html = buildEmailHtml_(formKey, payload, savedRow);
 
-  // 3) replyTo(있을 때) 설정
-  const replyTo = (payload?.email || payload?.contactEmail || '').trim();
-
+  // 1) 이메일
   MailApp.sendEmail({
-    to: admins.join(','),
+    to: CFG.ADMIN_EMAILS.join(','),
     subject,
     htmlBody: html,
-    name: CFG.EMAIL_SENDER_NAME || '폼 알림',
-    ...(replyTo ? { replyTo } : {})
+    name: CFG.EMAIL_SENDER_NAME || '폼 알림'
   });
 
-  // 4) 같은 제목을 var1로 사용해 알림톡 발송
+  // 2) 동일 제목을 var1로 하여 알림톡 (보안 PHP로)
   try {
-    // ALT에서 접두어 제거를 원할 경우 옵션화
-    const stripForAlt = !!CFG.STRIP_PREFIX_IN_ALT; // true면 접두어 제거
-    const titleForAlt = stripForAlt && prefix
-      ? subject.replace(new RegExp('^' + escapeRegExp(prefix) + '\\s*'), '').trim()
-      : subject;
-
-    // payload에 name/phone 등이 들어있어야 함
-    sendAltInlineFromPayload_(payload, titleForAlt);
+    const titleForAlt = subject; // 접두어 제거 원하면 .replace(CFG.EMAIL_SUBJECT_PREFIX||'','').trim()
+    sendAltFromPayloadSecure_(payload, titleForAlt);
   } catch (e) {
-    console.error('[ALT_TEST] 실패:', e);
+    console.error('[ALT] 실패:', e);
   }
 }
 
-// 유틸: 정규식 이스케이프
-function escapeRegExp(s) {
-  return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
-/** ========= 이메일 HTML ========= */
+/** ========== 이메일 HTML ========== */
 function buildEmailHtml_(formKey, payload, savedRow) {
   const rows = Object.keys(payload).map(k => {
-    const v = String(payload[k] || '');
+    const v = String(payload[k] ?? '');
     return `<tr>
       <td style="padding:6px 10px;border:1px solid #e5e7eb;background:#f9fafb;"><b>${escapeHtml_(k)}</b></td>
       <td style="padding:6px 10px;border:1px solid #e5e7eb;">${escapeHtml_(v).replace(/\n/g,'<br>')}</td>
@@ -896,88 +885,196 @@ function buildEmailHtml_(formKey, payload, savedRow) {
   }).join('');
   return `<div style="font-family:system-ui,Segoe UI,Arial;">
     <h3 style="margin:0 0 8px">📨 새 신청 접수: ${escapeHtml_(formKey)}</h3>
-    <div style="color:#6b7280;font-size:12px;margin-bottom:8px">저장 행: ${savedRow||'-'}</div>
+    <div style="color:#6b7280;font-size:12px;margin-bottom:8px">저장 행: ${savedRow ?? '-'}</div>
     <table style="border-collapse:collapse;border:1px solid #e5e7eb;font-size:13px"><tbody>${rows}</tbody></table>
   </div>`;
 }
 
-/** ========= EMAIL HTML ========= */
-function buildEmailHtml_(formKey, payload, savedRow) {
-  const rows = Object.keys(payload).map(k => {
-    const v = String(payload[k] || '');
-    return `<tr>
-      <td style="padding:6px 10px;border:1px solid #e5e7eb;background:#f9fafb;"><b>${escapeHtml_(k)}</b></td>
-      <td style="padding:6px 10px;border:1px solid #e5e7eb;">${escapeHtml_(v).replace(/\n/g,'<br>')}</td>
-    </tr>`;
-  }).join('');
-  return `<div style="font-family:system-ui,Segoe UI,Arial;">
-    <h3 style="margin:0 0 8px">📨 새 신청 접수: ${escapeHtml_(formKey)}</h3>
-    <div style="color:#6b7280;font-size:12px;margin-bottom:8px">저장 행: ${savedRow||'-'}</div>
-    <table style="border-collapse:collapse;border:1px solid #e5e7eb;font-size:13px"><tbody>${rows}</tbody></table>
-  </div>`;
-}
-/** ========= 테스트 알림톡(인라인) =========
- * - payload에서 성명/연락처를 추출해 고정 계정으로 ALT 발송
- * - 템플릿 변수는 var1/var2/var3 사용
+/** ========== 알림톡 (보안 PHP 호출) ========== 
+ * PHP는 내부에서 account/authKey/senderProfile/templateCode를 관리.
+ * 여기서는 name/to/var1만 전송.
  */
+function sendAltFromPayloadSecure_(payload, titleForAlt) {
+  const name  = pickNameFromPayload_(payload);
+  const phone = pickPhoneFromPayload_(payload);
 
-/** ========= 테스트 알림톡(인라인) =========
- * - payload에서 성명/연락처 추출
- * - titleForAlt(이메일 제목)를 var1로 사용
- */
-function sendAltInlineFromPayload_(payload, titleForAlt) {
-  // 고정 설정(필요시 Script Properties로 이동 권장)
-  const RELAY_URL      = 'https://ajoucu.mycafe24.com/relay_alimtalk.php';
-  const ACCOUNT        = 'ajou9770';
-  const AUTH_KEY       = '7bfe9eefc98c868431e0c3ca58c534ea37bbea9174a311c90be09636502ee296';
-  const SENDER_PROFILE = '@아주대의료원신협';
-  const TEMPLATE_CODE  = 'ppur_2025082420111632533837508';
-
-  // 제목: 이메일에서 받은 값 사용(없으면 안전한 기본값)
-  const VAR1_TITLE = String(titleForAlt || '**** 신청서');
-
-  // payload에서 성명/연락처 추출
-  const nameRaw = pickNameFromPayload_(payload) || '';
-  let phoneRaw  = pickPhoneFromPayload_(payload, '') || '';
-
-  // 연락처는 숫자만
-  phoneRaw = String(phoneRaw).replace(/[^\d]/g, '');
-  if (!nameRaw || !phoneRaw) {
-    console.warn('[ALT_TEST] 이름/연락처 누락으로 발송 생략', { nameRaw, phoneRaw });
+  const var1 = String(titleForAlt || '신청서').trim();
+  if (!name || !phone || !var1) {
+    console.warn('[ALT] 이름/연락처/var1 누락으로 발송 생략', { name, phone, var1 });
     return;
   }
 
-  // ※ 이름 앞에 [알림톡 알림 샘플]을 붙이는 처리는 PHP에서 normalize_change_word()로 보장하는 것을 권장
-  //   (GAS에서 붙이면 PHP에서도 붙일 때 중복될 수 있음)
-  const changeWord = {
-    var1: VAR1_TITLE,  // 이메일 제목 → var1
-    var2: nameRaw,     // 이름 → var2 (PHP에서 접두사 붙이도록 구성)
-    var3: phoneRaw     // 연락처 → var3
-  };
-
-  const body = {
-    title        : VAR1_TITLE,    // PHP로도 넘겨 둡니다(서버단 기본값/로그용)
-    name         : nameRaw,
-    to           : phoneRaw,
-    account      : ACCOUNT,
-    authKey      : AUTH_KEY,
-    senderProfile: SENDER_PROFILE,
-    templateCode : TEMPLATE_CODE,
-    changeWord   : changeWord
-  };
-
-  const res = UrlFetchApp.fetch(RELAY_URL, {
+  const body = { name, to: phone, var1 };
+  const res = UrlFetchApp.fetch(RELAY_ALIMTALK_URL, {
     method: 'post',
     contentType: 'application/json; charset=utf-8',
     payload: JSON.stringify(body),
     muteHttpExceptions: true
   });
+
   const code = res.getResponseCode();
   const text = res.getContentText();
-  console.log('[ALT_TEST]', code, text);
+  console.log('[ALT][SECURE]', code, text.slice(0, 1000));
 
   if (code < 200 || code >= 300) {
     throw new Error('ALT 릴레이 HTTP ' + code + ' ' + text);
   }
+  // 응답이 JSON이면 경고만 요약
+  try {
+    const j = JSON.parse(text);
+    if (j?.code && j.code !== '0000' && j.code !== 0) {
+      console.warn('[ALT][WARN]', j.code, j.description || j.message || text);
+    }
+  } catch (_) {}
 }
 
+/** ========== 유틸 ========== */
+function pickNameFromPayload_(payload) {
+  const keys = ['성명', '이름', 'name', '신청자', '대표자']; // input내의 name값을 가져옴. 
+  for (const k of keys) {
+    const v = payload?.[k];
+    if (v && String(v).trim()) return String(v).trim();
+  }
+  return '';
+}
+function pickPhoneFromPayload_(payload) {
+  const keys = ['연락처', 'tel', '전화번호', 'phone', 'mobile']; //input내의 name값을 가져옴. 
+  for (const k of keys) {
+    let v = payload?.[k];
+    if (!v) continue;
+    v = String(v).replace(/[^\d]/g, '');
+    if (v.length >= 10) {
+      // 10자리 & 지역번호가 02가 아니면 선행 0 보정 (서버도 처리하지만 중복 보정 무해)
+      if (v.length === 10 && !v.startsWith('02')) v = '0' + v;
+      return v;
+    }
+  }
+  return '';
+}
+function escapeHtml_(s) {
+  return String(s ?? '')
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#39;');
+}
+
+
+/******************************************************
+ * AjouCU 알림톡(카페24 릴레이) - GAS 클라이언트
+ * - 서버: relay_alimtalk_secure.php(또는 올려주신 PHP 코드)
+ * - 클라이언트(GAS)는 최소값만 전송: name, to, var1
+ ******************************************************/
+
+// ★ PHP 엔드포인트 URL (본인 주소로 교체)
+// 위 코드처럼 account/authKey/프로필/템플릿을 PHP에서 들고 있는 버전이면 secure.php
+// 방금 보내주신 코드 파일명이 다르면 그 파일 경로로 바꾸세요.
+
+/** 숫자만 남기기 */
+function _onlyDigits_(s) {
+  return String(s || '').replace(/[^0-9]/g, '');
+}
+
+/** 전화번호 포맷(서버에서도 정제하지만, 클라에서도 한 번 정리) */
+function _normalizePhone_(num) {
+  const d = _onlyDigits_(num);
+  if (d.length === 10 && !d.startsWith('02')) return '0' + d;
+  return d;
+}
+
+/**
+ * 알림톡 전송 (서버 보안 버전)
+ * @param {Object} params
+ *   - name: 수신자 이름(필수)
+ *   - to: 수신자 연락처(필수, 숫자만)
+ *   - var1: 템플릿 변수1(필수: 제목 등)
+ *   - tpl: (옵션) PHP에서 TEMPLATE_MAP으로 여러 템플릿 운영 시 키값
+ * @returns {Object} 서버(뿌리오) 응답 JSON 또는 원문 텍스트
+ */
+function sendAlimtalkViaRelay(params) {
+  const name = String(params?.name || '').trim();
+  const to   = _normalizePhone_(params?.to || '');
+  const var1 = String(params?.var1 || '').trim();
+  const tpl  = params?.tpl ? String(params.tpl).trim() : '';
+
+  if (!name || !to || !var1) {
+    throw new Error('알림톡 필수값 누락(name/to/var1).');
+  }
+
+  const body = {
+    name: name,
+    to: to,
+    var1: var1
+  };
+  if (tpl) body.tpl = tpl;
+
+  const res = UrlFetchApp.fetch(RELAY_ALIMTALK_URL, {
+    method: 'post',
+    contentType: 'application/json; charset=utf-8',
+    payload: JSON.stringify(body),
+    muteHttpExceptions: true
+  });
+
+  const status = res.getResponseCode();
+  const text   = res.getContentText();
+
+  // 로그로 남겨 추적
+  console.log('[ALT][REQ]', JSON.stringify(body));
+  console.log('[ALT][RES]', status, text.slice(0, 1000));
+
+  // 서버가 그대로 뿌리오 응답 JSON을 반환하므로 파싱을 시도
+  try {
+    const j = JSON.parse(text);
+    // 실패 코드 요약(선택)
+    if (j?.code && j.code !== '0000' && j.code !== 0) {
+      // 뿌리오 코드 체계에 맞춰 처리(예: 3004 invalid account 등)
+      console.warn('[ALT][WARN]', j.code, j.description || j.message);
+    }
+    return j;
+  } catch (e) {
+    // JSON이 아닐 수 있으므로 원문도 돌려준다
+    return { raw: text, http: status };
+  }
+}
+
+/** ✅ 단일 테스트 함수: 이름/번호/제목(var1)만 넣고 발송 */
+function testSendAlimtalk_SECURE() {
+  const result = sendAlimtalkViaRelay({
+    name: '홍길동',
+    to: '010-7118-6639',
+    var1: '보안구성 테스트 신청서', // 템플릿의 var1에 들어갈 값(제목 등)
+    // tpl: 'main' // PHP 측 TEMPLATE_MAP 사용시 선택적으로 지정
+  });
+  Logger.log(JSON.stringify(result, null, 2));
+}
+
+/**
+ * (선택) 기존 폼 저장 후 연동하는 흐름에 붙일 헬퍼
+ *   - email/저장 성공 후 호출
+ *   - payload에서 성명/연락처 키만 맞춰주세요
+ */
+function notifyAltAfterSubmit_(payload, formTitleForVar1) {
+  try {
+    // ⚠️ payload에서 키 이름은 실제 폼에 맞춰 수정
+    const name = String(payload['성명'] || payload['name'] || '').trim();
+    const phone = String(payload['연락처'] || payload['phone'] || '').trim();
+
+    if (!name || !phone) {
+      console.warn('[ALT] 이름/연락처 누락으로 생략', { name, phone });
+      return;
+    }
+
+    const var1 = String(formTitleForVar1 || '신청서').trim();
+
+    const res = sendAlimtalkViaRelay({
+      name: name,
+      to: phone,
+      var1: var1
+    });
+
+    console.log('[ALT][DONE]', JSON.stringify(res));
+  } catch (e) {
+    console.error('[ALT][ERR]', e && e.stack ? e.stack : e);
+  }
+}
