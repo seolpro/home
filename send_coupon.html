@@ -215,7 +215,7 @@
           <label class="form-label">⏰발송 시점</label>
           <div class="form-check form-switch mb-2">
             <input class="form-check-input" type="checkbox" role="switch" id="isSchedule">
-            <label class="form-check-label" for="isSchedule">📆예약 발송</label>
+            <label class="form-check-label" for="isSchedule">예약 발송</label>
           </div>
           <input id="scheduleAt" type="datetime-local" class="form-control" disabled/>
           <div class="small-muted mt-1">📍미설정 시 즉시 발송</div>
@@ -536,6 +536,40 @@ async function loadGoods(){
     toast('상품 불러오기 실패');
   }
 }
+
+// 페이지로딩시 상품 자동 불러오기 및 로딩표시
+// 로딩표시 버튼
+const btnGoods = document.getElementById("btnGoods");
+
+// 상품 로딩 핸들러 (버튼 클릭/자동 실행 공용)
+async function handleLoadGoods() {
+  const originalHtml = btnGoods.innerHTML;
+
+  try {
+    // 로딩 상태 표시
+    btnGoods.disabled = true;
+    btnGoods.innerHTML = "🔁상품로딩중...";
+
+    // 상품 불러오기 실행
+    await loadGoods();
+
+  } catch (e) {
+    console.error(e);
+  } finally {
+    // 원래 버튼 내용 복원
+    btnGoods.disabled = false;
+    btnGoods.innerHTML = originalHtml;
+  }
+}
+
+// 버튼 클릭 시
+btnGoods.addEventListener("click", handleLoadGoods);
+
+// 페이지 로딩시 자동 실행
+document.addEventListener("DOMContentLoaded", () => {
+  handleLoadGoods();
+});
+
 
 /** ====== 필터 ====== */
 function renderBrandChecks(list){
