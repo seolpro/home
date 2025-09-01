@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <title>사업자등록 진위확인 · 상태조회</title>
+
+  <link rel="preconnect" href="https://cdn.jsdelivr.net"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet"/>
+
+  <style>
+    :root{ --brand:#0d6efd; --soft:#f6f8fb; --ok:#16a34a; --warn:#f59e0b; --bad:#dc2626; }
+    body{ background:var(--soft); font-family:Pretendard, system-ui, -apple-system,"Segoe UI",Roboto,"Noto Sans KR",sans-serif; }
+    .page{ max-width:980px; margin:28px auto; }
+    .card{ border-radius:18px; box-shadow:0 10px 28px rgba(0,0,0,.06); }
+    .section-title{ font-weight:700; letter-spacing:.2px; }
+    .badge{ vertical-align:middle; }
+    .muted{ color:#6c757d; }
+    .pill{ display:inline-flex; align-items:center; gap:.5rem; padding:.5rem .8rem; border-radius:999px; font-weight:600; }
+    .pill.ok{ background:#e8f7ee; color:#0b7a33; }
+    .pill.warn{ background:#fff4e5; color:#9a6200; }
+    .pill.bad{ background:#fde8e8; color:#a80f0f; }
+    .spinner{ display:inline-block; width:1rem; height:1rem; border:.15rem solid rgba(0,0,0,.1); border-top-color: currentColor; border-radius:50%; animation:spin .8s linear infinite; }
+    @keyframes spin{ to{ transform:rotate(360deg);} }
+    .btn-icon{ display:inline-flex; align-items:center; gap:.4rem; }
+    .kvs .k{ width:7rem; color:#6c757d; }
+    .kvs .v{ flex:1 }
+    .kvs{ display:flex; gap:.5rem; flex-wrap:wrap; }
+    .kvs .row{ width:100% }
+    .toast-wrap{ position:fixed; right:16px; bottom:16px; z-index:1080; }
+    .recent a{ text-decoration:none }
+    .recent .item{ background:#fff; border:1px dashed #e5e7eb; border-radius:12px; padding:.6rem .8rem; }
+    .sticky-summary{ position:sticky; bottom:12px; z-index:10; }
+    .form-switch .form-check-input{ cursor:pointer; }
+    .small-help{ font-size:.92rem; color:#6b7280; }
+  </style>
+</head>
+<body>
+  <main class="page container">
+    <header class="mb-3">
+      <div class="d-flex align-items-center justify-content-between">
+        <h3 class="mb-0 section-title">🧾 사업자등록 진위확인 · 상태조회</h3>
+        <span class="badge text-bg-primary">운영</span>
+      </div>
+      <div class="small-help mt-1">사업자번호만으로 <b>상태(계속·휴업·폐업)</b> 확인, 필요 시 <b>대표자/개업일자 진위</b>까지 검증합니다.</div>
+    </header>
+
+    <!-- 연결 설정(필수): 웹앱 URL -->
+    <div id="biz-widget" class="d-none" data-endpoint="https://script.google.com/macros/s/AKfycbwOQtq9pv0CYah5hGl4v_zCT_sM6l-aYdbnj1QLnNSeQevvkxsX93B_OSbIw9nQqielww/exec"></div>
+
+    <!-- 요약 배너 -->
+    <div id="summary" class="sticky-summary mb-3" aria-live="polite"></div>
+
+    <!-- 1) 사업자번호 입력 + 상태조회 -->
+    <section class="card p-3 p-md-4 mb-3">
+      <h5 class="mb-3">1. 사업자 기본정보</h5>
+      <div class="row g-3">
+        <div class="col-12 col-md-7">
+          <label for="bizNo" class="form-label fw-semibold">사업자등록번호</label>
+          <div class="input-group">
+            <input id="bizNo" class="form-control" placeholder="000-00-00000" inputmode="numeric" autocomplete="off" aria-describedby="bizHelp">
+            <button id="btnStatus" type="button" class="btn btn-primary btn-icon">
+              <i class="bi bi-search"></i><span>상태조회</span>
+            </button>
+          </div>
+          <div id="bizHelp" class="form-text">붙여넣어도 숫자만 자동 인식 · 하이픈 자동</div>
+        </div>
+        <div class="col-12 col-md-5">
+          <label class="form-label fw-semibold">최근 조회</label>
+          <div id="recent" class="recent d-grid gap-2"></div>
+        </div>
+      </div>
+
+      <div id="statusArea" class="mt-3" aria-live="polite"></div>
+
+      <!-- 히든(폼 연동) -->
+      <input type="hidden" id="bizStatusCode" name="biz_status_code">
+      <input type="hidden" id="bizStatusName" name="biz_status_name">
+      <input type="hidden" id="bizValidateOk" name="biz_validate_ok" value="false">
+    </section>
+
+    <!-- 2) 진위확인 -->
+    <section class="card p-3 p-md-4 mb-3">
+      <div class="d-flex align-items-center justify-content-between">
+        <h5 class="mb-3 mb-md-0">2. 진위확인 <small class="text-muted">(선택)</small></h5>
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" role="switch" id="toggleRequireValidate">
+          <label class="form-check-label" for="toggleRequireValidate">제출 시 <b>진위확인 필수</b></label>
+        </div>
+      </div>
+
+      <div class="row g-2">
+        <div class="col-6 col-md-4">
+          <label class="form-label">대표자명</label>
+          <input id="pNm" class="form-control" placeholder="홍길동">
+        </div>
+        <div class="col-6 col-md-4">
+          <label class="form-label">개업일자</label>
+          <input id="startDt" type="date" class="form-control">
+        </div>
+        <div class="col-12 col-md-4 d-grid">
+          <label class="form-label invisible">.</label>
+          <button id="btnValidate" class="btn btn-outline-secondary btn-icon" type="button">
+            <i class="bi bi-shield-check"></i><span>진위확인</span>
+          </button>
+        </div>
+      </div>
+
+      <div id="validateArea" class="mt-3" aria-live="polite"></div>
+    </section>
+
+    <!-- 3) 제출(데모) + 가이드 -->
+    <!-- <section class="card p-3 p-md-4">
+      <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <div class="small-help">
+          제출 시 아래 옵션이 적용됩니다:
+          <span class="ms-2"><i class="bi bi-check2-circle text-success"></i> 계속사업자(코드 01) 필수</span>
+          <span class="ms-2" id="needValidBadge"><i class="bi bi-dot"></i> 진위확인 필수: <b class="text-secondary">해제</b></span>
+        </div>
+        <div class="d-flex gap-2">
+          <button id="btnReset" type="button" class="btn btn-light btn-icon">
+            <i class="bi bi-arrow-counterclockwise"></i><span>초기화</span>
+          </button>
+          <button id="demoSubmit" type="button" class="btn btn-primary btn-icon">
+            <i class="bi bi-send-check"></i><span>제출(데모)</span>
+          </button>
+        </div>
+      </div>
+      <hr/>
+      <details>
+        <summary class="small-help">데이터/오류 안내</summary>
+        <ul class="small-help mt-2 mb-0">
+          <li>상태조회는 사업자번호만으로, 진위확인은 대표자명·개업일자를 포함하여 검증합니다.</li>
+          <li>네트워크 또는 권한 오류 시 화면 우하단에 토스트가 나타납니다.</li>
+          <li>조회 결과는 브라우저에만 5개까지 저장됩니다(서버에 저장되지 않음).</li>
+        </ul>
+      </details>
+    </section> -->
+  </main>
+
+  <!-- 토스트 -->
+  <div class="toast-wrap">
+    <div id="toast" class="toast align-items-center text-bg-dark border-0" role="alert" aria-live="assertive" aria-atomic="true">
+      <div class="d-flex">
+        <div class="toast-body" id="toastBody">알림</div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+      </div>
+    </div>
+  </div>
+<footer class="container">
+  <div class="border-top pt-3 mt-4 small text-muted text-center">
+    데이터 출처: 공공데이터포털(ODcloud) · 국세청_사업자등록정보 진위확인 및 상태조회 API
+</footer>
+
+  <script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const widget = document.getElementById('biz-widget');
+    const ENDPOINT = widget.dataset.endpoint || '';
+    const $ = sel => document.querySelector(sel);
+
+    // 엘리먼트
+    const bizNo = $('#bizNo');
+    const btnStatus = $('#btnStatus');
+    const statusArea = $('#statusArea');
+    const pNm = $('#pNm');
+    const startDt = $('#startDt');
+    const btnValidate = $('#btnValidate');
+    const validateArea = $('#validateArea');
+    const recent = $('#recent');
+    const summary = $('#summary');
+    const btnReset = $('#btnReset');
+    const demoSubmit = $('#demoSubmit');
+    const toggleRequireValidate = $('#toggleRequireValidate');
+    const needValidBadge = $('#needValidBadge');
+
+    const hStatusCode = $('#bizStatusCode');
+    const hStatusName = $('#bizStatusName');
+    const hValidateOk = $('#bizValidateOk');
+
+    // 토스트
+    const bsToast = new bootstrap.Toast(document.getElementById('toast'), { delay: 3500 });
+    function toast(msg){ document.getElementById('toastBody').textContent = msg; bsToast.show(); }
+
+    // 최근 조회 (localStorage)
+    const RECENT_KEY = 'biz_recent_v1';
+    function loadRecent(){
+      const list = JSON.parse(localStorage.getItem(RECENT_KEY) || '[]');
+      recent.innerHTML = '';
+      if (!list.length) {
+        recent.innerHTML = '<div class="text-muted small">최근 조회 없음</div>';
+        return;
+      }
+      list.slice(0,5).forEach(item=>{
+        const badge = item.sc==='01' ? '<span class="badge text-bg-success">계속</span>'
+                   : item.sc==='02' ? '<span class="badge text-bg-warning text-dark">휴업</span>'
+                   : item.sc==='03' ? '<span class="badge text-bg-danger">폐업</span>'
+                   : '<span class="badge text-bg-secondary">미확인</span>';
+        const el = document.createElement('a');
+        el.href = '#';
+        el.className = 'item d-flex align-items-center justify-content-between';
+        el.innerHTML = `<div class="small"><b>${fmtBiz(item.bno)}</b><div class="text-muted">${item.ts}</div></div><div>${badge}</div>`;
+        el.addEventListener('click', (e)=>{
+          e.preventDefault();
+          bizNo.value = fmtBiz(item.bno);
+          runStatus();
+        });
+        recent.appendChild(el);
+      });
+    }
+    function pushRecent(bno, statusCode){
+      const list = JSON.parse(localStorage.getItem(RECENT_KEY) || '[]');
+      const now = new Date();
+      const rec = { bno, sc: statusCode||'', ts: now.toLocaleString() };
+      const next = [rec, ...list.filter(r=>r.bno!==bno)].slice(0,5);
+      localStorage.setItem(RECENT_KEY, JSON.stringify(next));
+      loadRecent();
+    }
+
+    // 입력 보조
+    bizNo.addEventListener('input', ()=>{
+      bizNo.value = formatBizNo(bizNo.value);
+      updateSummary();
+    });
+    bizNo.addEventListener('keydown', (e)=>{
+      if (e.key === 'Enter') { e.preventDefault(); runStatus(); }
+    });
+    startDt.addEventListener('keydown', (e)=>{
+      if (e.key === 'Enter') { e.preventDefault(); runValidate(); }
+    });
+
+    toggleRequireValidate.addEventListener('change', ()=>{
+      needValidBadge.innerHTML = '진위확인 필수: <b class="'+(toggleRequireValidate.checked?'text-success':'text-secondary')+'">'+(toggleRequireValidate.checked?'설정':'해제')+'</b>';
+    });
+
+    btnStatus.addEventListener('click', (e)=>{ e.preventDefault(); runStatus(); });
+    btnValidate.addEventListener('click', (e)=>{ e.preventDefault(); runValidate(); });
+    btnReset.addEventListener('click', resetAll);
+    demoSubmit.addEventListener('click', onDemoSubmit);
+
+    loadRecent();
+    updateSummary();
+
+    async function runStatus(){
+      const bno = digits(bizNo.value);
+      if (!isValidBizNo(bno)) { statusArea.innerHTML = warn('🚫 사업자번호 형식이 올바르지 않습니다.'); return; }
+      if (!ENDPOINT) { toast('웹앱 URL이 비어 있습니다. data-endpoint를 설정하세요.'); return; }
+
+      setLoading(btnStatus, true, '상태조회 중...');
+      statusArea.innerHTML = '<div class="muted"><span class="spinner"></span> 상태조회 중...</div>';
+      try{
+        const res = await callAPI('status', { b_no:bno });
+        if (!res.ok) throw new Error(res.message||'조회 실패');
+
+        hStatusCode.value = res.statusCode || '';
+        hStatusName.value = res.statusName || '';
+        pushRecent(bno, res.statusCode);
+
+        const badge = statusBadge(res.statusCode);
+        const tax = res.taxType ? ` · ${res.taxType}` : '';
+        const endDt = res.endDt ? ` · 폐업일자 ${fmtDate(res.endDt)}` : '';
+
+        statusArea.innerHTML = `
+          <div class="kvs row">
+            <div class="col-12 col-md-7 d-flex align-items-center gap-2">
+              ${badge}
+              <span class="small text-muted">${res.statusName||'미확인'}${tax}${endDt}</span>
+            </div>
+            <div class="col-12 col-md-5 text-md-end mt-2 mt-md-0">
+              <button type="button" class="btn btn-sm btn-outline-secondary btn-icon" id="btnCopy">
+                <i class="bi bi-clipboard-check"></i><span>결과 복사</span>
+              </button>
+            </div>
+          </div>
+        `;
+        $('#btnCopy').addEventListener('click', ()=>{
+          copyText(`사업자상태: ${res.statusName||'미확인'} / 코드: ${res.statusCode||'-'}${tax}${endDt}`);
+          toast('결과를 클립보드에 복사했습니다.');
+        });
+
+        updateSummary();
+      } catch(err){
+        statusArea.innerHTML = bad('❗ 조회 오류: ' + err.message);
+        updateSummary();
+      } finally{
+        setLoading(btnStatus, false, '상태조회');
+      }
+    }
+
+    async function runValidate(){
+      const bno = digits(bizNo.value);
+      if (!isValidBizNo(bno)) { validateArea.innerHTML = warn('🚫 사업자번호 형식이 올바르지 않습니다.'); return; }
+      const p_nm = pNm.value.trim();
+      const start_dt = startDt.value ? startDt.value.replaceAll('-','') : '';
+      if (!p_nm || !/^\d{8}$/.test(start_dt)) { validateArea.innerHTML = warn('ℹ️ 대표자명과 개업일자(YYYY-MM-DD)를 입력해주세요.'); return; }
+
+      setLoading(btnValidate, true, '진위확인 중...');
+      validateArea.innerHTML = '<div class="muted"><span class="spinner"></span> 진위확인 중...</div>';
+      try{
+        const res = await callAPI('validate', { b_no:bno, p_nm, start_dt });
+        if (!res.ok) throw new Error(res.message||'진위확인 실패');
+
+        hValidateOk.value = String(!!res.valid);
+        if (res.statusCode) hStatusCode.value = res.statusCode;
+        if (res.statusName) hStatusName.value = res.statusName;
+
+        const validPill = res.valid
+          ? `<span class="pill ok"><i class="bi bi-check2-circle"></i>일치</span>`
+          : `<span class="pill bad"><i class="bi bi-x-circle"></i>불일치(⚠️대표자명과 개업일자를 확인해주세요)${res.validCode?`(${res.validCode})`:''}</span>`;
+
+        const badge = statusBadge(res.statusCode);
+        const tax = res.taxType ? ` · ${res.taxType}` : '';
+        const endDt = res.endDt ? ` · 폐업일자 ${fmtDate(res.endDt)}` : '';
+
+        validateArea.innerHTML = `
+          <div class="d-flex flex-column gap-1">
+            <div>${validPill} <span class="small text-muted">${res.validMsg||''}</span></div>
+            <div>${badge} <span class="small text-muted">${res.statusName||'상태미확인'}${tax}${endDt}</span></div>
+          </div>
+        `;
+        updateSummary();
+      } catch(err){
+        validateArea.innerHTML = bad('❗ 진위확인 오류: ' + err.message);
+        updateSummary();
+      } finally{
+        setLoading(btnValidate, false, '진위확인');
+      }
+    }
+
+    function onDemoSubmit(){
+      const code = hStatusCode.value || '';
+      const valid = hValidateOk.value === 'true';
+      const needValid = toggleRequireValidate.checked;
+
+      if (code !== '01') { toast('제출 차단: 계속사업자(코드 01)만 제출 가능해요.'); return; }
+      if (needValid && !valid) { toast('제출 차단: 진위확인이 필요해요.'); return; }
+
+      toast('제출 통과(데모): 실제 폼에 연결하시면 그대로 적용됩니다.');
+    }
+
+    function resetAll(){
+      bizNo.value = '';
+      pNm.value = '';
+      startDt.value = '';
+      statusArea.innerHTML = '';
+      validateArea.innerHTML = '';
+      hStatusCode.value = '';
+      hStatusName.value = '';
+      hValidateOk.value = 'false';
+      updateSummary();
+    }
+
+    function updateSummary(){
+      const sc = hStatusCode.value;
+      const valid = hValidateOk.value === 'true';
+      const needValid = toggleRequireValidate.checked;
+
+      let html = '';
+      if (sc === '01' && (!needValid || valid)) {
+        html = `<div class="pill ok"><i class="bi bi-check2-circle"></i> 제출 가능 · 계속사업자${needValid?' · 진위 일치':''}</div>`;
+      } else if (sc === '01' && needValid && !valid) {
+        html = `<div class="pill warn"><i class="bi bi-exclamation-triangle"></i> 상태 OK · 진위확인 필요</div>`;
+      } else if (sc === '02' || sc === '03') {
+        html = `<div class="pill bad"><i class="bi bi-x-octagon"></i> 제출 불가 · ${sc==='02'?'휴업자':'폐업자'}</div>`;
+      } else {
+        html = `<div class="pill warn"><i class="bi bi-dot"></i> 상태미확인 · 조회를 진행하세요</div>`;
+      }
+      summary.innerHTML = html;
+    }
+
+    function statusBadge(code){
+      return code==='01' ? '<span class="badge text-bg-success">계속사업자</span>'
+           : code==='02' ? '<span class="badge text-bg-warning text-dark">휴업자</span>'
+           : code==='03' ? '<span class="badge text-bg-danger">폐업자</span>'
+           : '<span class="badge text-bg-secondary">미확인</span>';
+    }
+
+    async function callAPI(route, payload){
+      // preflight 방지: text/plain
+      const resp = await fetch(ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(Object.assign({ route }, payload))
+      });
+      const text = await resp.text();
+      try { return JSON.parse(text); }
+      catch { throw new Error('JSON 파싱 실패: ' + text); }
+    }
+
+    // Utils
+    function setLoading(btn, on, text){
+      const label = btn.querySelector('span');
+      if (on) { btn.disabled = true; label.textContent = text; label.insertAdjacentHTML('afterbegin', '<span class="spinner me-2"></span>'); }
+      else { btn.disabled = false; label.textContent = label.textContent.replace('상태조회 중...','상태조회').replace('진위확인 중...','진위확인'); }
+    }
+    function copyText(t){ navigator.clipboard?.writeText(t).catch(()=>{}); }
+    function digits(s){ return String(s||'').replace(/\D/g,''); }
+    function fmtBiz(v){ const d = digits(v).slice(0,10); if (d.length<4) return d; if (d.length<6) return d.replace(/(\d{3})(\d+)/,'$1-$2'); return d.replace(/(\d{3})(\d{2})(\d{0,5})/,(m,a,b,c)=> c?`${a}-${b}-${c}`:`${a}-${b}`); }
+    function formatBizNo(v){ return fmtBiz(v); }
+    function isValidBizNo(d){ d = digits(d); if (!/^\d{10}$/.test(d)) return false; const w=[1,3,7,1,3,7,1,3,5,1]; let sum=0; for(let i=0;i<9;i++) sum+=Number(d[i])*w[i]; sum+=Math.floor((Number(d[8])*5)/10); const check=(10-(sum%10))%10; return check===Number(d[9]); }
+    function fmtDate(yyyymmdd){ if (!/^\d{8}$/.test(yyyymmdd||'')) return yyyymmdd||''; return `${yyyymmdd.slice(0,4)}-${yyyymmdd.slice(4,6)}-${yyyymmdd.slice(6,8)}`; }
+  });
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
