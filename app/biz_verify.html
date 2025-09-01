@@ -406,7 +406,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     try {
       setLoading(btnPdf, true, 'PDF 생성 중...');
-      const fileName = `BRN-${fmtBiz(bno)}-${ts('yyyyMMdd-HHmmss')}.pdf`;
+      const fileName = `BRN-${fmtBiz(bno)}.pdf`;
       await exportResultPdf({ bno, sc, sname, taxText, valid, validMsg, p_nm, sdt, needValid: toggleRequireValidate?.checked }, fileName);
       toast('PDF를 저장했습니다.');
     } catch (e) {
