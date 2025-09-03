@@ -1,239 +1,408 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>🎒 조합원 테마여행 신청</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <meta name="theme-color" content="#0d6efd"/>
+  <title>🚌 조합원 테마여행 신청 | 미야코지마</title>
+
+  <!-- Pretendard + Bootstrap + Icons -->
+  <link rel="preconnect" href="https://cdn.jsdelivr.net"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet"/>
+
   <style>
-    body { background: #f8f9fa; padding-top: 40px; }
-    .form-container { max-width: 600px; margin: auto; }
-    .spinner-border { display: none; }
-    .form-check-label.btn {
-    transition: all 0.2s ease;
-    padding: 1rem;
-    border-radius: 0.5rem;
-  }
-  .carousel-inner img {
-    height: 300px;
-    object-fit: cover;
-  }
+    :root{
+      --brand:#0d6efd; --ink:#111827; --soft:#f6f8fb; --muted:#6b7280;
+      --glass: rgba(255,255,255,.6);
+    }
+    html,body{height:100%}
+    body{background:var(--soft); font-family:Pretendard,system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans KR",sans-serif; color:var(--ink)}
+    .container-narrow{max-width:960px}
+    .shadow-soft{ box-shadow: 0 10px 30px rgba(0,0,0,.08); }
+
+    /* Carousel: 모바일 비율 고정 + 부드러운 라운드 */
+    .hero-carousel .carousel-inner{ border-radius:20px; overflow:hidden }
+    .hero-carousel .ratio{ --bs-aspect-ratio: 56.25%; } /* 16:9 */
+
+    /* Hero 섹션 */
+    .hero{
+      position:relative; border-radius:20px; overflow:hidden;
+      background: radial-gradient(1200px 600px at 20% -10%, rgba(13,110,253,.35), transparent),
+                  radial-gradient(1200px 600px at 100% 0%, rgba(124,255,178,.25), transparent);
+    }
+    .hero .overlay{
+      position:absolute; inset:0; background:
+        linear-gradient(180deg, rgba(0,0,0,.35), rgba(0,0,0,.25));
+      z-index:1;
+    }
+    .hero .hero-text{
+      position:absolute; inset:0; z-index:2; color:#fff;
+      display:flex; align-items:center; justify-content:center; text-align:center; padding:36px 16px;
+    }
+    .hero h1{ font-weight:800; letter-spacing:.2px }
+    .chip{
+      display:inline-flex; align-items:center; gap:.35rem;
+      background:rgba(255,255,255,.85); color:#0f172a; border-radius:999px; padding:.35rem .7rem; font-size:.85rem; font-weight:700
+    }
+
+    /* 카드/섹션 */
+    .card-rounded{ border:1px solid #eaeef4; border-radius:18px }
+    .card-rounded .card-header{ background:linear-gradient(180deg,#fff, #fafcff); border-bottom:1px solid #eef2f7; border-radius:18px 18px 0 0 }
+    .glass{
+      background:var(--glass); backdrop-filter:saturate(130%) blur(8px);
+      border:1px solid rgba(255,255,255,.45); border-radius:18px;
+    }
+
+    /* 폼 */
+    .form-label{ font-weight:600 }
+    .form-control, .form-select{ border-radius:14px }
+    .btn-pill{ border-radius:999px }
+    .btn-lg{ padding:.9rem 1rem; font-weight:700 }
+    .helper{ color:var(--muted); font-size:.9rem }
+
+    /* 상단으로 이동 FAB */
+    .fab-top{
+      position:fixed; right:16px; bottom:calc(16px + env(safe-area-inset-bottom));
+      width:52px; height:52px; border-radius:999px; display:none;
+      align-items:center; justify-content:center; z-index:50
+    }
+    .fab-top.show{ display:flex }
+
+    /* 살짝 등장 애니메이션 */
+    .fade-in{ animation:fadeIn .6s ease both }
+    @keyframes fadeIn{ from{opacity:0; transform:translateY(8px) scale(.98)} to{opacity:1; transform:translateY(0) scale(1)} }
   </style>
 </head>
 <body>
-<!-- <div class="mb-4 position-relative" style="height: 400px; overflow: hidden;">
-  <img id="randomImage" class="position-absolute w-90 h-90 object-fit-cover fade-image" src="" alt="랜덤 산 이미지" />
-</div> -->
-<!-- 이미지 슬라이드 -->
-<div id="mainCarousel" class="carousel slide carousel-fade" data-bs-ride="carousel">
-  <!-- 슬라이드 인디케이터 (동그라미) -->
-  <div class="carousel-indicators">
-    <button type="button" data-bs-target="#mainCarousel" data-bs-slide-to="0" class="active" aria-current="true"></button>
-    <button type="button" data-bs-target="#mainCarousel" data-bs-slide-to="1"></button>
-    <button type="button" data-bs-target="#mainCarousel" data-bs-slide-to="2"></button>
-    <button type="button" data-bs-target="#mainCarousel" data-bs-slide-to="3"></button>
-    <button type="button" data-bs-target="#mainCarousel" data-bs-slide-to="4"></button>
-    <button type="button" data-bs-target="#mainCarousel" data-bs-slide-to="5"></button>
-  </div>
 
-  <!-- 슬라이드 이미지 영역 -->
-  <div class="carousel-inner rounded shadow">
-    <div class="carousel-item active">
-      <img src="https://file.sportsseoul.com/news/legacy/2019/10/29/news/2019102901002614700187451.jpg" class="d-block w-100" alt="슬라이드1">
-    </div>
-    <div class="carousel-item">
-      <img src="https://img.khan.co.kr/news/2022/08/31/news-p.v1.20220831.eb45dcf1aef5462385322834f298d197_P1.jpg" class="d-block w-100" alt="슬라이드2">
-    </div>
-    <div class="carousel-item">
-      <img src="https://www.hapt.co.kr/news/photo/202310/160352_30866_1012.jpg" class="d-block w-100" alt="슬라이드3">
-    </div>
-    <div class="carousel-item">
-      <img src="https://blog.kakaocdn.net/dn/bCHUXR/btqI7wJvXwZ/Tk3KmE4UxkiXsgPUNr61Kk/img.jpg" class="d-block w-100" alt="슬라이드4">
-    </div>
-    <div class="carousel-item">
-      <img src="https://img6.yna.co.kr/etc/inner/KR/2022/12/12/AKR20221212005400805_01_i_P4.jpg" class="d-block w-100" alt="슬라이드5">
-    </div>
-    <div class="carousel-item">
-      <img src="https://blog.kakaocdn.net/dn/bhwk3M/btrpuujnEiW/ObrYGkaUPaX75Gdm8Ahht0/img.jpg" class="d-block w-100" alt="슬라이드6">
-    </div>
-  </div>
+  <!-- 상단 여백용 -->
+  <div class="py-2"></div>
 
-  <!-- 좌우 이동 버튼 -->
-  <button class="carousel-control-prev" type="button" data-bs-target="#mainCarousel" data-bs-slide="prev">
-    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-    <span class="visually-hidden">이전</span>
-  </button>
-  <button class="carousel-control-next" type="button" data-bs-target="#mainCarousel" data-bs-slide="next">
-    <span class="carousel-control-next-icon" aria-hidden="true"></span>
-    <span class="visually-hidden">다음</span>
-  </button>
-</div>
-
-<!-- Hero 섹션 -->
-<div class="bg-dark text-white text-center py-3" style="background-image: url('https://example.com/hero-image.jpg'); background-size: cover; background-position: center;">
-  <div class="container">
-    <h5 class="display-4 fw-bold">🚌 조합원 테마여행 신청</h5>
-    <p class="lead">남설악과 동해바다를 함께하는 특별한 하루</p>
-  </div>
-</div>
-<!-- 신청 안내 카드 -->
-<section class="container my-3" id="application">
-  <div class="card shadow">
-    <div class="card-body">
-      <h5 class="card-title">📢참가 신청 안내</h5>
-      <ul class="list-unstyled">
-        <li><strong>대상:</strong> 우선 선착순) 최근 5년 이내 가입 조합원 우선 접수</li>
-        <li>2차 대상)  참조합원 대상 접수 후 추첨진행</li>
-        <li><strong>일시:</strong> 2025년 10월 18일(토) 07:00 ~ 19:00</li>
-        <li><strong>장소:</strong> 남설악(한계령 경유 용소탐방센터 ~ 오색약수) + 속초 바다향기길 트래킹</li>
-        <li><strong>코스:</strong> 용소폭포탐방센터 ~ 주전골 ~ 오색약수 (난이도: 하)</li>
-        <li><strong>참가비:</strong> 인당 1만원 [교통비, 아침, 점심(회정식), 간식 포함]</li>
-        <li><strong>신청인원:</strong> 최대 2명 (동반 1인 가능, 미성년 자녀 제외)</li>
-        <li><strong>신청기간:</strong>   ~ 9월 30일(화) / 10월 1일 (수)추첨</li>
-        <li><strong>참석인원:</strong> 2차 40명 초과시 추첨진행 (단, 1차 우선 접수자는 추첨 전 확정)</li>
-      </ul>
-    </div>
-  </div>
-  <br>
-
-</section>
-
-  <div class="container form-container bg-white p-4 shadow rounded">
-    <h3 class="text-center mb-4">📝신청하기</h3>
-    <form id="travelForm" onsubmit="submitForm(event)">
-      <div class="mb-3">
-        <label class="form-label">📌 조합원번호 또는 사번</label>
-        <input type="number" class="form-control" id="employeeId" required>
+  <!-- Carousel -->
+  <div class="container container-narrow hero-carousel fade-in">
+    <div id="mainCarousel" class="carousel slide carousel-fade shadow-soft" data-bs-ride="carousel" data-bs-interval="3500">
+      <div class="carousel-indicators">
+        <button type="button" data-bs-target="#mainCarousel" data-bs-slide-to="0" class="active" aria-current="true"></button>
+        <button type="button" data-bs-target="#mainCarousel" data-bs-slide-to="1"></button>
+        <button type="button" data-bs-target="#mainCarousel" data-bs-slide-to="2"></button>
+        <button type="button" data-bs-target="#mainCarousel" data-bs-slide-to="3"></button>
+        <button type="button" data-bs-target="#mainCarousel" data-bs-slide-to="4"></button>
+        <button type="button" data-bs-target="#mainCarousel" data-bs-slide-to="5"></button>
       </div>
-      <div class="mb-3">
-        <label class="form-label">👤 성명</label>
-        <input type="text" class="form-control" id="name" required>
-      </div>
-      <div class="mb-3">
-        <label class="form-label">📞 연락처</label>
-        <input type="tel" class="form-control" id="contact" required placeholder="숫자만">
-      </div>
-      <div class="mb-3">
-        <label class="form-label">👥 참석인원</label>
-        <select class="form-select" id="attendees" required>
-          <option value="">선택하세요</option>
-          <option value="1">1명</option>
-          <option value="2">2명</option>
-        </select>
-      </div>
-      <div class="accordion mb-3" id="consentAccordion">
-        <div class="accordion-item">
-          <h2 class="accordion-header" id="consentHeading">
-            <button class="accordion-button collapsed bg-light border shadow-sm"
-        type="button"
-        data-bs-toggle="collapse"
-        data-bs-target="#consentCollapse"
-        aria-expanded="false"
-        aria-controls="consentCollapse"
-        style="background-color: #f0f4f8;">
-  📄 개인정보 수집 및 활용 동의 내용 보기/닫기
-</button>
-
-          </h2>
-          <div id="consentCollapse" class="accordion-collapse collapse" aria-labelledby="consentHeading" data-bs-parent="#consentAccordion">
-            <div class="accordion-body">
-              <p>
-                우리 조합은 테마여행 참가 및 여행자 보험 가입을 위해 아래의 개인정보를 수집 및 활용합니다:
-              </p>
-              <ul>
-                <li><strong>수집 항목:</strong> 성명, 주민등록번호, 연락처</li>
-                <li><strong>이용 목적:</strong> 여행자 보험 가입 및 테마여행 운영</li>
-                <li><strong>보유 기간:</strong> 행사 종료 후 1개월 이내 파기</li>
-              </ul>
-              <p>
-                선생님은 개인정보 수집 및 활용에 동의하지 않을 권리가 있으며, 동의하지 않을 경우 테마여행 참가가 제한될 수 있습니다.
-              </p>
-            </div>
+      <div class="carousel-inner rounded">
+        <div class="carousel-item active">
+          <div class="ratio">
+            <img src="https://rimage.gnst.jp/livejapan.com/public/article/detail/a/00/04/a0004964/img/ko/a0004964_main.jpg" class="w-100 h-100 object-fit-cover" alt="슬라이드1" decoding="async"/>
+          </div>
+        </div>
+        <div class="carousel-item">
+          <div class="ratio">
+            <img src="https://media.triple.guide/triple-cms/c_limit,f_auto,h_1024,w_1024/80fdf6f8-04fd-4c5a-8fb7-980a8462780e.jpeg" class="w-100 h-100 object-fit-cover" alt="슬라이드2" loading="lazy" decoding="async"/>
+          </div>
+        </div>
+        <div class="carousel-item">
+          <div class="ratio">
+            <img src="https://img.activityjapan.com/wi/miyakojima-touristspots2-2.jpg" class="w-100 h-100 object-fit-cover" alt="슬라이드3" loading="lazy" decoding="async"/>
+          </div>
+        </div>
+        <div class="carousel-item">
+          <div class="ratio">
+            <img src="https://static.hubzum.zumst.com/hubzum/2019/04/25/10/7dd7015eb0934198b57fea31ee7d6309_780x520.jpg" class="w-100 h-100 object-fit-cover" alt="슬라이드4" loading="lazy" decoding="async"/>
+          </div>
+        </div>
+        <div class="carousel-item">
+          <div class="ratio">
+            <img src="https://img.japan-blog.net/app_photo/company/t_cerulean/plan/plan_thumbnail_868.png?v=20240606151824" class="w-100 h-100 object-fit-cover" alt="슬라이드5" loading="lazy" decoding="async"/>
+          </div>
+        </div>
+        <div class="carousel-item">
+          <div class="ratio">
+            <img src="https://content.r9cdn.net/rimg/dimg/29/11/b4b1aa54-city-53626-16a68e85248.jpg?width=1366&height=768&xhint=2769&yhint=2530&crop=true" class="w-100 h-100 object-fit-cover" alt="슬라이드6" loading="lazy" decoding="async"/>
           </div>
         </div>
       </div>
-      
-      <div class="form-check mb-3">
-        <input class="form-check-input" type="checkbox" id="consent" required>
-        <label class="form-check-label" for="consent">
-          상기 개인정보 수집 및 활용에 동의합니다.
-        </label>
-      </div>
-      <div class="mb-3">
-        <label class="form-label">💬 기타 코멘트 (선택)</label>
-        <textarea class="form-control" id="comment" rows="2" placeholder="선택사항입니다."></textarea>
-      </div>
-      <button type="submit" class="btn btn-primary w-100" id="submitBtn">📤 제출하기</button>
-      <div class="text-center mt-3">
-        <div class="spinner-border text-primary" id="loadingSpinner" role="status"><span class="visually-hidden">제출 중...</span></div>
-      </div>
-    </form>
+
+      <button class="carousel-control-prev" type="button" data-bs-target="#mainCarousel" data-bs-slide="prev">
+        <span class="carousel-control-prev-icon" aria-hidden="true"></span><span class="visually-hidden">이전</span>
+      </button>
+      <button class="carousel-control-next" type="button" data-bs-target="#mainCarousel" data-bs-slide="next">
+        <span class="carousel-control-next-icon" aria-hidden="true"></span><span class="visually-hidden">다음</span>
+      </button>
+    </div>
   </div>
 
-  <!-- Bootstrap JS Bundle (body 맨 아래에 삽입) -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-  const carouselElement = document.querySelector('#mainCarousel');
-  const carousel = new bootstrap.Carousel(carouselElement, {
-    interval: 3000, // 3초마다 슬라이드
-    ride: 'carousel'
-  });
-</script>
+  <!-- Hero -->
+  <section class="container container-narrow mt-3 fade-in">
+    <div class="hero position-relative shadow-soft">
+      <img src="https://static.hubzum.zumst.com/hubzum/2019/04/25/10/7dd7015eb0934198b57fea31ee7d6309_780x520.jpg" alt="미야코지마" class="w-100" style="height:180px; object-fit:cover;">
+      <div class="overlay"></div>
+      <div class="hero-text">
+        <div>
+          <h3 class="display-6 mb-2">미야코지마 2박3일 테마여행</h3>
+          <div class="d-flex flex-wrap justify-content-center gap-2">
+            <span class="chip"><i class="bi bi-calendar-event"></i> 2025.10.18(토)~20(월)</span>
+            <span class="chip"><i class="bi bi-geo-alt"></i> 일본 미야코지마섬</span>
+            <span class="chip"><i class="bi bi-people"></i> 정원 40명</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 안내 카드 -->
+  <section class="container container-narrow my-3 fade-in" id="application">
+    <div class="card card-rounded shadow-soft">
+      <div class="card-header py-3">
+        <h5 class="m-0"><i class="bi bi-megaphone me-2 text-primary"></i>참가 신청 안내</h5>
+      </div>
+      <div class="card-body">
+        <ul class="list-unstyled mb-0">
+          <li class="mb-1"><strong>대상:</strong> (우선) 최근 5년 이내 가입 조합원</li>
+          <li class="mb-1">2차: 참조합원 대상 접수 후 추첨 진행</li>
+          <li class="mb-1"><strong>일시:</strong> 2025년 10월 18일(토) ~ 20일(월) / 2박3일</li>
+          <li class="mb-1"><strong>장소:</strong> 일본 미야코지마섬</li>
+          <li class="mb-1"><strong>참가비:</strong> 인당 10만원 (항공/숙소/식사/입장료 포함)</li>
+          <li class="mb-1"><strong>신청인원:</strong> 최대 2명 (동반 1인 가능, 미성년 자녀 제외)</li>
+          <li class="mb-1"><strong>신청기간:</strong> ~ 9월 30일(화) / 10월 1일(수) 추첨</li>
+          <li class="mb-1"><strong>초과 시:</strong> 40명 초과 시 추첨 (1차 우선 접수자는 확정)</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 폼 -->
+  <section class="container container-narrow mb-5 fade-in">
+    <div class="glass p-3 p-md-4 shadow-soft">
+      <h3 class="fw-bold mb-3 text-center">📝 신청하기</h3>
+      <form id="travelForm" class="needs-validation" novalidate>
+        <div class="row g-3">
+          <div class="col-12">
+            <label class="form-label">📌 조합원번호 또는 사번</label>
+            <input type="number" class="form-control" id="employeeId" required inputmode="numeric" />
+            <div class="invalid-feedback">조합원번호/사번을 입력하세요.</div>
+          </div>
+          <div class="col-sm-6">
+            <label class="form-label">👤 성명</label>
+            <input type="text" class="form-control" id="name" required />
+            <div class="invalid-feedback">성명을 입력하세요.</div>
+          </div>
+          <div class="col-sm-6">
+            <label class="form-label">📞 연락처 <span class="helper">(숫자만 입력해도 자동 서식)</span></label>
+            <input type="tel" class="form-control" id="contact" required inputmode="tel" placeholder="01012345678"/>
+            <div class="invalid-feedback">연락처를 올바르게 입력하세요.</div>
+          </div>
+          <div class="col-sm-6">
+            <label class="form-label">👥 참석인원</label>
+            <select class="form-select" id="attendees" required>
+              <option value="">선택하세요</option>
+              <option value="1">1명</option>
+              <option value="2">2명</option>
+            </select>
+            <div class="invalid-feedback">참석 인원을 선택하세요.</div>
+          </div>
+          <div class="col-12">
+            <div class="accordion" id="consentAccordion">
+              <div class="accordion-item border-0">
+                <h2 class="accordion-header" id="consentHeading">
+                  <button class="accordion-button collapsed rounded-3" type="button"
+                          data-bs-toggle="collapse" data-bs-target="#consentCollapse"
+                          aria-expanded="false" aria-controls="consentCollapse">
+                    📄 개인정보 수집·활용 동의 내용 보기/닫기
+                  </button>
+                </h2>
+                <div id="consentCollapse" class="accordion-collapse collapse" aria-labelledby="consentHeading" data-bs-parent="#consentAccordion">
+                  <div class="accordion-body">
+                    <p>테마여행 운영 및 여행자 보험 가입을 위해 아래의 개인정보를 수집·활용합니다.</p>
+                    <ul class="mb-2">
+                      <li><strong>수집 항목:</strong> 성명, 주민등록번호, 연락처</li>
+                      <li><strong>이용 목적:</strong> 여행자 보험 가입, 운영 관리</li>
+                      <li><strong>보유 기간:</strong> 행사 종료 후 1개월 이내 파기</li>
+                    </ul>
+                    <p class="mb-0">동의하지 않을 권리가 있으며, 미동의 시 참가가 제한될 수 있습니다.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12">
+            <div class="form-check mt-1">
+              <input class="form-check-input" type="checkbox" id="consent" required>
+              <label class="form-check-label" for="consent">상기 개인정보 수집 및 활용에 동의합니다.</label>
+              <div class="invalid-feedback">동의가 필요합니다.</div>
+            </div>
+          </div>
+
+          <div class="col-12">
+            <label class="form-label">💬 기타 코멘트 (선택)</label>
+            <textarea class="form-control" id="comment" rows="2" placeholder="선택 사항입니다."></textarea>
+          </div>
+
+          <div class="col-12 d-grid mt-2">
+            <button type="submit" class="btn btn-primary btn-lg btn-pill" id="submitBtn">
+              <span class="btn-text">📤 제출하기</span>
+              <span class="btn-spinner spinner-border spinner-border-sm ms-2 d-none" role="status" aria-hidden="true"></span>
+            </button>
+            <div class="text-center helper mt-2" id="submitHint">제출 시 잠시만 기다려 주세요…</div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <!-- 상단 이동 FAB -->
+  <button id="btnTop" class="btn btn-primary fab-top shadow-soft"><i class="bi bi-arrow-up"></i></button>
+
+  <!-- Toast -->
+  <div class="position-fixed top-0 start-50 translate-middle-x p-3" style="z-index:1080">
+    <div id="toast" class="toast align-items-center text-bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+      <div class="d-flex">
+        <div class="toast-body"><i class="bi bi-check-circle me-2"></i>제출이 완료되었습니다.</div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
   <script>
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbzP-VPAbjtzV1oqTfLsuSDYtnpQBludpT0SPxGPQQ4V7BzKAVTrZ3l8FGVPjslVGBYO/exec'; // 배포된 웹 앱 URL로 변경해주세요
+  /* ========== 유틸 ========== */
+  const $  = (sel) => document.querySelector(sel);
+  const $$ = (sel) => document.querySelectorAll(sel);
 
-    function submitForm(event) {
-      event.preventDefault();
+  // 숫자만
+  function digitsOnly(s){ return String(s || '').replace(/\D/g, ''); }
 
-      const form = document.getElementById("travelForm");
-      const btn = document.getElementById("submitBtn");
-      const spinner = document.getElementById("loadingSpinner");
-
-      const contact = document.getElementById("contact").value.trim();
-        // 연락처가 11자리 숫자인지 확인
-     if (!/^\d{11}$/.test(contact)) {
-    alert("📞 연락처는 숫자만 11자리입니다. 확인해 주세요. 예: 01012345678");
-    document.getElementById("contact").focus();
-    return;
+  // 연락처 보정: 105... → 0105..., 최대 11자리로 제한
+  function normalizePhoneDigits(input){
+    let d = digitsOnly(input);
+    if (d.length === 10 && d.startsWith('10')) d = '0' + d; // 앞 0 누락 보정
+    if (d.length > 11) d = d.slice(0, 11);
+    return d;
   }
 
-      const data = {
-        employeeId: document.getElementById("employeeId").value.trim(),
-        name: document.getElementById("name").value.trim(),
-        contact: document.getElementById("contact").value.trim(),
-        attendees: document.getElementById("attendees").value,
-        consent: document.getElementById("consent").checked ? "동의" : "미동의",
-        comment: document.getElementById("comment").value.trim()
-      };
+  // 표시용 하이픈
+  function formatPhoneHyphen(d){
+    const n = digitsOnly(d);
+    if (n.length <= 3) return n;
+    if (n.length <= 7) return `${n.slice(0,3)}-${n.slice(3)}`;
+    const mid = (n.length === 11) ? n.slice(3,7) : n.slice(3,6);
+    return `${n.slice(0,3)}-${mid}-${n.slice(-4)}`;
+  }
 
-      const confirmMsg = `입력하신 내용을 확인해주세요:\n\n` +
-        `📌 사번: ${data.employeeId}\n` +
-        `👤 성명: ${data.name}\n` +
-        `📞 연락처: ${data.contact}\n` +
-        `👥 참석인원: ${data.attendees}명\n\n` +
-        `이대로 제출하시겠습니까?`;
-
-      if (!confirm(confirmMsg)) return;
-
-      btn.disabled = true;
-      btn.innerText = "🔄 제출 중...";
-      spinner.style.display = "inline-block";
-
-      fetch(scriptURL, {
-  method: "POST",
-  mode: "no-cors", // ✨ 핵심 설정
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify(data)
-})
-.finally(() => {
-  alert("✅ 신청이 완료되었을 수 있습니다.\n 취소 및 변경은 신협으로 신청 바랍니다. ");
-  form.reset();
-  btn.disabled = false;
-  btn.innerText = "📤 제출하기";
-  spinner.style.display = "none";
-});
+  /* ========== 부트스트랩 카루셀 초기화 ========== */
+  document.addEventListener('DOMContentLoaded', () => {
+    const carouselElement = document.querySelector('#mainCarousel');
+    if (carouselElement && window.bootstrap?.Carousel) {
+      try {
+        new bootstrap.Carousel(carouselElement, {
+          interval: 3000,   // 3초마다 슬라이드
+          ride: 'carousel'
+        });
+      } catch (e) {}
     }
-  </script>
+
+    // 외부 스피너가 있다면 초기 감춤
+    const extSpinner = $('#loadingSpinner');
+    if (extSpinner) extSpinner.style.display = 'none';
+
+    // 연락처 입력 시 자동 하이픈 + 0 보정(UX)
+    const contactInput = $('#contact');
+    if (contactInput){
+      contactInput.addEventListener('input', () => {
+        const d = normalizePhoneDigits(contactInput.value);
+        if (d.length <= 3) contactInput.value = d;
+        else if (d.length <= 7) contactInput.value = `${d.slice(0,3)}-${d.slice(3)}`;
+        else contactInput.value = `${d.slice(0,3)}-${d.slice(3,7)}-${d.slice(7)}`;
+      }, { passive: true });
+    }
+
+    // 폼이 인라인 onsubmit을 안 쓸 때도 동작하도록 리스너 보강
+    const form = $('#travelForm');
+    if (form && !form.getAttribute('onsubmit')) {
+      form.addEventListener('submit', submitForm);
+    }
+  });
+
+  /* ========== GAS 웹앱 엔드포인트 ========== */
+  const scriptURL = 'https://script.google.com/macros/s/AKfycbzP-VPAbjtzV1oqTfLsuSDYtnpQBludpT0SPxGPQQ4V7BzKAVTrZ3l8FGVPjslVGBYO/exec'; // 배포 URL
+
+  /* ========== 제출 핸들러 ========== */
+  function submitForm(event){
+    event.preventDefault();
+
+    const form = $('#travelForm');
+    const btn  = $('#submitBtn');
+
+    // 외부 스피너(#loadingSpinner) 또는 버튼 내부 스피너(.btn-spinner) 둘 다 지원
+    const extSpinner = $('#loadingSpinner');
+    const btnSpinner = btn?.querySelector('.btn-spinner');
+
+    // 버튼/스피너 ON
+    if (btn){ btn.disabled = true; btn.innerText = '🔄 제출 중...'; }
+    if (extSpinner){ extSpinner.style.display = 'inline-block'; }
+    if (btnSpinner){ btnSpinner.classList.remove('d-none'); }
+
+    // 값 수집 + 연락처 보정
+    const employeeId = $('#employeeId')?.value.trim() || '';
+    const name       = $('#name')?.value.trim() || '';
+    const attendees  = $('#attendees')?.value || '';
+    const consent    = $('#consent')?.checked ? '동의' : '미동의';
+    const comment    = $('#comment')?.value.trim() || '';
+
+    const contactRaw    = $('#contact')?.value.trim() || '';
+    const contactDigits = normalizePhoneDigits(contactRaw);   // ← 숫자만(11자리)으로 보정
+
+    // 연락처 검증 (숫자 11자리)
+    if (!/^\d{11}$/.test(contactDigits)) {
+      alert('📞 연락처는 숫자만 11자리입니다.\n예: 01012345678');
+      $('#contact')?.focus();
+      return resetUI();
+    }
+
+    // 확인창(연락처는 보기 좋게 하이픈으로 표시)
+    const confirmMsg =
+      `입력하신 내용을 확인해주세요:\n\n` +
+      `📌 사번: ${employeeId}\n` +
+      `👤 성명: ${name}\n` +
+      `📞 연락처: ${formatPhoneHyphen(contactDigits)}\n` +
+      `👥 참석인원: ${attendees}명\n\n` +
+      `이대로 제출하시겠습니까?`;
+    if (!confirm(confirmMsg)) return resetUI();
+
+    const data = {
+      employeeId,
+      name,
+      contact: contactDigits,   // 서버에는 숫자 11자리로 전송
+      attendees,
+      consent,
+      comment
+    };
+
+    fetch(scriptURL, {
+      method: 'POST',
+      mode: 'no-cors',                      // 응답을 읽지 않아도 되는 경우
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    })
+    .catch(() => { /* no-cors라 에러 핸들링 제한 */ })
+    .finally(() => {
+      alert('✅ 신청이 완료되었을 수 있습니다.\n취소 및 변경은 신협으로 신청 바랍니다.');
+      if (form) form.reset();
+      resetUI();
+    });
+
+    // 버튼/스피너 OFF
+    function resetUI(){
+      if (btn){ btn.disabled = false; btn.innerText = '📤 제출하기'; }
+      if (extSpinner){ extSpinner.style.display = 'none'; }
+      if (btnSpinner){ btnSpinner.classList.add('d-none'); }
+    }
+  }
+</script>
+
 </body>
 </html>
