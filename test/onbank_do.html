@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>온뱅크 실행 테스트</title>
+</head>
+<body>
+  <h2>📱 온뱅크 실행 테스트</h2>
+  <button onclick="openOnbank()">온뱅크 앱 열기</button>
+
+  <script>
+    function openOnbank() {
+      // iOS라면 onbank://, 안드로이드라면 intent:// 같은 딥링크가 필요
+      window.location.href = "onbank://";  
+
+      // 앱이 없을 경우 스토어로 이동
+      setTimeout(function() {
+        window.location.href = "https://play.google.com/store/apps/details?id=kr.co.cu.onbank";
+      }, 2000);
+    }
+  </script>
+</body>
+</html>
