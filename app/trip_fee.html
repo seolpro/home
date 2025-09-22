@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>여행경비 정산 (THB)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+</head>
+<body class="bg-light">
+<div class="container py-4">
+  <h2 class="mb-4">🧾 여행경비 정산 (THB)</h2>
+  <form id="expenseForm" class="row g-3 mb-4">
+    <div class="col-md-3">
+      <label class="form-label">날짜</label>
+      <input type="date" name="date" class="form-control" required>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">카테고리</label>
+      <select name="category" class="form-select">
+        <option>식비</option><option>교통</option><option>숙박</option><option>기타</option>
+      </select>
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">메모</label>
+      <input type="text" name="memo" class="form-control">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">금액(THB)</label>
+      <input type="number" step="0.01" name="amountTHB" class="form-control" required>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">결제자</label>
+      <input type="text" name="payer" value="총무" class="form-control" readonly>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">수단</label>
+      <select name="method" class="form-select">
+        <option>현금</option><option>카드</option><option>기타</option>
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">여정</label>
+      <input type="text" name="trip" class="form-control">
+    </div>
+    <div class="col-12">
+      <button type="submit" class="btn btn-primary">✅저장하기</button>
+    </div>
+  </form>
+
+  <h5>📊 저장된 경비</h5>
+  <table class="table table-bordered bg-white" id="expenseTable">
+    <thead>
+      <tr><th>날짜</th><th>카테고리</th><th>메모</th><th>금액(THB)</th><th>결제자</th><th>수단</th><th>여정</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<script>
+const GAS_URL = "https://script.google.com/macros/s/AKfycbwNRLzX4kMUtzVfKZplRJsWspoIEPMX9WIebnTHh6L-0zDoujjzgryRwjzI564wSM6tdg/exec"; 
+
+// 저장
+document.getElementById("expenseForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const formData = Object.fromEntries(new FormData(e.target).entries());
+
+  try {
+    const res = await fetch(GAS_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(formData)
+    });
+
+    // no-cors 모드에서는 응답을 읽을 수 없으니, 프록시 서버 필요
+    const data = await res.json();  
+
+    if (data.ok) {
+      alert("저장 완료");
+      loadData();
+      e.target.reset();
+    } else {
+      alert("실패: " + data.error);
+    }
+  } catch (err) {
+    console.error(err);
+    alert("요청 오류: " + err.message);
+  }
+});
+
+// 불러오기
+async function loadData(){
+  const res = await fetch(GAS_URL);
+  const data = await res.json();
+  const tbody = document.querySelector("#expenseTable tbody");
+  tbody.innerHTML = "";
+
+  if (data.ok) {
+    data.rows.forEach(r => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${r.date}</td>
+        <td>${r.category}</td>
+        <td>${r.memo}</td>
+        <td>${r.amountTHB}</td>
+        <td>${r.payer}</td>
+        <td>${r.method}</td>
+        <td>${r.trip}</td>`;
+      tbody.appendChild(tr);
+    });
+  }
+}
+loadData();
+</script>
+
+</body>
+</html>
