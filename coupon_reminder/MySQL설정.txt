@@ -1,0 +1,18 @@
+CREATE TABLE coupons (
+    id              INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    title           VARCHAR(100) NOT NULL,        -- 쿠폰 제목
+    barcode         VARCHAR(100) NULL,            -- 바코드 (선택)
+    coupon_code     VARCHAR(100) NULL,            -- 쿠폰 번호/코드
+    expire_date     DATE NOT NULL,                -- 유효기간 (마지막 사용 가능일)
+    receiver_tel    VARCHAR(20) NOT NULL,         -- 수신인 연락처(휴대폰)
+    image_path      VARCHAR(255) NULL,            -- 이미지 파일 경로
+    used_flag       TINYINT(1) NOT NULL DEFAULT 0,-- 0: 미사용, 1: 사용완료
+    used_at         DATETIME NULL,                -- 사용등록 일시
+    remind10_sent_at DATETIME NULL,               -- D-10 발송일시
+    remind5_sent_at  DATETIME NULL,               -- D-5 발송일시
+    remind2_sent_at  DATETIME NULL,               -- D-2 발송일시
+    created_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_expire_used (expire_date, used_flag),
+    INDEX idx_tel (receiver_tel)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
