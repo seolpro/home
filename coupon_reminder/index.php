@@ -8,8 +8,21 @@ require_once __DIR__ . '/db.php';
 $pdo = getDB();
 
 // 최근 쿠폰 목록 (예: 최근 50개)
-$stmt = $pdo->query("SELECT * FROM coupons ORDER BY created_at DESC LIMIT 50");
+/* $stmt = $pdo->query("SELECT * FROM coupons ORDER BY created_at DESC LIMIT 50");
+$coupons = $stmt->fetchAll(PDO::FETCH_ASSOC); */
+// ✅ 쿠폰 목록 (미사용 우선 + 유효기간 임박순)
+// ✅ 쿠폰 목록: 미사용 먼저 + 유효기간 임박순 + (동일 날짜면 최근등록 우선)
+$stmt = $pdo->query("
+  SELECT *
+  FROM coupons
+  ORDER BY
+    used_flag ASC,
+    expire_date ASC,
+    created_at DESC
+  LIMIT 50
+");
 $coupons = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
 ?>
 <!DOCTYPE html>
 <html lang="ko">
@@ -20,6 +33,10 @@ $coupons = $stmt->fetchAll(PDO::FETCH_ASSOC);
   <link
     href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
     rel="stylesheet">
+
+<!-- Bootstrap 5 JS (bundle: modal 포함) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
   <style>
     body {
       background: #f5f7fb;
@@ -154,7 +171,7 @@ $coupons = $stmt->fetchAll(PDO::FETCH_ASSOC);
   <!-- 쿠폰 목록 -->
   <div class="card">
     <div class="card-body">
-      <h5 class="card-title mb-3">📂 등록된 쿠폰 목록</h5>
+      <h5 class="card-title mb-3">📂 등록된 쿠폰 목록(*만료일 빠른순)</h5>
       <div class="table-responsive">
         <table class="table align-middle">
           <thead>
@@ -238,7 +255,7 @@ $coupons = $stmt->fetchAll(PDO::FETCH_ASSOC);
                   <?php if ($c['used_flag']): ?>
                     <span class="text-success small">이미 사용등록</span>
                   <?php else: ?>
-                    <form action="use_coupon.php" method="post" onsubmit="return confirm('이 쿠폰을 사용완료로 등록할까요? 알림톡 발송 대상에서 제외됩니다.');">
+                    <form action="use_coupon.php" method="post" onsubmit="return confirm('✅이 쿠폰을 사용완료로 등록할까요? 알림톡 발송 대상에서 제외됩니다.');">
                       <input type="hidden" name="id" value="<?= (int)$c['id'] ?>">
                       <button type="submit" class="btn btn-outline-success btn-sm btn-pill">
                         ✅ 사용등록
@@ -295,8 +312,47 @@ $coupons = $stmt->fetchAll(PDO::FETCH_ASSOC);
   </div>
 </div>
 
+<!-- ✅ 로딩 시 자동 표시 모달 -->
+<div class="modal fade" id="noticeModal" tabindex="-1" aria-labelledby="noticeModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content shadow">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold" id="noticeModalLabel">📢 쿠폰사용 안내</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button>
+      </div>
+
+      <div class="modal-body">
+        <p class="mb-2">📍유효기간이 먼저 도래하는 쿠폰부터 사용해 주세요</p>
+        <ul class="mb-0">
+          <li>유효기간 또는 상태(잔여일) 확인</li>
+        </ul>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">확인했어요</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const el = document.getElementById('noticeModal');
+  if (!el) return;
+
+  const modal = new bootstrap.Modal(el, {
+    backdrop: 'static', // 바깥 클릭으로 닫히지 않게
+    keyboard: false     // ESC로 닫히지 않게
+  });
+
+  modal.show();
+});
+</script>
+
 
 <script>
 function deleteCoupon(id, title, btnEl) {
