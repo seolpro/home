@@ -124,8 +124,47 @@
         <div class="toast-body" id="toastMsg">복사되었습니다.</div>
         <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
       </div>
-    </div>
+      </div>
   </div>
+
+  <img
+  id="guideImg"
+  src="scrach.jpg"
+  alt="픽업 전 안내"
+  style="width:100%; max-width:720px; height:auto; display:block; margin:0 auto; border-radius:16px;">
+<div style="text-align: center;">
+<a
+  id="downloadBtn"
+  href="scrach.jpg"
+  download="pickup-guide.png"
+>
+  ⬇️ 이미지 다운로드
+</a>
+
+<button id="copyBtn">📋 이미지 복사</button>
+</div>
+<script>
+async function copyImage(url){
+  const res = await fetch(url);
+  const blob = await res.blob();
+
+  if (!navigator.clipboard || !window.ClipboardItem) {
+    alert("이 브라우저는 이미지 복사를 지원하지 않아요. 다운로드를 사용해주세요.");
+    return;
+  }
+
+  await navigator.clipboard.write([
+    new ClipboardItem({ [blob.type]: blob })
+  ]);
+
+  alert("✅ 이미지가 복사됐어요! 카톡/문서에 붙여넣기 해보세요.");
+}
+
+document.getElementById("copyBtn").addEventListener("click", () => {
+  const url = document.getElementById("guideImg").src;
+  copyImage(url);
+});
+</script>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
@@ -203,7 +242,7 @@
    남겨주시면 확인되는 대로 연락 드리겠습니다.` },
     ];
 
-    // =========================
+     // =========================
     // 상태/유틸
     // =========================
     const state = { theme:"전체", q:"" };
