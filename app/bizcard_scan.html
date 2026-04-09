@@ -1,0 +1,688 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart Card Scan Contact Saver</title>
+  <meta name="theme-color" content="#0f172a" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <style>
+    :root{
+      --bg:#07111f;
+      --bg2:#0f172a;
+      --card:rgba(255,255,255,0.08);
+      --line:rgba(255,255,255,0.12);
+      --text:#ecf3ff;
+      --sub:#b6c2d9;
+      --accent:#60a5fa;
+      --accent2:#22c55e;
+      --warn:#f59e0b;
+      --shadow:0 24px 64px rgba(0,0,0,.28);
+      --radius:26px;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0;font-family:'Pretendard',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:
+      radial-gradient(circle at top right, rgba(96,165,250,.2), transparent 30%),
+      radial-gradient(circle at top left, rgba(34,197,94,.12), transparent 25%),
+      linear-gradient(180deg, #081120, #101827 56%, #0b1220 100%);
+      color:var(--text);}
+    body{min-height:100vh}
+    .wrap{max-width:1200px;margin:0 auto;padding:22px}
+    .hero{
+      display:grid;grid-template-columns:1.15fr .85fr;gap:18px;align-items:stretch
+    }
+    .glass{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      backdrop-filter: blur(16px);
+    }
+    .hero-main{padding:28px}
+    .badge{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:8px 14px;border:1px solid rgba(96,165,250,.35);
+      border-radius:999px;background:rgba(96,165,250,.12);font-size:13px;color:#d8e9ff
+    }
+    h1{font-size:clamp(28px,4vw,50px);line-height:1.05;margin:16px 0 10px;font-weight:800;letter-spacing:-.03em}
+    .hero p{margin:0;color:var(--sub);font-size:16px;line-height:1.75}
+    .hero-side{padding:24px;display:flex;flex-direction:column;gap:14px}
+    .quick-stat{
+      display:flex;justify-content:space-between;align-items:center;padding:16px 18px;border:1px solid var(--line);
+      border-radius:20px;background:rgba(255,255,255,0.04)
+    }
+    .quick-stat strong{font-size:18px}
+    .quick-stat span{color:var(--sub);font-size:13px}
+    .grid{
+      margin-top:18px;
+      display:grid;grid-template-columns:1.05fr .95fr;gap:18px
+    }
+    .panel{padding:22px}
+    .panel h2{margin:0 0 6px;font-size:22px;letter-spacing:-.02em}
+    .muted{color:var(--sub)}
+    .upload-box{
+      position:relative;margin-top:18px;border:1.5px dashed rgba(255,255,255,.22);
+      border-radius:24px;padding:22px;background:rgba(255,255,255,.04)
+    }
+    .upload-actions{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px}
+    .btn{
+      appearance:none;border:none;cursor:pointer;
+      padding:14px 18px;border-radius:16px;font-weight:700;font-size:15px;
+      transition:transform .18s ease, opacity .18s ease, box-shadow .18s ease;
+      text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px
+    }
+    .btn:hover{transform:translateY(-1px)}
+    .btn:active{transform:translateY(0)}
+    .btn.primary{background:linear-gradient(135deg,#60a5fa,#3b82f6);color:white;box-shadow:0 14px 30px rgba(59,130,246,.35)}
+    .btn.secondary{background:rgba(255,255,255,.08);color:var(--text);border:1px solid var(--line)}
+    .btn.success{background:linear-gradient(135deg,#34d399,#22c55e);color:#08110c;box-shadow:0 14px 30px rgba(34,197,94,.35)}
+    .btn.warn{background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#201505;box-shadow:0 14px 30px rgba(245,158,11,.28)}
+    .btn[disabled]{opacity:.55;cursor:not-allowed;transform:none}
+    .preview-wrap{
+      display:grid;grid-template-columns:1fr;gap:12px
+    }
+    .preview{
+      min-height:280px;border-radius:22px;overflow:hidden;background:#09101c;border:1px solid var(--line);
+      display:flex;align-items:center;justify-content:center;position:relative
+    }
+    .preview img{width:100%;height:100%;object-fit:contain;display:block}
+    .placeholder{padding:24px;text-align:center;color:var(--sub);line-height:1.7}
+    .tip-list{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}
+    .tip{
+      padding:12px 14px;border-radius:16px;background:rgba(255,255,255,.04);border:1px solid var(--line);font-size:13px;color:#d4def0
+    }
+    .status{
+      margin-top:14px;padding:14px 16px;border-radius:18px;background:rgba(255,255,255,.05);
+      border:1px solid var(--line);font-size:14px;color:#dbe8ff;min-height:52px
+    }
+    .progress{
+      width:100%;height:10px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden;margin-top:12px;display:none
+    }
+    .bar{height:100%;width:0%;background:linear-gradient(90deg,#60a5fa,#22c55e)}
+    .form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:16px}
+    .field{display:flex;flex-direction:column;gap:8px}
+    .field.full{grid-column:1 / -1}
+    label{font-size:13px;color:#d7e3f9;font-weight:700}
+    input, textarea{
+      width:100%;padding:14px 15px;border-radius:16px;border:1px solid var(--line);
+      background:rgba(255,255,255,.05);color:var(--text);outline:none;font-size:15px
+    }
+    textarea{min-height:98px;resize:vertical}
+    input:focus, textarea:focus{border-color:rgba(96,165,250,.55);box-shadow:0 0 0 4px rgba(96,165,250,.15)}
+    .mini-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+    .ocr-box{
+      margin-top:18px;padding:16px;border-radius:18px;background:#08111d;border:1px solid var(--line)
+    }
+    .ocr-box pre{
+      margin:10px 0 0;white-space:pre-wrap;word-break:break-word;color:#d7e5fd;font-size:13px;line-height:1.7;
+      max-height:220px;overflow:auto
+    }
+    .footer-note{
+      margin-top:18px;padding:16px 18px;border-radius:18px;background:rgba(96,165,250,.08);
+      border:1px solid rgba(96,165,250,.2);color:#ddecff;font-size:14px;line-height:1.7
+    }
+    .small{font-size:12px;color:var(--sub)}
+    .pill-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+    .pill{padding:8px 12px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid var(--line);font-size:12px;color:#dbe9ff}
+    canvas{display:none}
+    @media (max-width:980px){
+      .hero,.grid{grid-template-columns:1fr}
+      .tip-list,.form-grid{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="hero">
+      <div class="hero-main glass">
+        <div class="badge">📇 Smart BizCard Scanner · Android 저장 지원</div>
+        <h1>명함 촬영 → 자동 분석 → 연락처 저장</h1>
+        <p>
+          안드로이드 폰에서 명함을 촬영하거나 업로드하면, OCR로 이름/회사/직책/전화/이메일/주소/웹사이트를 자동 추출하고
+          즉시 연락처 저장용 vCard(.vcf)를 만들어 줍니다.
+          <br><br>
+          가장 현실적이고 안정적인 방식은 <strong>웹에서 자동 인식</strong> 후 <strong>연락처 저장용 파일 생성</strong>입니다.
+          이후 안드로이드 연락처 앱에서 저장 화면이 열리거나 가져오기(import)로 바로 저장할 수 있습니다.
+        </p>
+        <div class="pill-row">
+          <div class="pill">카메라 촬영 지원</div>
+          <div class="pill">클라이언트 OCR</div>
+          <div class="pill">서버 없이 사용 가능</div>
+          <div class="pill">vCard 저장</div>
+        </div>
+      </div>
+      <aside class="hero-side glass">
+        <div class="quick-stat">
+          <div>
+            <strong>1</strong><br><span>HTML 파일 하나로 실행</span>
+          </div>
+          <div style="font-size:26px">⚡</div>
+        </div>
+        <div class="quick-stat">
+          <div>
+            <strong>Android 친화적</strong><br><span>촬영 · 공유 · 저장 흐름 최적화</span>
+          </div>
+          <div style="font-size:26px">📱</div>
+        </div>
+        <div class="quick-stat">
+          <div>
+            <strong>스마트 UI</strong><br><span>다크 글래스 스타일</span>
+          </div>
+          <div style="font-size:26px">✨</div>
+        </div>
+      </aside>
+    </section>
+
+    <section class="grid">
+      <div class="panel glass">
+        <h2>1. 명함 촬영 / 업로드</h2>
+        <div class="muted">휴대폰에서는 카메라가 바로 열립니다. 데스크톱에서는 파일 선택으로 동작합니다.</div>
+
+        <div class="upload-box">
+          <div class="upload-actions">
+            <label class="btn primary" for="imageInput">📷 명함 촬영 / 선택</label>
+            <button class="btn secondary" id="scanBtn" disabled>🔍 OCR 분석 시작</button>
+            <button class="btn secondary" id="clearBtn" disabled>🗑 초기화</button>
+          </div>
+
+          <input id="imageInput" type="file" accept="image/*" capture="environment" hidden>
+
+          <div class="preview-wrap">
+            <div class="preview" id="preview">
+              <div class="placeholder">
+                아직 명함 이미지가 없습니다.<br>
+                위 버튼으로 명함을 촬영하거나 업로드하세요.
+              </div>
+            </div>
+          </div>
+
+          <div class="status" id="statusBox">준비 완료. 명함 이미지를 불러오면 분석 버튼이 활성화됩니다.</div>
+          <div class="progress" id="progressWrap"><div class="bar" id="progressBar"></div></div>
+
+          <div class="tip-list">
+            <div class="tip">빛 반사가 적게</div>
+            <div class="tip">명함 테두리까지 포함</div>
+            <div class="tip">가급적 정면 촬영</div>
+          </div>
+        </div>
+
+        <div class="ocr-box">
+          <strong>OCR 원문</strong>
+          <pre id="ocrText">아직 분석 전입니다.</pre>
+        </div>
+      </div>
+
+      <div class="panel glass">
+        <h2>2. 자동 입력된 연락처 확인</h2>
+        <div class="muted">추출값은 사람이 한번 검수한 뒤 저장하는 방식이 가장 정확합니다.</div>
+
+        <div class="form-grid">
+          <div class="field">
+            <label for="name">이름</label>
+            <input id="name" placeholder="예: 홍길동">
+          </div>
+          <div class="field">
+            <label for="jobTitle">직책</label>
+            <input id="jobTitle" placeholder="예: 팀장">
+          </div>
+
+          <div class="field">
+            <label for="company">회사명</label>
+            <input id="company" placeholder="예: 아주메디컬">
+          </div>
+          <div class="field">
+            <label for="department">부서</label>
+            <input id="department" placeholder="예: 마케팅팀">
+          </div>
+
+          <div class="field">
+            <label for="mobile">휴대폰</label>
+            <input id="mobile" placeholder="예: 010-1234-5678">
+          </div>
+          <div class="field">
+            <label for="phone">대표전화 / 사무실</label>
+            <input id="phone" placeholder="예: 02-123-4567">
+          </div>
+
+          <div class="field">
+            <label for="email">이메일</label>
+            <input id="email" placeholder="예: hello@company.com">
+          </div>
+          <div class="field">
+            <label for="website">웹사이트</label>
+            <input id="website" placeholder="예: https://company.com">
+          </div>
+
+          <div class="field full">
+            <label for="address">주소</label>
+            <input id="address" placeholder="예: 서울시 영등포구 ...">
+          </div>
+
+          <div class="field full">
+            <label for="memo">메모</label>
+            <textarea id="memo" placeholder="OCR 원문 일부나 비고를 넣을 수 있습니다."></textarea>
+          </div>
+        </div>
+
+        <div class="mini-actions">
+          <button class="btn success" id="saveVcfBtn">💾 연락처 저장용 VCF 만들기</button>
+          <button class="btn warn" id="shareVcfBtn">📤 VCF 공유하기</button>
+          <button class="btn secondary" id="copySummaryBtn">📋 요약 복사</button>
+        </div>
+
+        <div class="footer-note">
+          <strong>안내</strong><br>
+          브라우저 웹앱은 안드로이드 연락처 DB에 아무 확인 없이 직접 “무조건 자동 저장”하는 방식은 제한적입니다.
+          대신 이 앱은 <strong>명함 인식 → 연락처 데이터 자동 채움 → 저장용 vCard 생성</strong>으로 가장 안정적으로 동작합니다.
+          생성된 VCF를 열면 안드로이드 연락처 앱에서 저장 흐름으로 이어집니다.
+          <div class="small" style="margin-top:10px">
+            HTTPS 환경에서 모바일 홈화면에 추가(PWA)하면 더 앱처럼 사용할 수 있습니다.
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <canvas id="workCanvas"></canvas>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    const imageInput = $('imageInput');
+    const preview = $('preview');
+    const scanBtn = $('scanBtn');
+    const clearBtn = $('clearBtn');
+    const statusBox = $('statusBox');
+    const progressWrap = $('progressWrap');
+    const progressBar = $('progressBar');
+    const ocrText = $('ocrText');
+    const workCanvas = $('workCanvas');
+
+    const fields = {
+      name: $('name'),
+      company: $('company'),
+      jobTitle: $('jobTitle'),
+      department: $('department'),
+      mobile: $('mobile'),
+      phone: $('phone'),
+      email: $('email'),
+      website: $('website'),
+      address: $('address'),
+      memo: $('memo')
+    };
+
+    let currentImageFile = null;
+    let currentBlobUrl = null;
+    let currentVcfBlob = null;
+    let currentVcfName = 'contact.vcf';
+
+    function setStatus(msg){
+      statusBox.textContent = msg;
+    }
+
+    function setProgress(value){
+      progressWrap.style.display = 'block';
+      progressBar.style.width = Math.max(0, Math.min(100, value)) + '%';
+    }
+
+    function hideProgress(){
+      progressWrap.style.display = 'none';
+      progressBar.style.width = '0%';
+    }
+
+    function escapeVCF(value=''){
+      return String(value)
+        .replace(/\\/g, '\\\\')
+        .replace(/\n/g, '\\n')
+        .replace(/;/g, '\\;')
+        .replace(/,/g, '\\,');
+    }
+
+    function normalizePhone(raw=''){
+      let txt = String(raw).replace(/[^\d+]/g, '');
+      if (txt.startsWith('+82')) {
+        txt = '0' + txt.replace('+82', '');
+      }
+      if (txt.length === 10 && txt.startsWith('02')) {
+        return txt.replace(/(\d{2})(\d{4})(\d{4})/, '$1-$2-$3');
+      }
+      if (txt.length === 11) {
+        return txt.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
+      }
+      if (txt.length === 10) {
+        return txt.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
+      }
+      return raw.trim();
+    }
+
+    function cleanWebsite(url=''){
+      const t = url.trim();
+      if (!t) return '';
+      if (/^https?:\/\//i.test(t)) return t;
+      if (/^[\w.-]+\.[a-z]{2,}/i.test(t)) return 'https://' + t;
+      return t;
+    }
+
+    function smartTrim(s=''){
+      return s.replace(/\s+/g, ' ').replace(/[|]/g, ' ').trim();
+    }
+
+    function uniq(arr){
+      return [...new Set(arr.filter(Boolean))];
+    }
+
+    function likelyName(line){
+      const t = line.trim();
+      if (!t) return false;
+      if (t.length > 16) return false;
+      if (/@|www|http|\.com|\.co\.kr|\d{2,}/i.test(t)) return false;
+      if (/(대표|TEL|FAX|Mobile|E-mail|Email|Address|주소|Homepage|홈페이지|www)/i.test(t)) return false;
+      return /[가-힣]{2,4}|[A-Za-z]{2,}\s+[A-Za-z]{2,}/.test(t);
+    }
+
+    function likelyCompany(line){
+      const t = line.trim();
+      return /(주식회사|㈜|\(주\)|Inc\.?|Corp\.?|Co\.?,?\s*Ltd\.?|Company|병원|의원|센터|신협|은행|대학교|학원|메디컬|Medical|Tech|테크|무역|건설|식품|마트|스튜디오)/i.test(t);
+    }
+
+    function likelyJobTitle(line){
+      const t = line.trim();
+      return /(대표|이사|부장|차장|과장|대리|주임|사원|팀장|실장|원장|교수|소장|매니저|Manager|Director|CEO|CTO|CFO|Head|Lead|Sales|Marketing|Engineer|Consultant)/i.test(t);
+    }
+
+    function likelyDepartment(line){
+      const t = line.trim();
+      return /(팀|부|실|센터|사업부|본부|파트|연구소|영업부|마케팅부|개발팀|지원팀|총무팀|관리팀)/i.test(t);
+    }
+
+    function parseBusinessCard(text){
+      const raw = text || '';
+      const lines = raw
+        .split(/\r?\n/)
+        .map(v => smartTrim(v))
+        .filter(Boolean);
+
+      const joined = lines.join('\n');
+
+      const emails = uniq((joined.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/ig) || []).map(v => v.trim()));
+      const urls = uniq((joined.match(/((https?:\/\/)?(www\.)?[\w-]+\.[\w.-]{2,}(\/[^\s]*)?)/ig) || [])
+        .map(v => v.trim())
+        .filter(v => !/@/.test(v) && !/^\d+\.\d+$/.test(v))
+        .map(cleanWebsite));
+
+      const phoneCandidates = uniq(
+        (joined.match(/(\+?\d[\d\s().-]{7,}\d)/g) || [])
+          .map(v => v.replace(/\s+/g,' ').trim())
+          .filter(v => /\d{8,}/.test(v.replace(/\D/g,'')))
+      );
+
+      let mobile = '';
+      let phone = '';
+
+      for (const p of phoneCandidates){
+        const digits = p.replace(/\D/g,'');
+        if (!mobile && (/^(010|011|016|017|018|019)/.test(digits) || /^\+?82(10|11|16|17|18|19)/.test(p.replace(/\s/g,'')))) {
+          mobile = normalizePhone(p);
+          continue;
+        }
+        if (!phone) phone = normalizePhone(p);
+      }
+      if (!mobile && phoneCandidates[0]) mobile = normalizePhone(phoneCandidates[0]);
+      if (!phone && phoneCandidates[1]) phone = normalizePhone(phoneCandidates[1]);
+
+      let email = emails[0] || '';
+      let website = urls.find(u => !email || !u.includes(email.split('@')[1])) || urls[0] || '';
+
+      let address = lines.find(v => /(서울|경기|인천|부산|대구|광주|대전|울산|세종|제주|강원|충북|충남|전북|전남|경북|경남|로|길|동|구|읍|면|리|Address|주소)/i.test(v)) || '';
+
+      let company = lines.find(likelyCompany) || '';
+      let jobTitle = lines.find(likelyJobTitle) || '';
+      let department = lines.find(likelyDepartment) || '';
+
+      let name = '';
+      const candidates = lines.filter(likelyName);
+      if (candidates.length){
+        name = candidates
+          .sort((a,b) => {
+            const score = (s) => {
+              let n = 0;
+              if (/^[가-힣]{2,4}$/.test(s)) n += 10;
+              if (/^[A-Za-z]+\s+[A-Za-z]+/.test(s)) n += 8;
+              if (s.length <= 6) n += 4;
+              if (company && s === company) n -= 6;
+              if (jobTitle && s === jobTitle) n -= 6;
+              return n;
+            };
+            return score(b) - score(a);
+          })[0];
+      }
+
+      const memoLines = lines.slice(0, 12).filter(v => ![name, company, jobTitle, department, mobile, phone, email, website, address].includes(v));
+      const memo = memoLines.join('\n');
+
+      return {
+        name, company, jobTitle, department, mobile, phone, email, website, address, memo
+      };
+    }
+
+    async function fileToImage(file){
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        const url = URL.createObjectURL(file);
+        img.onload = () => resolve({img, url});
+        img.onerror = reject;
+        img.src = url;
+      });
+    }
+
+    async function preprocessImage(file){
+      const {img, url} = await fileToImage(file);
+      const canvas = workCanvas;
+      const ctx = canvas.getContext('2d');
+
+      const maxW = 1800;
+      const scale = Math.min(1, maxW / img.width);
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const d = imageData.data;
+
+      for (let i = 0; i < d.length; i += 4){
+        const r = d[i], g = d[i+1], b = d[i+2];
+        const gray = (0.299*r + 0.587*g + 0.114*b);
+        const boosted = gray > 180 ? 255 : gray < 80 ? 0 : gray * 1.05;
+        d[i] = d[i+1] = d[i+2] = boosted;
+      }
+      ctx.putImageData(imageData, 0, 0);
+
+      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png', 0.95));
+      URL.revokeObjectURL(url);
+      return blob;
+    }
+
+    function fillFields(data){
+      Object.entries(fields).forEach(([k, el]) => {
+        if (data[k]) el.value = data[k];
+      });
+      if (fields.mobile.value) fields.mobile.value = normalizePhone(fields.mobile.value);
+      if (fields.phone.value) fields.phone.value = normalizePhone(fields.phone.value);
+      if (fields.website.value) fields.website.value = cleanWebsite(fields.website.value);
+    }
+
+    function generateVCard(){
+      const name = fields.name.value.trim();
+      const company = fields.company.value.trim();
+      const jobTitle = fields.jobTitle.value.trim();
+      const department = fields.department.value.trim();
+      const mobile = fields.mobile.value.trim();
+      const phone = fields.phone.value.trim();
+      const email = fields.email.value.trim();
+      const website = cleanWebsite(fields.website.value.trim());
+      const address = fields.address.value.trim();
+      const memo = fields.memo.value.trim();
+
+      const fileNameBase = (name || company || 'contact').replace(/[^\w가-힣-]+/g, '_');
+
+      const lines = [
+        'BEGIN:VCARD',
+        'VERSION:3.0',
+        `FN:${escapeVCF(name || company || 'Unknown Contact')}`,
+        name ? `N:${escapeVCF(name)};;;;` : 'N:;;;;',
+      ];
+
+      if (company || department) lines.push(`ORG:${escapeVCF(company)};${escapeVCF(department)}`);
+      if (jobTitle) lines.push(`TITLE:${escapeVCF(jobTitle)}`);
+      if (mobile) lines.push(`TEL;TYPE=CELL:${escapeVCF(mobile)}`);
+      if (phone) lines.push(`TEL;TYPE=WORK,VOICE:${escapeVCF(phone)}`);
+      if (email) lines.push(`EMAIL;TYPE=INTERNET,WORK:${escapeVCF(email)}`);
+      if (website) lines.push(`URL:${escapeVCF(website)}`);
+      if (address) lines.push(`ADR;TYPE=WORK:;;${escapeVCF(address)};;;;`);
+      if (memo) lines.push(`NOTE:${escapeVCF(memo)}`);
+      lines.push('END:VCARD');
+
+      const vcf = lines.join('\r\n');
+      const blob = new Blob([vcf], {type: 'text/vcard;charset=utf-8'});
+      currentVcfBlob = blob;
+      currentVcfName = `${fileNameBase}.vcf`;
+      return {blob, fileName: currentVcfName, text: vcf};
+    }
+
+    function downloadVcf(){
+      const {blob, fileName} = generateVCard();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1500);
+      setStatus(`VCF 파일 생성 완료: ${fileName} — 안드로이드에서 열어 연락처로 저장하세요.`);
+    }
+
+    async function shareVcf(){
+      const {blob, fileName} = generateVCard();
+      const file = new File([blob], fileName, {type:'text/vcard'});
+      if (navigator.canShare && navigator.canShare({files:[file]}) && navigator.share) {
+        await navigator.share({
+          title: '연락처 저장용 VCF',
+          text: '명함 스캔으로 만든 연락처 파일입니다.',
+          files: [file]
+        });
+        setStatus('VCF 공유 창을 열었습니다.');
+      } else {
+        downloadVcf();
+      }
+    }
+
+    function copySummary(){
+      const summary = [
+        `이름: ${fields.name.value.trim()}`,
+        `회사: ${fields.company.value.trim()}`,
+        `직책: ${fields.jobTitle.value.trim()}`,
+        `부서: ${fields.department.value.trim()}`,
+        `휴대폰: ${fields.mobile.value.trim()}`,
+        `사무실: ${fields.phone.value.trim()}`,
+        `이메일: ${fields.email.value.trim()}`,
+        `웹사이트: ${fields.website.value.trim()}`,
+        `주소: ${fields.address.value.trim()}`,
+        `메모: ${fields.memo.value.trim()}`
+      ].join('\n');
+
+      navigator.clipboard.writeText(summary)
+        .then(() => setStatus('연락처 요약을 클립보드에 복사했습니다.'))
+        .catch(() => setStatus('복사에 실패했습니다. 브라우저 권한을 확인하세요.'));
+    }
+
+    imageInput.addEventListener('change', async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      currentImageFile = file;
+
+      if (currentBlobUrl) URL.revokeObjectURL(currentBlobUrl);
+      currentBlobUrl = URL.createObjectURL(file);
+
+      preview.innerHTML = `<img src="${currentBlobUrl}" alt="명함 미리보기">`;
+      scanBtn.disabled = false;
+      clearBtn.disabled = false;
+      ocrText.textContent = '아직 분석 전입니다.';
+      setStatus('이미지를 불러왔습니다. OCR 분석을 시작해 주세요.');
+    });
+
+    scanBtn.addEventListener('click', async () => {
+      if (!currentImageFile) return;
+      scanBtn.disabled = true;
+      setStatus('이미지 전처리 중...');
+      setProgress(8);
+
+      try {
+        const blob = await preprocessImage(currentImageFile);
+
+        setStatus('OCR 분석 중... 잠시만 기다려 주세요.');
+        const result = await Tesseract.recognize(blob, 'kor+eng', {
+          logger: (m) => {
+            if (m.status === 'recognizing text') {
+              setProgress(15 + Math.round((m.progress || 0) * 75));
+            }
+          }
+        });
+
+        const text = (result?.data?.text || '').trim();
+        ocrText.textContent = text || '(텍스트를 충분히 읽지 못했습니다. 더 선명한 이미지로 다시 시도해 보세요.)';
+
+        setStatus('문자 분석 완료. 연락처 필드에 자동 입력 중...');
+        const parsed = parseBusinessCard(text);
+        fillFields(parsed);
+
+        if (!fields.memo.value.trim() && text) {
+          fields.memo.value = text.split('\n').slice(0, 8).join('\n');
+        }
+
+        setProgress(100);
+        setTimeout(hideProgress, 600);
+        setStatus('완료! 자동 입력된 값을 확인한 뒤 VCF를 생성하세요.');
+      } catch (err) {
+        console.error(err);
+        hideProgress();
+        setStatus('분석 중 오류가 발생했습니다. 이미지 형식 또는 네트워크 환경을 확인해 주세요.');
+      } finally {
+        scanBtn.disabled = false;
+      }
+    });
+
+    clearBtn.addEventListener('click', () => {
+      currentImageFile = null;
+      if (currentBlobUrl) URL.revokeObjectURL(currentBlobUrl);
+      currentBlobUrl = null;
+      imageInput.value = '';
+      preview.innerHTML = `<div class="placeholder">아직 명함 이미지가 없습니다.<br>위 버튼으로 명함을 촬영하거나 업로드하세요.</div>`;
+      ocrText.textContent = '아직 분석 전입니다.';
+      Object.values(fields).forEach(el => el.value = '');
+      hideProgress();
+      scanBtn.disabled = true;
+      clearBtn.disabled = true;
+      setStatus('초기화되었습니다.');
+    });
+
+    $('saveVcfBtn').addEventListener('click', downloadVcf);
+    $('shareVcfBtn').addEventListener('click', async () => {
+      try {
+        await shareVcf();
+      } catch (e) {
+        console.error(e);
+        setStatus('공유 창을 열지 못해 VCF 다운로드 방식으로 전환합니다.');
+        downloadVcf();
+      }
+    });
+    $('copySummaryBtn').addEventListener('click', copySummary);
+  </script>
+</body>
+</html>
