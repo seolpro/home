@@ -218,7 +218,7 @@
 
       <div class="panel glass">
         <h2>2. 자동 입력된 연락처 확인</h2>
-        <div class="muted">추출값은 사람이 한번 검수한 뒤 저장하는 방식이 가장 정확합니다.</div>
+        <div class="muted">추출값은 사람이 한번 검수한 뒤 저장하는 방식이 가장 정확합니다. 이번 수정본은 한글 OCR(kor) 로딩을 명시적으로 강화했습니다.</div>
 
         <div class="form-grid">
           <div class="field">
@@ -280,7 +280,7 @@
           대신 이 앱은 <strong>명함 인식 → 연락처 데이터 자동 채움 → 저장용 vCard 생성</strong>으로 가장 안정적으로 동작합니다.
           생성된 VCF를 열면 안드로이드 연락처 앱에서 저장 흐름으로 이어집니다.
           <div class="small" style="margin-top:10px">
-            HTTPS 환경에서 모바일 홈화면에 추가(PWA)하면 더 앱처럼 사용할 수 있습니다.
+            HTTPS 환경에서 모바일 홈화면에 추가(PWA)하면 더 앱처럼 사용할 수 있습니다. 최초 1회는 한글 OCR 데이터 다운로드 때문에 조금 느릴 수 있습니다.
           </div>
         </div>
       </div>
@@ -301,6 +301,8 @@
     const progressBar = $('progressBar');
     const ocrText = $('ocrText');
     const workCanvas = $('workCanvas');
+    let ocrWorker = null;
+    let ocrWorkerReady = false;
 
     const fields = {
       name: $('name'),
@@ -617,6 +619,38 @@
       setStatus('이미지를 불러왔습니다. OCR 분석을 시작해 주세요.');
     });
 
+    async function ensureWorker() {
+      if (ocrWorkerReady && ocrWorker) return ocrWorker;
+
+      setStatus('한글 OCR 엔진 준비 중... 최초 1회는 언어 파일 다운로드 때문에 조금 더 걸릴 수 있습니다.');
+      setProgress(12);
+
+      const { createWorker, PSM } = Tesseract;
+
+      ocrWorker = await createWorker(['kor', 'eng'], 1, {
+        langPath: 'https://tessdata.projectnaptha.com/4.0.0_fast',
+        cacheMethod: 'refresh',
+        logger: (m) => {
+          if (m.status === 'loading language traineddata') {
+            setStatus('한글 언어 데이터(kor) 불러오는 중...');
+            setProgress(18 + Math.round((m.progress || 0) * 22));
+          } else if (m.status === 'initializing tesseract') {
+            setStatus('OCR 엔진 초기화 중...');
+            setProgress(45 + Math.round((m.progress || 0) * 10));
+          }
+        }
+      });
+
+      await ocrWorker.setParameters({
+        tessedit_pageseg_mode: PSM.SINGLE_BLOCK,
+        preserve_interword_spaces: '1',
+        user_defined_dpi: '300',
+      });
+
+      ocrWorkerReady = true;
+      return ocrWorker;
+    }
+
     scanBtn.addEventListener('click', async () => {
       if (!currentImageFile) return;
       scanBtn.disabled = true;
@@ -625,15 +659,12 @@
 
       try {
         const blob = await preprocessImage(currentImageFile);
+        const worker = await ensureWorker();
 
-        setStatus('OCR 분석 중... 잠시만 기다려 주세요.');
-        const result = await Tesseract.recognize(blob, 'kor+eng', {
-          logger: (m) => {
-            if (m.status === 'recognizing text') {
-              setProgress(15 + Math.round((m.progress || 0) * 75));
-            }
-          }
-        });
+        setStatus('한글+영문 OCR 분석 중... 잠시만 기다려 주세요.');
+        const result = await worker.recognize(blob, {}, {
+          text: true
+        }, undefined);
 
         const text = (result?.data?.text || '').trim();
         ocrText.textContent = text || '(텍스트를 충분히 읽지 못했습니다. 더 선명한 이미지로 다시 시도해 보세요.)';
@@ -652,7 +683,7 @@
       } catch (err) {
         console.error(err);
         hideProgress();
-        setStatus('분석 중 오류가 발생했습니다. 이미지 형식 또는 네트워크 환경을 확인해 주세요.');
+        setStatus('분석 중 오류가 발생했습니다. 한글 언어 데이터 로드 실패 또는 이미지 품질 문제일 수 있습니다. HTTPS/인터넷 연결 상태도 확인해 주세요.');
       } finally {
         scanBtn.disabled = false;
       }
