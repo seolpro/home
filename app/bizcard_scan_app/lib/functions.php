@@ -262,26 +262,26 @@ function parse_business_card_text(string $text, array $raw = []): array
         }
     }
 
-    // 1순위: 좌표/크기 기반 이름 후보
-    $name = detect_name_from_layout($raw);
-
-    // 2순위: 이름+직책 한 줄
-    if ($name === '') {
-        foreach ($lines as $line) {
-            $split = split_name_and_title($line);
-            if ($split['name'] !== '') {
-                $name = $split['name'];
-                if ($jobTitle === '' && $split['job_title'] !== '') {
-                    $jobTitle = $split['job_title'];
-                }
-                break;
+    // 1순위: 이름+직책 한 줄
+    foreach ($lines as $line) {
+        $split = split_name_and_title($line);
+        if ($split['name'] !== '') {
+            $name = $split['name'];
+            if ($split['job_title'] !== '') {
+                $jobTitle = $split['job_title'];
             }
+            break;
         }
     }
 
-    // 3순위: 이름 단독 줄
+    // 2순위: 상단 독립 이름 블록 (큰 글씨 / 독립 / 2~4자)
     if ($name === '') {
-        foreach (array_slice($lines, 0, 6) as $line) {
+        $name = detect_name_from_layout($raw);
+    }
+
+    // 3순위: 텍스트 줄 기준 이름 단독 줄
+    if ($name === '') {
+        foreach (array_slice($lines, 0, 8) as $line) {
             if (is_name_only_line($line)) {
                 $name = $line;
                 break;
@@ -289,21 +289,27 @@ function parse_business_card_text(string $text, array $raw = []): array
         }
     }
 
-    // 직책은 이름이 잡힌 뒤에만 보수적으로 채택
+    // 직책은 이름이 정해진 뒤에만 추출
     if ($jobTitle === '' && $name !== '') {
-        foreach (array_slice($lines, 0, 8) as $line) {
-            $tmpTitle = extract_job_title_from_line($line);
-
-            // 이름 후보 줄이면 split 우선
+        foreach (array_slice($lines, 0, 10) as $line) {
             $split = split_name_and_title($line);
             if ($split['name'] === $name && $split['job_title'] !== '') {
                 $jobTitle = $split['job_title'];
                 break;
             }
+        }
+    }
 
-            // 이름 없는 단독 직책 줄은 다음 우선순위
-            if ($tmpTitle !== '' && trim($line) === $tmpTitle) {
-                $jobTitle = $tmpTitle;
+    // 이름+직책 한 줄이 없으면 직책 단독 줄 보수적 탐색
+    if ($jobTitle === '' && $name !== '') {
+        foreach (array_slice($lines, 0, 10) as $line) {
+            $line = trim($line);
+            if ($line === '') continue;
+            if ($line === $name) continue;
+
+            // 직책 단독 줄만 허용
+            if (is_title_only_line($line)) {
+                $jobTitle = extract_job_title_from_line($line);
                 break;
             }
         }
@@ -350,45 +356,61 @@ function detect_name_from_layout(array $raw): string
     foreach ($blocks as $block) {
         $text = block_to_text($block);
         $text = preg_replace('/\s+/u', ' ', trim($text));
-
         if ($text === '') continue;
-        if (!preg_match('/^[가-힣]{2,4}(?:\s*[가-힣]{2,4})?$/u', $text)) continue;
-        if (extract_job_title_from_line($text) !== '') continue;
+
+        // 이름 후보 조건: 한글 2~4자 또는 띄어쓴 2개 이름
+        if (!preg_match('/^[가-힣]{2,4}(?:\s+[가-힣]{2,4})?$/u', $text)) {
+            continue;
+        }
+
+        // 직책/부서/회사명은 이름 후보 제외
+        if (is_title_only_line($text)) continue;
         if (extract_department_from_line($text) !== '') continue;
         if (is_company_line($text)) continue;
 
         $box = $block['boundingBox']['vertices'] ?? [];
-        $xs = array_column($box, 'x');
-        $ys = array_column($box, 'y');
-        $minX = min(array_map('intval', $xs ?: [0]));
-        $maxX = max(array_map('intval', $xs ?: [0]));
-        $minY = min(array_map('intval', $ys ?: [0]));
-        $maxY = max(array_map('intval', $ys ?: [0]));
+        $xs = [];
+        $ys = [];
+        foreach ($box as $v) {
+            $xs[] = (int)($v['x'] ?? 0);
+            $ys[] = (int)($v['y'] ?? 0);
+        }
+
+        $minX = $xs ? min($xs) : 0;
+        $maxX = $xs ? max($xs) : 0;
+        $minY = $ys ? min($ys) : 0;
+        $maxY = $ys ? max($ys) : 0;
+
         $height = max(1, $maxY - $minY);
         $width = max(1, $maxX - $minX);
 
         $score = 0;
 
-        // 위쪽일수록 가산점
-        if ($minY < 250) $score += 20;
-        elseif ($minY < 420) $score += 10;
+        // 상단 위치 우대
+        if ($minY < 180) $score += 35;
+        elseif ($minY < 280) $score += 22;
+        elseif ($minY < 400) $score += 10;
 
-        // 글자 크기가 클수록 가산점
-        if ($height >= 40) $score += 25;
-        elseif ($height >= 28) $score += 15;
+        // 큰 글씨 우대
+        if ($height >= 42) $score += 30;
+        elseif ($height >= 34) $score += 22;
+        elseif ($height >= 26) $score += 12;
 
-        // 너무 긴 문장은 제외
-        if (mb_strlen($text) >= 2 && mb_strlen($text) <= 4) $score += 20;
+        // 너무 긴 문장 제외, 2~4자 우대
+        $charLen = mb_strlen(str_replace(' ', '', $text));
+        if ($charLen >= 2 && $charLen <= 4) $score += 25;
 
-        // 좌측/중앙 근처 가산점
-        if ($minX < 350) $score += 8;
+        // 좌측~중앙권 우대
+        if ($minX < 420) $score += 8;
+
+        // 폭이 과도하게 넓지 않으면 가산
+        if ($width < 260) $score += 8;
 
         $candidates[] = [
             'text' => $text,
             'score' => $score,
             'y' => $minY,
-            'h' => $height,
-            'w' => $width,
+            'height' => $height,
         ];
     }
 
@@ -398,6 +420,9 @@ function detect_name_from_layout(array $raw): string
 
     usort($candidates, function ($a, $b) {
         if ($a['score'] === $b['score']) {
+            if ($a['y'] === $b['y']) {
+                return $b['height'] <=> $a['height'];
+            }
             return $a['y'] <=> $b['y'];
         }
         return $b['score'] <=> $a['score'];
@@ -432,9 +457,10 @@ function split_name_and_title(string $line): array
         return ['name' => '', 'job_title' => ''];
     }
 
-    $titles = '(대표이사|대표원장|부사장|상무이사|전무이사|본부장|센터장|실장|팀장|부장|차장|과장|대리|주임|사원|이사|대표|원장|교수|소장|Manager|Director|CEO|CTO|CFO|Head|Lead)';
+    $titles = '(대표이사|대표원장|부회장|사장|부사장|전무|상무|상무이사|전무이사|본부장|지점장|센터장|실장|팀장|부장|차장|과장|대리|주임|사원|이사|대표|원장|교수|소장|Manager|Director|CEO|CTO|CFO|Head|Lead)';
     $namePart = '([가-힣]{2,4}|[A-Za-z]{2,}(?:\s+[A-Za-z]{2,}){0,2})';
 
+    // 이름 + 직책
     if (preg_match('/^' . $namePart . '\s+' . $titles . '$/u', $line, $m)) {
         return [
             'name' => trim((string)$m[1]),
@@ -442,6 +468,7 @@ function split_name_and_title(string $line): array
         ];
     }
 
+    // 직책 + 이름
     if (preg_match('/^' . $titles . '\s+' . $namePart . '$/u', $line, $m)) {
         return [
             'name' => trim((string)$m[2]),
@@ -449,7 +476,8 @@ function split_name_and_title(string $line): array
         ];
     }
 
-    if (preg_match('/^([가-힣]{2,4})(대표이사|대표원장|부사장|상무이사|전무이사|본부장|센터장|실장|팀장|부장|차장|과장|대리|주임|사원|이사|대표|원장|교수|소장)$/u', $line, $m)) {
+    // 붙어있는 경우
+    if (preg_match('/^([가-힣]{2,4})(대표이사|대표원장|부회장|사장|부사장|전무|상무|상무이사|전무이사|본부장|지점장|센터장|실장|팀장|부장|차장|과장|대리|주임|사원|이사|대표|원장|교수|소장)$/u', $line, $m)) {
         return [
             'name' => trim((string)$m[1]),
             'job_title' => trim((string)$m[2]),
@@ -462,27 +490,17 @@ function split_name_and_title(string $line): array
 function is_name_only_line(string $line): bool
 {
     $line = trim($line);
-    if ($line === '') {
-        return false;
-    }
-    if (mb_strlen($line) < 2 || mb_strlen($line) > 5) {
-        return false;
-    }
+    if ($line === '') return false;
+
+    // 이름은 2~4자의 한글 독립 문자열 위주
     if (!preg_match('/^[가-힣]{2,4}$/u', $line)) {
         return false;
     }
-    if (extract_job_title_from_line($line) !== '') {
-        return false;
-    }
-    if (extract_department_from_line($line) !== '') {
-        return false;
-    }
-    if (is_company_line($line)) {
-        return false;
-    }
-    if (preg_match('/\d|@|www|https?:\/\//iu', $line)) {
-        return false;
-    }
+
+    if (extract_job_title_from_line($line) !== '') return false;
+    if (extract_department_from_line($line) !== '') return false;
+    if (is_company_line($line)) return false;
+    if (preg_match('/\d|@|www|https?:\/\//iu', $line)) return false;
 
     return true;
 }
@@ -604,4 +622,19 @@ function build_vcf(array $contact): string
 
     // ⭐ BOM 추가 (안드로이드 호환성 ↑)
     return "\xEF\xBB\xBF" . $vcf;
+}
+
+function is_title_only_line(string $line): bool
+{
+    $line = trim($line);
+    if ($line === '') return false;
+
+    $titles = [
+        '대표이사','대표원장','부회장','사장','부사장','전무','상무','상무이사','전무이사',
+        '본부장','지점장','센터장','실장','팀장','부장','차장','과장','대리','주임','사원',
+        '이사','대표','원장','교수','소장',
+        'Manager','Director','CEO','CTO','CFO','Head','Lead'
+    ];
+
+    return in_array($line, $titles, true);
 }
