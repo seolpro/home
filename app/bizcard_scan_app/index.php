@@ -126,6 +126,41 @@ declare(strict_types=1);
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
+#floatingSaveBar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 9998;
+    padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
+    background: rgba(15, 23, 42, 0.92);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 -8px 24px rgba(0,0,0,.18);
+}
+
+#floatingSaveBtn {
+    width: 100%;
+    border: 0;
+    border-radius: 16px;
+    padding: 16px 18px;
+    font-size: 17px;
+    font-weight: 800;
+    background: #22c55e;
+    color: #052e16;
+    cursor: pointer;
+    box-shadow: 0 6px 18px rgba(34,197,94,.35);
+}
+
+#floatingSaveBtn:disabled {
+    background: #64748b;
+    color: #e2e8f0;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+body {
+    padding-bottom: 96px;
+}
     </style>
 </head>
 <body>
@@ -243,12 +278,24 @@ declare(strict_types=1);
         <div style="font-size:14px;color:#333;">⌛분석중...완료 후 아래양식에 자동입력됩니다.</div>
     </div>
 </div>
+<div id="floatingSaveBar">
+    <button type="button" id="floatingSaveBtn" onclick="addContactOnAndroid()">
+        📲 연락처에 추가
+    </button>
+</div>
 <script>
 const imageInput = document.getElementById('imageInput');
 const previewBox = document.getElementById('previewBox');
 const loadingModal = document.getElementById('loadingModal');
 const statusBox = document.getElementById('statusBox');
 const ocrTextBox = document.getElementById('ocrTextBox');
+
+// 👉 여기 추가
+const floatingSaveBtn = document.getElementById('floatingSaveBtn');
+
+// ✅ 초기 비활성화
+floatingSaveBtn.disabled = true;
+
 
 let previewUrl = null;
 
@@ -315,6 +362,7 @@ setTimeout(() => {
 
         ocrTextBox.textContent = data.ocr_text || '';
         statusBox.textContent = '🧩분석 완료. 아래 입력된 내용을 확인하세요';
+        floatingSaveBtn.disabled = false;
 
     } catch (e) {
         statusBox.textContent = '오류: ' + e.message;
@@ -340,6 +388,8 @@ resetBtn.addEventListener('click', function () {
         URL.revokeObjectURL(previewUrl);
         previewUrl = null;
     }
+
+    floatingSaveBtn.disabled = true;
 });
 
 function submitVcfDownload() {
