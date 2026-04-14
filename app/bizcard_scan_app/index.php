@@ -122,12 +122,16 @@ declare(strict_types=1);
         @media (max-width: 640px) {
             .row { grid-template-columns: 1fr; }
         }
+        @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
     </style>
 </head>
 <body>
 <div class="wrap">
     <div class="card">
-        <h1 class="title">📰명함 스캔</h1>
+        <h1 class="title">📰명함 스캔 => 연락처 자동추가</h1>
 
         <div class="btns">
             <label class="btn btn-primary" for="imageInput">📷 명함 촬영 / 선택</label>
@@ -188,11 +192,11 @@ declare(strict_types=1);
         </div>
 
         <div class="ocrbox" id="ocrTextBox"></div>
-
+        
         <form id="scanForm" class="hidden">
             <input type="file" name="image" id="scanImageMirror">
         </form>
-
+        <div id="resultSection">
         <form id="vcfDownloadForm" action="api/download_vcf.php" method="post" target="_blank" class="hidden">
             <input type="hidden" name="name" id="vcf_name">
             <input type="hidden" name="company" id="vcf_company">
@@ -205,14 +209,44 @@ declare(strict_types=1);
             <input type="hidden" name="address" id="vcf_address">
             <input type="hidden" name="memo" id="vcf_memo">
         </form>
+        </div>
     </div>
 </div>
 
+<!-- 분석중 모달 -->
+<div id="loadingModal" style="
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+">
+    <div style="
+        background: #fff;
+        padding: 24px 28px;
+        border-radius: 14px;
+        text-align: center;
+        min-width: 220px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    ">
+        <div class="spinner" style="
+            width: 36px;
+            height: 36px;
+            border: 4px solid #eee;
+            border-top: 4px solid #333;
+            border-radius: 50%;
+            margin: 0 auto 12px;
+            animation: spin 0.8s linear infinite;
+        "></div>
+        <div style="font-size:14px;color:#333;">⌛분석중...완료 후 아래양식에 자동입력됩니다.</div>
+    </div>
+</div>
 <script>
 const imageInput = document.getElementById('imageInput');
 const previewBox = document.getElementById('previewBox');
-const scanBtn = document.getElementById('scanBtn');
-const resetBtn = document.getElementById('resetBtn');
+const loadingModal = document.getElementById('loadingModal');
 const statusBox = document.getElementById('statusBox');
 const ocrTextBox = document.getElementById('ocrTextBox');
 
@@ -223,35 +257,27 @@ imageInput.addEventListener('change', function () {
 
     if (!file) {
         statusBox.textContent = '이미지를 다시 선택해 주세요.';
-        scanBtn.disabled = true;
         return;
     }
 
-    scanBtn.disabled = false;
-
+    // 미리보기
     if (previewUrl) {
         URL.revokeObjectURL(previewUrl);
     }
 
     previewUrl = URL.createObjectURL(file);
     previewBox.innerHTML = '<img src="' + previewUrl + '" alt="명함 이미지">';
-    statusBox.textContent = '이미지 선택 완료: ' + (file.name || 'camera.jpg') + ' / ' + Math.round(file.size / 1024) + 'KB';
+
+    // 👉 바로 분석 실행
+    autoScan(file);
 });
 
-scanBtn.addEventListener('click', async function () {
-    const file = imageInput.files && imageInput.files[0] ? imageInput.files[0] : null;
-
-    if (!file) {
-        alert('명함 이미지를 먼저 촬영하거나 선택해 주세요.');
-        statusBox.textContent = '명함 이미지를 업로드해 주세요.';
-        return;
-    }
-
+async function autoScan(file) {
     const fd = new FormData();
     fd.append('image', file, file.name || 'camera.jpg');
 
-    statusBox.textContent = '분석 중...';
-    scanBtn.disabled = true;
+    // 🔥 모달 표시
+    loadingModal.style.display = 'flex';
 
     try {
         const res = await fetch('api/scan.php', {
@@ -265,6 +291,17 @@ scanBtn.addEventListener('click', async function () {
             throw new Error(data.message || '분석 실패');
         }
 
+        // 결과 입력 후 ↓↓↓ 추가
+setTimeout(() => {
+    const el = document.getElementById('resultSection');
+    if (el) {
+        el.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+        });
+    }
+}, 300);
+        // 결과 입력
         document.getElementById('name').value = data.contact.name || '';
         document.getElementById('job_title').value = data.contact.job_title || '';
         document.getElementById('company').value = data.contact.company || '';
@@ -275,15 +312,18 @@ scanBtn.addEventListener('click', async function () {
         document.getElementById('website').value = data.contact.website || '';
         document.getElementById('address').value = data.contact.address || '';
         document.getElementById('memo').value = data.contact.memo || '';
-        ocrTextBox.textContent = data.ocr_text || '';
 
-        statusBox.textContent = '분석 완료';
+        ocrTextBox.textContent = data.ocr_text || '';
+        statusBox.textContent = '🧩분석 완료. 아래 입력된 내용을 확인하세요';
+
     } catch (e) {
         statusBox.textContent = '오류: ' + e.message;
+        alert(e.message);
     } finally {
-        scanBtn.disabled = false;
+        // 🔥 모달 숨김
+        loadingModal.style.display = 'none';
     }
-});
+}
 
 resetBtn.addEventListener('click', function () {
     imageInput.value = '';
