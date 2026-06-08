@@ -70,10 +70,14 @@ function get_setting(string $key, string $default = ''): string {
 }
 
 function set_setting(string $key, string $value): void {
-    $stmt = db()->prepare(
-        'INSERT INTO yt_settings (setting_key, setting_value) VALUES (?, ?)\n'
-        .'ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)'
-    );
+    $sql = "
+        INSERT INTO yt_settings (setting_key, setting_value)
+        VALUES (?, ?)
+        ON DUPLICATE KEY UPDATE
+        setting_value = VALUES(setting_value)
+    ";
+
+    $stmt = db()->prepare($sql);
     $stmt->execute([$key, $value]);
 }
 
