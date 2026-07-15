@@ -1,0 +1,12 @@
+SET FOREIGN_KEY_CHECKS=0;
+ALTER TABLE departments ADD COLUMN code VARCHAR(40) NULL UNIQUE AFTER id, ADD COLUMN parent_id INT NULL AFTER name, ADD COLUMN manager_employee_id INT NULL AFTER parent_id, ADD COLUMN memo VARCHAR(255) NULL AFTER is_active;
+ALTER TABLE employees ADD COLUMN approval_line_id INT NULL AFTER mandatory_rate;
+ALTER TABLE leave_requests ADD COLUMN approval_line_id INT NULL AFTER leave_type_id;
+ALTER TABLE admins MODIFY role ENUM('super_admin','hr_admin','department_manager','approver','viewer') NOT NULL DEFAULT 'hr_admin';
+CREATE TABLE IF NOT EXISTS admin_department_scopes(id INT AUTO_INCREMENT PRIMARY KEY,admin_id INT NOT NULL,department_id INT NOT NULL,UNIQUE(admin_id,department_id),CONSTRAINT fk_scope_admin FOREIGN KEY(admin_id) REFERENCES admins(id) ON DELETE CASCADE,CONSTRAINT fk_scope_department FOREIGN KEY(department_id) REFERENCES departments(id) ON DELETE CASCADE) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+ALTER TABLE departments ADD CONSTRAINT fk_department_parent FOREIGN KEY(parent_id) REFERENCES departments(id) ON DELETE SET NULL;
+ALTER TABLE departments ADD CONSTRAINT fk_department_manager FOREIGN KEY(manager_employee_id) REFERENCES employees(id) ON DELETE SET NULL;
+ALTER TABLE employees ADD CONSTRAINT fk_employee_approval_line FOREIGN KEY(approval_line_id) REFERENCES approval_lines(id) ON DELETE SET NULL;
+ALTER TABLE leave_requests ADD CONSTRAINT fk_request_approval_line FOREIGN KEY(approval_line_id) REFERENCES approval_lines(id) ON DELETE SET NULL;
+UPDATE admins SET role='hr_admin' WHERE role='admin';
+SET FOREIGN_KEY_CHECKS=1;

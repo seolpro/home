@@ -1,0 +1,26 @@
+HRM Plus V2 최종 통합본
+
+통합 반영사항
+- 신규 DB 전체 설치형 install.php
+- 직원관리 ERP UI 및 연도별 월 통상임금 이력
+- 연차수당 계산(월 통상임금 ÷ 209 × 8 × 미사용일수)
+- 알림톡 관리 ERP UI 및 변수 선택 기능
+- CRON 보안키 자동 생성/복사/재생성
+- 직원현황 기반 1~3단계 결재선
+- 결재자 휴대폰 및 알림톡 수신여부 연동
+- 비즈뿌리오 정상 검증 규격 반영
+  * POST /v1/token
+  * POST /v1/kakao
+  * messageType: ALT
+  * targets[].changeWord
+  * {var1}~{var6} 변수 치환
+
+신규 설치
+1. config.sample.php를 config.php로 복사
+2. DB 접속정보 입력
+3. 빈 DB에서 install.php 실행
+4. schema.sql은 직접 실행하지 않음
+
+알림톡 기본 URL
+- 토큰: https://message.ppurio.com/v1/token
+- 발송: https://message.ppurio.com/v1/kakao

@@ -1,0 +1,10 @@
+<?php
+require_once __DIR__ . '/../lib/auth.php';require_admin();
+$pageTitle=$pageTitle??'관리자';$orgName=setting('org_name','휴가관리시스템');$currentPage=basename($_SERVER['PHP_SELF']??'');
+function admin_nav_active(string $file,string $currentPage):string{return$file===$currentPage?' active':'';}
+?>
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow"><title><?=h($pageTitle)?> | <?=h($orgName)?></title><link rel="stylesheet" href="../assets/style.css?v=<?=filemtime(__DIR__.'/../assets/style.css')?>"></head><body>
+<header class="top"><div class="wrap admin-top-wrap"><a class="brand" href="dashboard.php"><?=h($orgName)?></a><nav class="nav" aria-label="관리자 메뉴">
+<a class="<?=admin_nav_active('dashboard.php',$currentPage)?>" href="dashboard.php">대시보드</a><a class="<?=admin_nav_active('requests.php',$currentPage)?>" href="requests.php">신청·결재</a><a class="<?=admin_nav_active('leave_status.php',$currentPage)?>" href="leave_status.php">휴가현황</a>
+<?php if(can_manage_hr()):?><a class="<?=admin_nav_active('employees.php',$currentPage)?>" href="employees.php">직원</a><a class="<?=admin_nav_active('departments.php',$currentPage)?>" href="departments.php">부서</a><a class="<?=admin_nav_active('leave_types.php',$currentPage)?>" href="leave_types.php">휴가유형</a><a class="<?=admin_nav_active('approval_lines.php',$currentPage)?>" href="approval_lines.php">결재선</a><a class="<?=admin_nav_active('allowances.php',$currentPage)?>" href="allowances.php">연차수당</a><a class="<?=admin_nav_active('notifications.php',$currentPage)?>" href="notifications.php">알림톡</a><a class="<?=admin_nav_active('users.php',$currentPage)?>" href="users.php">권한계정</a><a class="<?=admin_nav_active('settings.php',$currentPage)?>" href="settings.php">설정</a><a class="<?=admin_nav_active('logs.php',$currentPage)?>" href="logs.php">알림로그</a><?php endif?>
+<a href="logout.php">로그아웃</a></nav></div></header><main class="wrap admin-main">
