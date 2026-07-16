@@ -23,4 +23,13 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
     }catch(Throwable $e){$err=$e->getMessage();}
 }
 ?>
-<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><link rel="stylesheet" href="../assets/style.css?v=<?=filemtime(__DIR__.'/../assets/style.css')?>"><title>관리자 로그인</title></head><body><div class="login"><div class="card"><h1>관리자·결재자 로그인</h1><p class="muted">권한에 따라 조회 가능한 메뉴와 부서가 자동으로 제한됩니다.</p><?php if($err):?><div class="alert err"><?=h($err)?></div><?php endif?><form method="post"><input type="hidden" name="csrf" value="<?=csrf_token()?>"><label>아이디<input name="username" required autocomplete="username"></label><label>비밀번호<input type="password" name="password" required autocomplete="current-password"></label><button class="btn">로그인</button></form><div class="login-help"><a href="find_account.php?mode=find">아이디 찾기</a><span>·</span><a href="find_account.php?mode=reset">비밀번호 초기화</a></div></div></div></body></html>
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><link rel="stylesheet" href="../assets/style.css?v=<?=filemtime(__DIR__.'/../assets/style.css')?>"><title>관리자 로그인</title></head><body><div class="login"><div class="card"><h1>관리자·결재자 로그인</h1><p class="muted">권한에 따라 조회 가능한 메뉴와 부서가 자동으로 제한됩니다.</p><?php if($err):?><div class="alert err"><?=h($err)?></div><?php endif?><form method="post"><input type="hidden" name="csrf" value="<?=csrf_token()?>"><label>아이디<input name="username" required autocomplete="username"></label><label>비밀번호<input type="password" name="password" required autocomplete="current-password"></label><button class="btn">로그인</button></form><div class="login-help" aria-label="계정 복구 메뉴">
+        <a class="login-help-link" href="find_account.php?mode=find">
+            <span class="login-help-icon">ID</span>
+            <span>아이디 찾기</span>
+        </a>
+        <a class="login-help-link" href="find_account.php?mode=reset">
+            <span class="login-help-icon">PW</span>
+            <span>비밀번호 초기화</span>
+        </a>
+    </div></div></div></body></html>
