@@ -80,7 +80,7 @@ ksort($by); ?>
             <section class="col6 card">
                 <h1>휴가 사용신청</h1>
                 <p class="muted">신청 후 설정된 결재선에 따라 순차 승인됩니다.</p>
-                <div class="request-period-guide"><strong>신청 가능 기간</strong><span>신청 시작일 기준 오늘부터 <?= h($requestPeriodLabel) ?> 이내</span><small><?= h(date('Y년 m월 d일', strtotime($requestMaxDate))) ?>까지 신청할 수 있습니다.</small></div><?php if ($msg): ?><div class="alert ok"><?= h($msg) ?></div><?php endif ?><?php if ($err): ?><div class="alert err"><?= h($err) ?></div><?php endif ?><form method="post"><input type="hidden" name="csrf" value="<?= csrf_token() ?>"><label>신청자<select name="employee_id" required>
+                <div class="request-period-guide"><strong>신청 가능 기간</strong><span>신청 시작일 기준 오늘부터 <?= h($requestPeriodLabel) ?> 이내</span><small><?= h(date('Y년 m월 d일', strtotime($requestMaxDate))) ?>까지 신청할 수 있습니다.</small></div><?php if ($msg): ?><div class="alert ok"><?= h($msg) ?></div><?php endif ?><?php if ($err): ?><div class="alert err"><?= h($err) ?></div><?php endif ?><form method="post"><input type="hidden" name="csrf" value="<?= csrf_token() ?>"><label>👤신청직원<select name="employee_id" required>
                             <option value="">선택하세요</option><?php foreach ($employees as $e): ?><option value="<?= $e['id'] ?>"><?= h($e['name'] . ' ' . $e['position'] . ' · ' . $e['department_name']) ?></option><?php endforeach ?>
                         </select></label><?php if (setting('employee_auth_mode', 'phone4') === 'phone4'): ?><label>휴대폰 뒤 4자리<input name="phone4" maxlength="4" inputmode="numeric" required></label><?php endif ?><label>휴가유형<select name="leave_type_id" id="leave_type" required>
                             <option value="">선택하세요</option><?php foreach ($types as $t): ?><option value="<?= $t['id'] ?>" data-days="<?= $t['default_days'] ?>" data-custom="<?= $t['allow_custom_days'] ?>" data-half="<?= $t['require_half_option'] ?>" data-range="<?= $t['allow_date_range'] ?>"><?= h($t['name']) ?></option><?php endforeach ?>
@@ -89,7 +89,7 @@ ksort($by); ?>
                                 <option value="">해당없음</option>
                                 <option>오전</option>
                                 <option>오후</option>
-                            </select></label></div><label>참고사항<textarea name="memo" placeholder="사유 또는 참고사항"></textarea></label><button class="btn">신청 제출</button>
+                            </select></label></div><label>참고사항<textarea name="memo" placeholder="사유 또는 참고사항"></textarea></label><button class="btn">✅신청 제출</button>
                 </form>
             </section>
             <section class="col6">
