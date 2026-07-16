@@ -1,0 +1,16 @@
+HRM Plus V3 최종 통합본
+
+핵심 안정화
+- lib/app.php에서 권한 라이브러리를 공통 로드하여 require_hr_admin() 누락 오류 해결
+- 최고관리자/인사관리자/부서관리자/결재권자 권한 가드 정리
+- 1차 → 2차 → 3차 순차결재 및 현재 차례 결재자만 처리
+- 직원별 결재선 → 부서 결재선 → 전체 기본 결재선 우선순위
+- 직원 CSV 및 기승인 휴가 CSV 일괄업로드
+- 정상 발송 검증된 비즈뿌리오 v1 API(/v1/token, /v1/kakao, ALT, changeWord)
+- 부서별 조회범위, 직원별·일자별 휴가현황, 연차수당 계산
+
+설치
+1) config.sample.php를 config.php로 복사
+2) DB 접속정보 입력
+3) 빈 상태의 HRM 테이블에서 install.php 실행
+4) schema.sql은 별도 실행하지 않음

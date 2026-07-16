@@ -5,6 +5,16 @@ function admin_nav_active(string $file,string $currentPage):string{return$file==
 ?>
 <!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow"><title><?=h($pageTitle)?> | <?=h($orgName)?></title><link rel="stylesheet" href="../assets/style.css?v=<?=filemtime(__DIR__.'/../assets/style.css')?>"></head><body>
 <header class="top"><div class="wrap admin-top-wrap"><a class="brand" href="dashboard.php"><?=h($orgName)?></a><nav class="nav" aria-label="관리자 메뉴">
-<a class="<?=admin_nav_active('dashboard.php',$currentPage)?>" href="dashboard.php">대시보드</a><a class="<?=admin_nav_active('requests.php',$currentPage)?>" href="requests.php">신청·결재</a><a class="<?=admin_nav_active('leave_status.php',$currentPage)?>" href="leave_status.php">휴가현황</a>
-<?php if(can_manage_hr()):?><a class="<?=admin_nav_active('employees.php',$currentPage)?>" href="employees.php">직원</a><a class="<?=admin_nav_active('departments.php',$currentPage)?>" href="departments.php">부서</a><a class="<?=admin_nav_active('leave_types.php',$currentPage)?>" href="leave_types.php">휴가유형</a><a class="<?=admin_nav_active('approval_lines.php',$currentPage)?>" href="approval_lines.php">결재선</a><a class="<?=admin_nav_active('allowances.php',$currentPage)?>" href="allowances.php">연차수당</a><a class="<?=admin_nav_active('notifications.php',$currentPage)?>" href="notifications.php">알림톡</a><a class="<?=admin_nav_active('users.php',$currentPage)?>" href="users.php">권한계정</a><a class="<?=admin_nav_active('settings.php',$currentPage)?>" href="settings.php">설정</a><a class="<?=admin_nav_active('logs.php',$currentPage)?>" href="logs.php">알림로그</a><?php endif?>
+<?php
+$inboxCount=0;
+if(can_approve() && admin_employee_id()>0){
+    try{
+        $q=db()->prepare("SELECT COUNT(*) FROM request_approvals ra JOIN leave_requests lr ON lr.id=ra.request_id WHERE ra.approver_employee_id=? AND ra.status='pending' AND ra.step_order=lr.current_step AND lr.status IN ('pending','in_approval')");
+        $q->execute([admin_employee_id()]);
+        $inboxCount=(int)$q->fetchColumn();
+    }catch(Throwable $e){$inboxCount=0;}
+}
+?>
+<a class="<?=admin_nav_active('dashboard.php',$currentPage)?>" href="dashboard.php">대시보드</a><?php if(can_approve()):?><a class="<?=admin_nav_active('inbox.php',$currentPage)?>" href="inbox.php">내 결재함<?=$inboxCount>0?' ('.$inboxCount.')':''?></a><?php endif?><a class="<?=admin_nav_active('requests.php',$currentPage)?>" href="requests.php">신청·결재 현황</a><a class="<?=admin_nav_active('leave_status.php',$currentPage)?>" href="leave_status.php">휴가현황</a>
+<?php if(can_manage_hr()):?><a class="<?=admin_nav_active('employees.php',$currentPage)?>" href="employees.php">직원</a><a class="<?=admin_nav_active('departments.php',$currentPage)?>" href="departments.php">부서</a><a class="<?=admin_nav_active('leave_types.php',$currentPage)?>" href="leave_types.php">휴가유형</a><a class="<?=admin_nav_active('approval_lines.php',$currentPage)?>" href="approval_lines.php">결재선</a><a class="<?=admin_nav_active('allowances.php',$currentPage)?>" href="allowances.php">연차수당</a><a class="<?=admin_nav_active('import.php',$currentPage)?>" href="import.php">일괄업로드</a><a class="<?=admin_nav_active('notifications.php',$currentPage)?>" href="notifications.php">알림톡</a><a class="<?=admin_nav_active('users.php',$currentPage)?>" href="users.php">권한계정</a><a class="<?=admin_nav_active('settings.php',$currentPage)?>" href="settings.php">설정</a><a class="<?=admin_nav_active('logs.php',$currentPage)?>" href="logs.php">알림로그</a><?php endif?>
 <a href="logout.php">로그아웃</a></nav></div></header><main class="wrap admin-main">

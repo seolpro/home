@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__.'/db.php';
+require_once __DIR__.'/auth.php';
 function date_range($start,$end): array {$out=[];$d=new DateTime($start);$last=new DateTime($end);while($d<=$last){$out[]=$d->format('Y-m-d');$d->modify('+1 day');}return $out;}
 function working_days($start,$end,$includeWeekend=false): float {$n=0;foreach(date_range($start,$end) as $d){$w=(int)date('N',strtotime($d));if($includeWeekend||$w<6)$n++;}return $n;}
 function leave_type(int $id){$s=db()->prepare('SELECT * FROM leave_types WHERE id=? AND is_active=1');$s->execute([$id]);return $s->fetch();}

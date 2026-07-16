@@ -72,3 +72,22 @@ CREATE TABLE audit_logs(id BIGINT AUTO_INCREMENT PRIMARY KEY,admin_id INT NULL,a
 ALTER TABLE departments ADD CONSTRAINT fk_department_parent FOREIGN KEY(parent_id) REFERENCES departments(id) ON DELETE SET NULL;
 ALTER TABLE departments ADD CONSTRAINT fk_department_manager FOREIGN KEY(manager_employee_id) REFERENCES employees(id) ON DELETE SET NULL;
 ALTER TABLE employees ADD CONSTRAINT fk_employee_approval_line FOREIGN KEY(approval_line_id) REFERENCES approval_lines(id) ON DELETE SET NULL;
+
+CREATE TABLE import_batches(
+ id BIGINT AUTO_INCREMENT PRIMARY KEY,
+ import_type ENUM('employees','approved_leave') NOT NULL,
+ original_filename VARCHAR(255) NULL,
+ total_rows INT NOT NULL DEFAULT 0,
+ success_rows INT NOT NULL DEFAULT 0,
+ failed_rows INT NOT NULL DEFAULT 0,
+ result_message TEXT NULL,
+ created_by INT NULL,
+ created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+ CONSTRAINT fk_import_admin FOREIGN KEY(created_by) REFERENCES admins(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+ALTER TABLE leave_requests
+ ADD COLUMN source_type ENUM('application','import') NOT NULL DEFAULT 'application' AFTER reject_reason,
+ ADD COLUMN import_batch_id BIGINT NULL AFTER source_type,
+ ADD INDEX idx_leave_import_batch(import_batch_id),
+ ADD CONSTRAINT fk_leave_import_batch FOREIGN KEY(import_batch_id) REFERENCES import_batches(id) ON DELETE SET NULL;
