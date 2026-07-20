@@ -151,6 +151,7 @@ $queue=$pdo->query("SELECT * FROM notification_queue ORDER BY id DESC LIMIT 100"
     'leave.submit': ['#{직원명}','#{직책}','#{부서}','#{휴가종류}','#{기간}','#{사용일수}','#{신청사유}','#{결재자}','#{url}'],
     'next_approval': ['#{직원명}','#{휴가종류}','#{기간}','#{사용일수}','#{결재자}','#{url}'],
     'approved': ['#{직원명}','#{휴가종류}','#{기간}','#{사용일수}','#{처리일}','#{url}'],
+    'approved_all_staff': ['#{직원명}','#{휴가종류}','#{기간}','#{사용일수}'],
     'rejected': ['#{직원명}','#{휴가종류}','#{기간}','#{반려사유}','#{결재자}','#{처리일}','#{url}']
   };
   const descriptions = Object.fromEntries(common);

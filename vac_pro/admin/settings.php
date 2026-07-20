@@ -24,7 +24,7 @@ try {
             set_setting('notification_cron_key',generate_cron_secret());
             $ok='새 CRON 보안키를 생성했습니다. 기존 CRON URL은 더 이상 사용할 수 없습니다.';
         } else {
-            foreach(['org_name','grant_method','mandatory_rate','daily_max_people','request_months_ahead','employee_auth_mode','allowance_monthly_hours','allowance_daily_hours','allowance_rounding','alimtalk_enabled','ppurio_account','ppurio_sender_profile','ppurio_sender_number','ppurio_token_url','ppurio_message_url','notification_dispatch_mode','notification_max_attempts'] as $k){
+            foreach(['org_name','grant_method','mandatory_rate','daily_max_people','request_months_ahead','employee_auth_mode','allowance_monthly_hours','allowance_daily_hours','allowance_rounding','alimtalk_enabled','ppurio_account','ppurio_sender_profile','ppurio_sender_number','ppurio_token_url','ppurio_message_url','notification_dispatch_mode','notification_max_attempts','final_approval_broadcast_enabled'] as $k){
                 set_setting($k,$_POST[$k]??'');
             }
             // 비워두면 기존 인증키를 유지합니다.
@@ -76,6 +76,7 @@ $lastCronResult=setting('notification_cron_last_result','');
     <div class="help-notice"><strong>어디서 확인하나요?</strong> 비즈뿌리오 관리자에서 계정·인증키·발신프로필(Sender Key)·발신번호를 확인하여 입력합니다.</div>
     <div class="form-grid cols-2 ppurio-grid">
       <label>알림톡 사용<select name="alimtalk_enabled"><option value="0">사용 안 함</option><option value="1" <?=setting('alimtalk_enabled')==='1'?'selected':''?>>사용</option></select></label>
+      <label>최종승인 전 직원 안내<select name="final_approval_broadcast_enabled"><option value="0">사용 안 함</option><option value="1" <?=setting('final_approval_broadcast_enabled','0')==='1'?'selected':''?>>수신동의 직원에게 발송</option></select><small>신청자는 기존 승인완료 알림만 받고, 전 직원 안내에서는 중복 제외됩니다.</small></label>
       <label>발송 방식<select name="notification_dispatch_mode"><option value="immediate" <?=setting('notification_dispatch_mode','immediate')==='immediate'?'selected':''?>>즉시 발송</option><option value="queue" <?=setting('notification_dispatch_mode')==='queue'?'selected':''?>>대기열(CRON) 발송</option></select></label>
       <label>비즈뿌리오 계정<input name="ppurio_account" value="<?=h(setting('ppurio_account'))?>" autocomplete="off" placeholder="비즈뿌리오 로그인 계정"></label>
       <label>인증키<input type="password" name="ppurio_auth_key" value="" autocomplete="new-password" placeholder="변경할 때만 입력"><small>저장된 키는 보안상 다시 표시하지 않습니다. 비워두면 기존 키를 유지합니다.</small></label>

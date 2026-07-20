@@ -101,7 +101,11 @@ if($_SERVER['REQUEST_METHOD']==='POST' && $myEmployeeId>0){
                 'var5'=>fmt_days($r['requested_days']),
                 'var6'=>$comment?:'-'
             ]);
-        }elseif($event==='next_approval' && $nextApproval){
+        }
+        if($event==='approved'){
+            send_final_approval_broadcast($r);
+        }
+        if($event==='next_approval' && $nextApproval){
             $q=$pdo->prepare('SELECT name,position,phone,alimtalk_opt_in FROM employees WHERE id=?');
             $q->execute([$nextApproval['approver_employee_id']]);
             $na=$q->fetch(PDO::FETCH_ASSOC);
@@ -169,7 +173,7 @@ if($myEmployeeId>0){
 <tr>
 <td><?=h(trim($r['employee_name'].' '.$r['position']))?></td>
 <td><?=h($r['department_name']?:'-')?></td>
-<td><?=h($r['leave_name'])?><div class="muted"><?=h($r['start_date'])?> ~ <?=h($r['end_date'])?></div></td>
+<td><?=h($r['leave_name'])?><div class="muted"><?=h($r['start_date'])?> ~ <?=h($r['end_date'])?></div><?php if(!empty($r['evidence_path'])):?><a class="evidence-link" href="evidence.php?id=<?=$r['id']?>" target="_blank" rel="noopener">📎 <?=h($r['evidence_name']?:'증빙서류 보기')?></a><?php endif?></td>
 <td><?=fmt_days($r['requested_days'])?></td>
 <td><span class="badge"><?=h($r['step_order'].'차 결재')?></span></td>
 <td><div class="approval-flow"><?php foreach(array_filter(explode(' → ',(string)$r['approval_state'])) as $state):?><span><?=h(str_replace(['[waiting]','[pending]','[approved]','[rejected]','[skipped]'],['[대기]','[결재차례]','[승인]','[반려]','[종료]'],$state))?></span><?php endforeach?></div></td>

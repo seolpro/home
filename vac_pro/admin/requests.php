@@ -109,7 +109,11 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
                 'var5'=>fmt_days($r['requested_days']),
                 'var6'=>$comment?:'-'
             ]);
-        }elseif($event==='next_approval' && $nextApproval){
+        }
+        if($event==='approved'){
+            send_final_approval_broadcast($r);
+        }
+        if($event==='next_approval' && $nextApproval){
             $q=$pdo->prepare('SELECT name,position,phone,alimtalk_opt_in FROM employees WHERE id=?');
             $q->execute([$nextApproval['approver_employee_id']]);
             $na=$q->fetch();
@@ -245,7 +249,7 @@ $rows = $s->fetchAll(PDO::FETCH_ASSOC);
 <div class="card"><div class="table-wrap"><table class="table"><tr><th>신청자</th><th>부서</th><th>유형/기간</th><th>일수</th><th>현재단계</th><th>결재진행</th><th>처리</th></tr>
 <?php foreach($rows as $r):?><tr>
 <td><?=h($r['employee_name'].' '.$r['position'])?></td><td><?=h($r['department_name']?:'-')?></td>
-<td><?=h($r['leave_name'])?><div class="muted"><?=h($r['start_date'])?> ~ <?=h($r['end_date'])?></div></td>
+<td><?=h($r['leave_name'])?><div class="muted"><?=h($r['start_date'])?> ~ <?=h($r['end_date'])?></div><?php if(!empty($r['evidence_path'])):?><a class="evidence-link" href="evidence.php?id=<?=$r['id']?>" target="_blank" rel="noopener">📎 <?=h($r['evidence_name']?:'증빙서류 보기')?></a><?php endif?></td>
 <td><?=fmt_days($r['requested_days'])?></td>
 <td><span class="badge"><?=in_array($r['status'],['pending','in_approval'],true)?h($r['current_step'].'차 결재'):h($r['status'])?></span></td>
 <td>

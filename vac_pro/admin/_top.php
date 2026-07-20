@@ -57,13 +57,14 @@ $adminRole = function_exists('admin_role_label')
 
         <div class="smart-admin-user">
             <?php if (can_approve()): ?>
-                <a class="smart-inbox-link" href="inbox.php">
-                    <span>내 결재함</span>
-                    <?php if ($inboxCount > 0): ?>
-                        <b><?=$inboxCount?></b>
-                    <?php endif ?>
-                </a>
-            <?php endif ?>
+    <a class="smart-inbox-link" href="../index.php">
+        <span>📝 신청페이지</span>
+    </a>
+
+    <a class="smart-inbox-link" href="inbox.php">
+        <span>📥 내 결재함</span>
+    </a>
+<?php endif; ?>
 
             <div class="smart-user-avatar"><?=h(mb_substr($adminName, 0, 1))?></div>
             <div class="smart-user-meta">
