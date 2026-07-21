@@ -71,8 +71,8 @@ foreach($employees as $employee){
     $pending=max(0,$approvedAndPending-$approved);
     $remaining=$granted-$approved;
     $mandatoryRate=$employee['mandatory_rate']!==null
-        ? (float)$employee['mandatory_rate']
-        : (float)setting('mandatory_rate','70');
+    ? (float)$employee['mandatory_rate']
+    : (float)setting('mandatory_rate','70');
     $mandatoryDays=$granted*$mandatoryRate/100;
     $usageRate=$granted>0?round($approved/$granted*100,1):0;
     $shortage=max(0,$mandatoryDays-$approved);
