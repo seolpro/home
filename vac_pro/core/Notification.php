@@ -230,6 +230,115 @@ class Notification
         )->execute([$status, mb_substr($error, 0, 1000), $minutes, (int)$q['id']]);
     }
 
+    /**
+     * 최종 승인된 휴가를 알림톡 수신동의 직원 전체에게 안내합니다.
+     *
+     * 발송 조건:
+     * - final_approval_broadcast_enabled 설정이 1
+     * - approved_all_staff 템플릿이 활성화
+     * - 재직 중(is_active=1)
+     * - 알림톡 수신동의(alimtalk_opt_in=1)
+     * - 휴대폰 번호 보유
+     *
+     * 신청자는 기존 approved 알림을 받으므로 중복 방지를 위해 제외합니다.
+     */
+    public static function notifyAllStaffApproved(array $request): array
+    {
+        $result = [
+            'enabled' => false,
+            'target' => 0,
+            'queued_or_sent' => 0,
+            'failed' => 0,
+            'skipped_duplicate' => 0,
+            'message' => '',
+        ];
+
+        if (setting('final_approval_broadcast_enabled', '0') !== '1') {
+            $result['message'] = '전 직원 최종승인 알림이 비활성화되어 있습니다.';
+            return $result;
+        }
+        $result['enabled'] = true;
+
+        if (!self::template('approved_all_staff')) {
+            $result['message'] = 'approved_all_staff 템플릿이 없거나 비활성화되어 있습니다.';
+            return $result;
+        }
+
+        $requestId = (int)($request['id'] ?? 0);
+        $applicantId = (int)($request['employee_id'] ?? 0);
+        $requestedDays = (float)($request['requested_days'] ?? $request['days'] ?? 0);
+        $daysText = rtrim(rtrim(number_format($requestedDays, 2, '.', ''), '0'), '.');
+        if ($daysText === '') {
+            $daysText = '0';
+        }
+
+        $variables = [
+            'var1' => trim(
+                (string)($request['employee_name'] ?? $request['name'] ?? '') . ' ' .
+                (string)($request['position'] ?? $request['employee_position'] ?? '')
+            ),
+            'var2' => (string)($request['leave_name'] ?? $request['leave_type_name'] ?? ''),
+            'var3' => (string)($request['start_date'] ?? ''),
+            'var4' => (string)($request['end_date'] ?? ''),
+            'var5' => $daysText,
+        ];
+
+        $sql = "SELECT id,name,position,phone
+                FROM employees
+                WHERE is_active=1
+                  AND alimtalk_opt_in=1
+                  AND phone IS NOT NULL
+                  AND TRIM(phone)<>''";
+        $params = [];
+
+        if ($applicantId > 0) {
+            $sql .= ' AND id<>?';
+            $params[] = $applicantId;
+        }
+        $sql .= ' ORDER BY sort_order ASC,id ASC';
+
+        $stmt = db()->prepare($sql);
+        $stmt->execute($params);
+
+        $seenPhones = [];
+        while ($employee = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $phone = self::phone((string)$employee['phone']);
+            if ($phone === '') {
+                continue;
+            }
+            if (isset($seenPhones[$phone])) {
+                $result['skipped_duplicate']++;
+                continue;
+            }
+            $seenPhones[$phone] = true;
+            $result['target']++;
+
+            // 동일 신청·동일 직원에 대한 중복 등록을 방지합니다.
+            $dedupeKey = hash(
+                'sha256',
+                'approved_all_staff|' . $requestId . '|' . (int)$employee['id'] . '|' . $phone
+            );
+
+            $ok = self::dispatch(
+                'approved_all_staff',
+                'employee',
+                (int)$employee['id'],
+                $phone,
+                $variables,
+                $dedupeKey
+            );
+
+            if ($ok) {
+                $result['queued_or_sent']++;
+            } else {
+                $result['failed']++;
+            }
+        }
+
+        $result['message'] = '전 직원 최종승인 알림 처리가 완료되었습니다.';
+        return $result;
+    }
+
     public static function processPending(int $limit = 30): array
     {
         $limit = max(1, min(200, $limit));
