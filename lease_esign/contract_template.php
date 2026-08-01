@@ -98,7 +98,30 @@ $signatureUrl = static function (?string $path): string {
                 <img class="signature-img"
                      src="<?=e($signatureUrl($c['lessee_signature']))?>"
                      alt="임차인 서명"><br>
-                <?=e($c['lessee_signed_at'])?> 서명
+
+                <div style="margin-top:8px;padding:8px 10px;border:1px solid #999;background:#f7f7f7;font-size:11px;line-height:1.55;word-break:break-all;">
+                    <div>
+                        <strong>전자서명 완료일시:</strong>
+                        <?=e($c['lessee_signed_at'] ?: '-')?>
+                        <?php if (!empty($c['lessee_signed_at'])): ?>(KST)<?php endif; ?>
+                    </div>
+
+                    <div>
+                        <strong>서명 접속 IP:</strong>
+                        <?=e($c['lessee_ip'] ?? '-')?>
+                    </div>
+
+                    <?php if (!empty($c['lessee_user_agent'])): ?>
+                        <div>
+                            <strong>접속환경:</strong>
+                            <?=e($c['lessee_user_agent'])?>
+                        </div>
+                    <?php endif; ?>
+
+                    <div style="margin-top:6px;padding-top:5px;border-top:1px dotted #aaa;font-size:10px;color:#444;">
+                        위 정보는 임차인이 전자계약 내용을 확인하고 전자서명을 완료한 시점의 시스템 기록입니다.
+                    </div>
+                </div>
             <?php else: ?>
                 미서명
             <?php endif; ?>
