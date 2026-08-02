@@ -39,12 +39,12 @@ $statusLabels = [
 <main class="wrap">
     <div class="actions">
         <a class="btn green" href="create.php">＋ 새 계약서 만들기</a>
-        <a class="btn <?=$view === 'progress' ? 'green' : 'gray'?>" href="index.php?view=progress">진행 계약</a>
-        <a class="btn <?=$view === 'completed' ? 'green' : 'gray'?>" href="index.php?view=completed">완료 계약</a>
-        <a class="btn <?=$view === 'all' ? 'green' : 'gray'?>" href="index.php">전체 계약</a>
+        <a class="btn <?=$view === 'progress' ? 'green' : 'gray'?>" href="index.php?view=progress">⚙️진행 계약</a>
+        <a class="btn <?=$view === 'completed' ? 'green' : 'gray'?>" href="index.php?view=completed">✅완료 계약</a>
+        <a class="btn <?=$view === 'all' ? 'green' : 'gray'?>" href="index.php">📚전체 계약</a>
     </div>
 
-    <h1><?=e($pageTitle)?> 목록</h1>
+    <h1><?=e($pageTitle)?> 🧾목록</h1>
 
     <div class="table-wrap">
         <table class="list">

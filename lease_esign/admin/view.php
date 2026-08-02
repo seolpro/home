@@ -54,14 +54,14 @@ $isSuccess = $flash !== '' && (
 
         <?php if ($lessorUrl !== ''): ?>
             <label>
-                임대인 서명 링크
+                🔗임대인 서명 링크
                 <input readonly value="<?= e($lessorUrl) ?>" onclick="this.select()">
             </label>
         <?php endif; ?>
 
         <?php if ($lesseeUrl !== ''): ?>
             <label>
-                임차인 서명 링크
+                🔗임차인 서명 링크
                 <input readonly value="<?= e($lesseeUrl) ?>" onclick="this.select()">
             </label>
         <?php endif; ?>
@@ -71,7 +71,7 @@ $isSuccess = $flash !== '' && (
                 <input type="hidden" name="csrf" value="<?= csrf() ?>">
                 <input type="hidden" name="id" value="<?= $id ?>">
                 <input type="hidden" name="party" value="lessor">
-                <button type="submit" class="btn">임대인에게 링크 문자</button>
+                <button type="submit" class="btn">💬임대인에게 링크 문자</button>
             </form>
 
             <?php if (!empty($c['lessor_signed_at'])): ?>
@@ -79,12 +79,12 @@ $isSuccess = $flash !== '' && (
                     <input type="hidden" name="csrf" value="<?= csrf() ?>">
                     <input type="hidden" name="id" value="<?= $id ?>">
                     <input type="hidden" name="party" value="lessee">
-                    <button type="submit" class="btn green">임차인에게 링크 문자</button>
+                    <button type="submit" class="btn green">💬임차인에게 링크 문자</button>
                 </form>
             <?php endif; ?>
 
             <?php if ($c['status'] === 'completed'): ?>
-                <a class="btn green" href="final.php?id=<?= $id ?>">최종 PDF 생성·발송</a>
+                <a class="btn green" href="final.php?id=<?= $id ?>">📥최종 PDF 생성·발송</a>
             <?php endif; ?>
         </div>
 
@@ -96,7 +96,7 @@ $isSuccess = $flash !== '' && (
         <form method="post" action="regenerate.php">
             <input type="hidden" name="csrf" value="<?= csrf() ?>">
             <input type="hidden" name="id" value="<?= $id ?>">
-            <button type="submit" class="btn gray">서명 링크 모두 재발급</button>
+            <button type="submit" class="btn gray">🔗서명 링크 모두 재발급</button>
         </form>
     </div>
 
