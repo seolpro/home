@@ -208,7 +208,7 @@ $hasIdCard = !empty($c['lessee_id_image']);
                 📥 생성된 PDF 다운로드
             </a>
 
-            <a class="btn gray" href="view.php?id=<?=$id?>">돌아가기</a>
+            <a class="btn gray" href="view.php?id=<?=$id?>">⬅️돌아가기</a>
         </div>
 
         <div id="msg" class="alert" style="display:none"></div>
