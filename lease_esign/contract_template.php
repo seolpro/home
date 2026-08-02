@@ -72,7 +72,8 @@ $signatureUrl = static function (?string $path): string {
         </tr>
         <?php if (!empty($c['agent_name'])): ?>
             <tr>
-                <th>대리인</th>
+                <th>대리인<br>
+                (중개인)</th>
                 <td colspan="3"><?=e($c['agent_name'])?> / <?=e($c['agent_phone'])?></td>
             </tr>
         <?php endif; ?>
