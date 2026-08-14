@@ -75,17 +75,17 @@
 
     <section class="card">
       <h2 class="section-title">사용하시는 은행앱을 선택하세요</h2>
-      <p class="section-desc">은행을 누르면 계좌번호를 먼저 복사한 후 앱 실행을 시도합니다.</p>
+      <p class="section-desc">은행을 누르면 계좌번호를 먼저 복사합니다. Android는 앱 실행 후 미설치 시 Play 스토어로, iPhone/iPad는 App Store로 연결됩니다.</p>
       <div class="grid">
-        <button class="bankbtn" onclick="openBank('신협 온뱅크','kr.co.cu.onbank')"><span class="bankicon">신협</span><span class="banktxt"><strong>신협</strong><span>신협 온뱅크</span></span></button>
-        <button class="bankbtn" onclick="openBank('KB국민은행','com.kbstar.kbbank')"><span class="bankicon">KB</span><span class="banktxt"><strong>KB국민은행</strong><span>KB스타뱅킹</span></span></button>
-        <button class="bankbtn" onclick="openBank('신한은행','com.shinhan.sbanking')"><span class="bankicon">신한</span><span class="banktxt"><strong>신한은행</strong><span>신한 슈퍼SOL</span></span></button>
-        <button class="bankbtn" onclick="openBank('우리은행','com.wooribank.smart.npib')"><span class="bankicon">우리</span><span class="banktxt"><strong>우리은행</strong><span>우리WON뱅킹</span></span></button>
-        <button class="bankbtn" onclick="openBank('하나은행','com.hanabank.oqf')"><span class="bankicon">하나</span><span class="banktxt"><strong>하나은행</strong><span>하나원큐</span></span></button>
-        <button class="bankbtn" onclick="openBank('NH농협은행','nh.smart.banking')"><span class="bankicon">NH</span><span class="banktxt"><strong>NH농협은행</strong><span>NH스마트뱅킹</span></span></button>
-        <button class="bankbtn" onclick="openBank('IBK기업은행','com.ibk.android.ionebank')"><span class="bankicon">IBK</span><span class="banktxt"><strong>IBK기업은행</strong><span>i-ONE Bank</span></span></button>
-        <button class="bankbtn" onclick="openBank('카카오뱅크','com.kakaobank.channel')"><span class="bankicon">K</span><span class="banktxt"><strong>카카오뱅크</strong><span>카카오뱅크</span></span></button>
-        <button class="bankbtn" onclick="openBank('토스','viva.republica.toss')"><span class="bankicon">T</span><span class="banktxt"><strong>토스</strong><span>토스 / 토스뱅크</span></span></button>
+        <button class="bankbtn" onclick="openBank('cu')"><span class="bankicon">신협</span><span class="banktxt"><strong>신협</strong><span>신협 온뱅크</span></span></button>
+        <button class="bankbtn" onclick="openBank('kb')"><span class="bankicon">KB</span><span class="banktxt"><strong>KB국민은행</strong><span>KB스타뱅킹</span></span></button>
+        <button class="bankbtn" onclick="openBank('shinhan')"><span class="bankicon">신한</span><span class="banktxt"><strong>신한은행</strong><span>신한 슈퍼SOL</span></span></button>
+        <button class="bankbtn" onclick="openBank('woori')"><span class="bankicon">우리</span><span class="banktxt"><strong>우리은행</strong><span>우리WON뱅킹</span></span></button>
+        <button class="bankbtn" onclick="openBank('hana')"><span class="bankicon">하나</span><span class="banktxt"><strong>하나은행</strong><span>하나원큐</span></span></button>
+        <button class="bankbtn" onclick="openBank('nh')"><span class="bankicon">NH</span><span class="banktxt"><strong>NH농협은행</strong><span>NH스마트뱅킹</span></span></button>
+        <button class="bankbtn" onclick="openBank('ibk')"><span class="bankicon">IBK</span><span class="banktxt"><strong>IBK기업은행</strong><span>i-ONE Bank</span></span></button>
+        <button class="bankbtn" onclick="openBank('kakao')"><span class="bankicon">K</span><span class="banktxt"><strong>카카오뱅크</strong><span>카카오뱅크</span></span></button>
+        <button class="bankbtn" onclick="openBank('toss')"><span class="bankicon">T</span><span class="banktxt"><strong>토스</strong><span>토스 / 토스뱅크</span></span></button>
         <button class="bankbtn other" onclick="otherBank()"><span class="bankicon">＋</span><span class="banktxt"><strong>다른 은행앱 사용</strong><span>계좌번호 복사 후 직접 은행앱을 열어주세요</span></span></button>
       </div>
     </section>
@@ -146,24 +146,62 @@
       return copied;
     }
 
-    function isAndroid(){ return /Android/i.test(navigator.userAgent); }
+    const BANKS = {
+      cu:      { name:'신협 온뱅크',  android:'kr.co.cu.onbank',              iosSearch:'신협 온뱅크' },
+      kb:      { name:'KB국민은행',   android:'com.kbstar.kbbank',           iosSearch:'KB스타뱅킹' },
+      shinhan: { name:'신한은행',     android:'com.shinhan.sbanking',        iosSearch:'신한 슈퍼SOL' },
+      woori:   { name:'우리은행',     android:'com.wooribank.smart.npib',    iosSearch:'우리WON뱅킹' },
+      hana:    { name:'하나은행',     android:'com.hanabank.oqf',            iosSearch:'하나원큐' },
+      nh:      { name:'NH농협은행',   android:'nh.smart.banking',            iosSearch:'NH스마트뱅킹' },
+      ibk:     { name:'IBK기업은행',  android:'com.ibk.android.ionebank',    iosSearch:'i-ONE Bank 개인고객용' },
+      kakao:   { name:'카카오뱅크',   android:'com.kakaobank.channel',       iosSearch:'카카오뱅크' },
+      toss:    { name:'토스',         android:'viva.republica.toss',         iosSearch:'토스' }
+    };
 
-    async function openBank(bankName, packageName){
+    function isAndroid(){
+      return /Android/i.test(navigator.userAgent);
+    }
+
+    function isIOS(){
+      return /iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+             (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    }
+
+    function playStoreUrl(packageName){
+      return 'https://play.google.com/store/apps/details?id=' + encodeURIComponent(packageName);
+    }
+
+    function appStoreSearchUrl(term){
+      return 'https://apps.apple.com/kr/search?term=' + encodeURIComponent(term);
+    }
+
+    async function openBank(key){
+      const bank = BANKS[key];
+      if(!bank) return;
+
       await copyAccount(false);
-      showToast('계좌번호 복사 완료 · ' + bankName + ' 앱을 엽니다');
 
       if(isAndroid()){
-        // Android Chrome 계열에서 설치된 앱을 패키지명으로 실행 시도.
-        // 앱 내부의 특정 송금화면이 아니라 앱 시작 화면을 엽니다.
-        const intentUrl = 'intent://#Intent;scheme=https;package=' + packageName + ';end';
+        showToast('계좌번호 복사 완료 · ' + bank.name + ' 실행');
+
+        // 설치되어 있으면 앱 실행, 설치되어 있지 않으면 Google Play로 이동합니다.
+        const fallback = encodeURIComponent(playStoreUrl(bank.android));
+        const intentUrl = 'intent://#Intent;scheme=https;package=' + bank.android +
+                          ';S.browser_fallback_url=' + fallback + ';end';
         setTimeout(() => { window.location.href = intentUrl; }, 180);
         return;
       }
 
-      // iOS/기타 환경은 웹에서 임의의 설치 은행앱을 확실하게 호출할 수 없으므로 안내.
-      setTimeout(() => {
-        showToast('복사 완료 · ' + bankName + ' 앱을 직접 열어 붙여넣어 주세요');
-      }, 250);
+      if(isIOS()){
+        // iOS Safari는 웹페이지에서 임의 은행앱의 설치 여부를 안정적으로 확인할 수 없습니다.
+        // 계좌번호를 먼저 복사한 뒤 해당 앱의 App Store 검색 화면으로 연결합니다.
+        showToast('계좌번호 복사 완료 · App Store로 이동합니다');
+        setTimeout(() => { window.location.href = appStoreSearchUrl(bank.iosSearch); }, 350);
+        return;
+      }
+
+      // PC/기타 기기
+      showToast('계좌번호 복사 완료 · 모바일에서 은행앱을 이용해 주세요');
     }
 
     async function otherBank(){
