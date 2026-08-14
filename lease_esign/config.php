@@ -1,6 +1,6 @@
 <?php
 return [
- 'app_name'=>'온라인 주거용 임대차 전자계약',
+ 'app_name'=>'온라인 임대차 전자계약',
  'base_url'=>'https://seolhopro.mycafe24.com/lease_esign',
  'timezone'=>'Asia/Seoul',
  'db'=>['host'=>'localhost','port'=>3306,'name'=>'seolhopro','user'=>'seolhopro','pass'=>'ajou2130--','charset'=>'utf8mb4'],
