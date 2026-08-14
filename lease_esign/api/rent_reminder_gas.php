@@ -93,7 +93,7 @@ try {
             . $name . "님, 내일은 월차임 납부일입니다.\n\n"
             . "월차임 " . number_format($rent) . "원을 다음 계좌로 입금해 주세요.\n\n"
             . "[입금계좌]\n" . $account . "\n\n"
-            . "본 SMS알림은 시스템에 이거 자동발송되었습니다.";
+            . "본 SMS알림은 시스템에서 자동발송 되었습니다.";
 
         $result = send_sms($phone, $message, $name);
         sms_log($id, $phone, $message, $result);
