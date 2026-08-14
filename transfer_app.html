@@ -40,7 +40,9 @@
     .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
     .bankbtn{border:1px solid var(--line);background:#fff;border-radius:14px;padding:14px 12px;text-align:left;cursor:pointer;min-height:68px;display:flex;align-items:center;gap:10px;transition:.15s ease}
     .bankbtn:active{transform:scale(.985);background:#f7faf9}
-    .bankicon{width:38px;height:38px;border-radius:12px;background:#edf3f2;display:grid;place-items:center;font-weight:900;color:var(--brand-dark);flex:0 0 38px}
+    .bankicon{width:42px;height:42px;border-radius:12px;background:#fff;border:1px solid #e4ecea;display:grid;place-items:center;flex:0 0 42px;overflow:hidden;box-shadow:0 2px 7px rgba(20,45,40,.06)}
+    .banklogo{width:30px;height:30px;object-fit:contain;display:block}
+    .bankicon.fallback{font-weight:900;color:var(--brand-dark);background:#edf3f2}
     .banktxt strong{display:block;font-size:14px;margin-bottom:2px}
     .banktxt span{display:block;font-size:11px;color:var(--muted)}
     .other{grid-column:1/-1;background:#f8fbfa}
@@ -77,17 +79,17 @@
       <h2 class="section-title">사용하시는 은행앱을 선택하세요</h2>
       <p class="section-desc">은행을 누르면 계좌번호를 먼저 복사합니다. Android는 앱 실행 후 미설치 시 Play 스토어로, iPhone/iPad는 App Store로 연결됩니다.</p>
       <div class="grid">
-        <button class="bankbtn" onclick="openShinhyup()"><span class="bankicon">신협</span><span class="banktxt"><strong>신협</strong><span>신협 온뱅크</span></span></button>
-        <button class="bankbtn" onclick="openKakaoPay()"><span class="bankicon">KP</span><span class="banktxt"><strong>카카오페이</strong><span>바로송금</span></span></button>
-        <button class="bankbtn" onclick="openBank('kb')"><span class="bankicon">KB</span><span class="banktxt"><strong>KB국민은행</strong><span>KB스타뱅킹</span></span></button>
-        <button class="bankbtn" onclick="openBank('shinhan')"><span class="bankicon">신한</span><span class="banktxt"><strong>신한은행</strong><span>신한 슈퍼SOL</span></span></button>
-        <button class="bankbtn" onclick="openBank('woori')"><span class="bankicon">우리</span><span class="banktxt"><strong>우리은행</strong><span>우리WON뱅킹</span></span></button>
-        <button class="bankbtn" onclick="openBank('hana')"><span class="bankicon">하나</span><span class="banktxt"><strong>하나은행</strong><span>하나원큐</span></span></button>
-        <button class="bankbtn" onclick="openBank('nh')"><span class="bankicon">NH</span><span class="banktxt"><strong>NH농협은행</strong><span>NH스마트뱅킹</span></span></button>
-        <button class="bankbtn" onclick="openBank('ibk')"><span class="bankicon">IBK</span><span class="banktxt"><strong>IBK기업은행</strong><span>i-ONE Bank</span></span></button>
-        <button class="bankbtn" onclick="openBank('kakao')"><span class="bankicon">K</span><span class="banktxt"><strong>카카오뱅크</strong><span>카카오뱅크</span></span></button>
-        <button class="bankbtn" onclick="openBank('toss')"><span class="bankicon">T</span><span class="banktxt"><strong>토스</strong><span>토스 / 토스뱅크</span></span></button>
-        <button class="bankbtn other" onclick="otherBank()"><span class="bankicon">＋</span><span class="banktxt"><strong>다른 은행앱 사용</strong><span>계좌번호 복사 후 직접 은행앱을 열어주세요</span></span></button>
+        <button class="bankbtn" onclick="openShinhyup()"><span class="bankicon"><img class="banklogo" src="https://www.google.com/s2/favicons?domain=cu.co.kr&sz=128" alt="신협 로고"></span><span class="banktxt"><strong>신협</strong><span>신협 온뱅크</span></span></button>
+        <button class="bankbtn" onclick="openKakaoPay()"><span class="bankicon"><img class="banklogo" src="https://www.google.com/s2/favicons?domain=kakaopay.com&sz=128" alt="카카오페이 로고"></span><span class="banktxt"><strong>카카오페이</strong><span>바로송금</span></span></button>
+        <button class="bankbtn" onclick="openBank('kb')"><span class="bankicon"><img class="banklogo" src="https://www.google.com/s2/favicons?domain=kbstar.com&sz=128" alt="KB국민은행 로고"></span><span class="banktxt"><strong>KB국민은행</strong><span>KB스타뱅킹</span></span></button>
+        <button class="bankbtn" onclick="openBank('shinhan')"><span class="bankicon"><img class="banklogo" src="https://www.google.com/s2/favicons?domain=shinhan.com&sz=128" alt="신한은행 로고"></span><span class="banktxt"><strong>신한은행</strong><span>신한 슈퍼SOL</span></span></button>
+        <button class="bankbtn" onclick="openBank('woori')"><span class="bankicon"><img class="banklogo" src="https://www.google.com/s2/favicons?domain=wooribank.com&sz=128" alt="우리은행 로고"></span><span class="banktxt"><strong>우리은행</strong><span>우리WON뱅킹</span></span></button>
+        <button class="bankbtn" onclick="openBank('hana')"><span class="bankicon"><img class="banklogo" src="https://www.google.com/s2/favicons?domain=kebhana.com&sz=128" alt="하나은행 로고"></span><span class="banktxt"><strong>하나은행</strong><span>하나원큐</span></span></button>
+        <button class="bankbtn" onclick="openBank('nh')"><span class="bankicon"><img class="banklogo" src="https://www.google.com/s2/favicons?domain=nhbank.com&sz=128" alt="NH농협은행 로고"></span><span class="banktxt"><strong>NH농협은행</strong><span>NH스마트뱅킹</span></span></button>
+        <button class="bankbtn" onclick="openBank('ibk')"><span class="bankicon"><img class="banklogo" src="https://www.google.com/s2/favicons?domain=ibk.co.kr&sz=128" alt="IBK기업은행 로고"></span><span class="banktxt"><strong>IBK기업은행</strong><span>i-ONE Bank</span></span></button>
+        <button class="bankbtn" onclick="openBank('kakao')"><span class="bankicon"><img class="banklogo" src="https://www.google.com/s2/favicons?domain=kakaobank.com&sz=128" alt="카카오뱅크 로고"></span><span class="banktxt"><strong>카카오뱅크</strong><span>카카오뱅크</span></span></button>
+        <button class="bankbtn" onclick="openBank('toss')"><span class="bankicon"><img class="banklogo" src="https://www.google.com/s2/favicons?domain=toss.im&sz=128" alt="토스 로고"></span><span class="banktxt"><strong>토스</strong><span>토스 / 토스뱅크</span></span></button>
+        <button class="bankbtn other" onclick="otherBank()"><span class="bankicon fallback">＋</span><span class="banktxt"><strong>다른 은행앱 사용</strong><span>계좌번호 복사 후 직접 은행앱을 열어주세요</span></span></button>
       </div>
     </section>
 
