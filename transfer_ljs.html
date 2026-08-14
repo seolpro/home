@@ -4,7 +4,7 @@
 <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#0a6f63">
-  <title>💰이주성 신협 계좌 송금</title>
+  <title>💰이주성 우리은행 계좌 송금</title>
   <style>
     :root{
       --brand:#0a6f63;
@@ -62,29 +62,29 @@
   <main class="wrap">
     <header class="hero">
       <div class="badge">💸 간편 계좌송금</div>
-      <h1>신협 계좌로 송금하기</h1>
+      <h1>우리은행 (이주성) 계좌로 송금하기</h1>
       <p class="sub">계좌번호를 복사한 뒤 사용하시는 은행앱을 선택해 주세요.</p>
     </header>
 
     <section class="card" aria-label="받는 계좌 정보">
       <div class="label">은행명 (예금주)</div>
-      <div class="bankname">신협 (이주성)</div>
+      <div class="bankname">우리은행 (이주성)</div>
       <div class="label">계좌번호</div>
       <div class="accountbox">
-        <div class="account" aria-label="계좌번호 132-129-399254">132-129-399254</div>
+        <div class="account" aria-label="계좌번호 282-020-85712-001">282-020-85712-001</div>
         <button class="copybtn" type="button" onclick="copyAccount(true)">복사</button>
       </div>
-      <p class="hint">※ 복사되는 값은 하이픈(-)을 제외한 <strong>132129399254</strong> 입니다.</p>
+      <p class="hint">※ 복사되는 값은 하이픈(-)을 제외한 <strong>28202085712001</strong> 입니다.</p>
     </section>
 
     <section class="card">
       <h2 class="section-title">사용하시는 은행앱을 선택하세요</h2>
       <p class="section-desc">은행을 누르면 계좌번호를 먼저 복사합니다. Android는 앱 실행 후 미설치 시 Play 스토어로, iPhone/iPad는 App Store로 연결됩니다.</p>
       <div class="grid">
+        <button class="bankbtn" onclick="openBank('woori')"><span class="bankicon"><img class="banklogo" src="https://www.google.com/s2/favicons?domain=wooribank.com&amp;sz=128" alt="우리은행 로고"></span><span class="banktxt"><strong>우리은행</strong><span>우리WON뱅킹</span></span></button>
         <button class="bankbtn" onclick="openShinhyup()"><span class="bankicon"><img class="banklogo" src="https://www.google.com/s2/favicons?domain=cu.co.kr&amp;sz=128" alt="신협 로고"></span><span class="banktxt"><strong>신협</strong><span>신협 온뱅크</span></span></button>
         <button class="bankbtn" onclick="openBank('kb')"><span class="bankicon"><img class="banklogo" src="https://www.google.com/s2/favicons?domain=kbstar.com&amp;sz=128" alt="KB국민은행 로고"></span><span class="banktxt"><strong>KB국민은행</strong><span>KB스타뱅킹</span></span></button>
         <button class="bankbtn" onclick="openBank('shinhan')"><span class="bankicon"><img class="banklogo" src="https://www.google.com/s2/favicons?domain=shinhan.com&amp;sz=128" alt="신한은행 로고"></span><span class="banktxt"><strong>신한은행</strong><span>신한 슈퍼SOL</span></span></button>
-        <button class="bankbtn" onclick="openBank('woori')"><span class="bankicon"><img class="banklogo" src="https://www.google.com/s2/favicons?domain=wooribank.com&amp;sz=128" alt="우리은행 로고"></span><span class="banktxt"><strong>우리은행</strong><span>우리WON뱅킹</span></span></button>
         <button class="bankbtn" onclick="openBank('hana')"><span class="bankicon"><img class="banklogo" src="https://www.google.com/s2/favicons?domain=kebhana.com&amp;sz=128" alt="하나은행 로고"></span><span class="banktxt"><strong>하나은행</strong><span>하나원큐</span></span></button>
         <button class="bankbtn" onclick="openBank('nh')"><span class="bankicon"><img class="banklogo" src="https://www.google.com/s2/favicons?domain=nhbank.com&amp;sz=128" alt="NH농협은행 로고"></span><span class="banktxt"><strong>NH농협은행</strong><span>NH스마트뱅킹</span></span></button>
         <button class="bankbtn" onclick="openBank('ibk')"><span class="bankicon"><img class="banklogo" src="https://www.google.com/s2/favicons?domain=ibk.co.kr&amp;sz=128" alt="IBK기업은행 로고"></span><span class="banktxt"><strong>IBK기업은행</strong><span>i-ONE Bank</span></span></button>
