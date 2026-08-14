@@ -1,0 +1,260 @@
+<!doctype html>
+<meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0a6f63">
+  <title>💰이주성 신협 계좌 송금</title>
+  <style>
+    :root{
+      --brand:#0a6f63;
+      --brand-dark:#07564d;
+      --bg:#f4f7f6;
+      --card:#ffffff;
+      --text:#17201f;
+      --muted:#6d7b79;
+      --line:#dfe7e5;
+      --ok:#0a7f55;
+      --shadow:0 12px 34px rgba(18,46,42,.10);
+      --radius:22px;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",Roboto,Arial,sans-serif}
+    body{padding:22px 16px calc(30px + env(safe-area-inset-bottom))}
+    .wrap{width:min(100%,560px);margin:0 auto}
+    .hero{text-align:center;padding:10px 8px 18px}
+    .badge{display:inline-flex;align-items:center;gap:7px;padding:8px 12px;border-radius:999px;background:#e8f4f1;color:var(--brand-dark);font-weight:800;font-size:13px}
+    h1{font-size:27px;line-height:1.25;margin:14px 0 7px;letter-spacing:-.6px}
+    .sub{margin:0;color:var(--muted);font-size:14px;line-height:1.6}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px;margin-bottom:16px}
+    .label{font-size:13px;color:var(--muted);font-weight:700;margin-bottom:6px}
+    .bankname{font-size:18px;font-weight:900;margin-bottom:14px}
+    .accountbox{display:flex;align-items:center;gap:10px;background:#f8fbfa;border:1px solid #dce9e6;border-radius:16px;padding:14px}
+    .account{font-size:23px;font-weight:900;letter-spacing:.4px;flex:1;word-break:break-all}
+    button{font:inherit}
+    .copybtn{border:0;background:var(--brand);color:#fff;font-weight:900;border-radius:12px;padding:12px 14px;white-space:nowrap;cursor:pointer}
+    .copybtn:active{transform:scale(.98)}
+    .hint{font-size:12px;color:var(--muted);margin:10px 2px 0;line-height:1.5}
+    .section-title{font-size:17px;font-weight:900;margin:0 0 5px}
+    .section-desc{font-size:13px;color:var(--muted);margin:0 0 14px;line-height:1.5}
+    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+    .bankbtn{border:1px solid var(--line);background:#fff;border-radius:14px;padding:14px 12px;text-align:left;cursor:pointer;min-height:68px;display:flex;align-items:center;gap:10px;transition:.15s ease}
+    .bankbtn:active{transform:scale(.985);background:#f7faf9}
+    .bankicon{width:42px;height:42px;border-radius:12px;background:#fff;border:1px solid #e4ecea;display:grid;place-items:center;flex:0 0 42px;overflow:hidden;box-shadow:0 2px 7px rgba(20,45,40,.06)}
+    .banklogo{width:30px;height:30px;object-fit:contain;display:block}
+    .bankicon.fallback{font-weight:900;color:var(--brand-dark);background:#edf3f2}
+    .banktxt strong{display:block;font-size:14px;margin-bottom:2px}
+    .banktxt span{display:block;font-size:11px;color:var(--muted)}
+    .other{grid-column:1/-1;background:#f8fbfa}
+    .notice{display:flex;gap:10px;align-items:flex-start;background:#eef7f5;border:1px solid #d1e8e2;border-radius:16px;padding:14px;color:#31534d;font-size:13px;line-height:1.55}
+    .step{display:flex;gap:10px;margin-top:14px}
+    .num{width:26px;height:26px;border-radius:50%;background:var(--brand);color:#fff;display:grid;place-items:center;font-weight:900;font-size:12px;flex:0 0 26px}
+    .step div:last-child{font-size:13px;color:#40514f;line-height:1.5;padding-top:2px}
+    .toast{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom));transform:translate(-50%,18px);background:#17201f;color:#fff;padding:12px 16px;border-radius:999px;font-size:13px;font-weight:800;opacity:0;pointer-events:none;transition:.22s ease;z-index:9999;max-width:calc(100vw - 32px);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .toast.show{opacity:1;transform:translate(-50%,0)}
+    .foot{text-align:center;color:#8a9694;font-size:11px;line-height:1.6;padding:3px 10px}
+    @media(max-width:360px){.grid{grid-template-columns:1fr}.other{grid-column:auto}.account{font-size:20px}.copybtn{padding:11px 12px}}
+  </style>
+
+
+  <main class="wrap">
+    <header class="hero">
+      <div class="badge">💸 간편 계좌송금</div>
+      <h1>신협 계좌로 송금하기</h1>
+      <p class="sub">계좌번호를 복사한 뒤 사용하시는 은행앱을 선택해 주세요.</p>
+    </header>
+
+    <section class="card" aria-label="받는 계좌 정보">
+      <div class="label">은행명 (예금주)</div>
+      <div class="bankname">신협 (이주성)</div>
+      <div class="label">계좌번호</div>
+      <div class="accountbox">
+        <div class="account" aria-label="계좌번호 01080136639">01080136639</div>
+        <button class="copybtn" type="button" onclick="copyAccount(true)">복사</button>
+      </div>
+      <p class="hint">※ 복사되는 값은 하이픈(-)을 제외한 <strong>01080136639</strong> 입니다.</p>
+    </section>
+
+    <section class="card">
+      <h2 class="section-title">사용하시는 은행앱을 선택하세요</h2>
+      <p class="section-desc">은행을 누르면 계좌번호를 먼저 복사합니다. Android는 앱 실행 후 미설치 시 Play 스토어로, iPhone/iPad는 App Store로 연결됩니다.</p>
+      <div class="grid">
+        <button class="bankbtn" onclick="openShinhyup()"><span class="bankicon"><img class="banklogo" src="https://www.google.com/s2/favicons?domain=cu.co.kr&amp;sz=128" alt="신협 로고"></span><span class="banktxt"><strong>신협</strong><span>신협 온뱅크</span></span></button>
+        <button class="bankbtn" onclick="openBank('kb')"><span class="bankicon"><img class="banklogo" src="https://www.google.com/s2/favicons?domain=kbstar.com&amp;sz=128" alt="KB국민은행 로고"></span><span class="banktxt"><strong>KB국민은행</strong><span>KB스타뱅킹</span></span></button>
+        <button class="bankbtn" onclick="openBank('shinhan')"><span class="bankicon"><img class="banklogo" src="https://www.google.com/s2/favicons?domain=shinhan.com&amp;sz=128" alt="신한은행 로고"></span><span class="banktxt"><strong>신한은행</strong><span>신한 슈퍼SOL</span></span></button>
+        <button class="bankbtn" onclick="openBank('woori')"><span class="bankicon"><img class="banklogo" src="https://www.google.com/s2/favicons?domain=wooribank.com&amp;sz=128" alt="우리은행 로고"></span><span class="banktxt"><strong>우리은행</strong><span>우리WON뱅킹</span></span></button>
+        <button class="bankbtn" onclick="openBank('hana')"><span class="bankicon"><img class="banklogo" src="https://www.google.com/s2/favicons?domain=kebhana.com&amp;sz=128" alt="하나은행 로고"></span><span class="banktxt"><strong>하나은행</strong><span>하나원큐</span></span></button>
+        <button class="bankbtn" onclick="openBank('nh')"><span class="bankicon"><img class="banklogo" src="https://www.google.com/s2/favicons?domain=nhbank.com&amp;sz=128" alt="NH농협은행 로고"></span><span class="banktxt"><strong>NH농협은행</strong><span>NH스마트뱅킹</span></span></button>
+        <button class="bankbtn" onclick="openBank('ibk')"><span class="bankicon"><img class="banklogo" src="https://www.google.com/s2/favicons?domain=ibk.co.kr&amp;sz=128" alt="IBK기업은행 로고"></span><span class="banktxt"><strong>IBK기업은행</strong><span>i-ONE Bank</span></span></button>
+        <button class="bankbtn" onclick="openBank('kakao')"><span class="bankicon"><img class="banklogo" src="https://www.google.com/s2/favicons?domain=kakaobank.com&amp;sz=128" alt="카카오뱅크 로고"></span><span class="banktxt"><strong>카카오뱅크</strong><span>카카오뱅크</span></span></button>
+        <button class="bankbtn" onclick="openBank('toss')"><span class="bankicon"><img class="banklogo" src="https://www.google.com/s2/favicons?domain=toss.im&amp;sz=128" alt="토스 로고"></span><span class="banktxt"><strong>토스</strong><span>토스 / 토스뱅크</span></span></button>
+        <button class="bankbtn other" onclick="otherBank()"><span class="bankicon fallback">＋</span><span class="banktxt"><strong>다른 은행앱 사용</strong><span>계좌번호 복사 후 직접 은행앱을 열어주세요</span></span></button>
+      </div>
+    </section>
+
+    <section class="notice">
+      <div>💡</div>
+      <div><strong>송금 방법</strong><br>은행앱이 열리면 이체 메뉴에서 받는 계좌번호 입력란을 길게 눌러 <strong>붙여넣기</strong> 하세요. 송금 전 은행명과 수취인명을 반드시 확인해 주세요.</div>
+    </section>
+
+    <section class="card" style="margin-top:16px">
+      <div class="step"><span class="num">1</span><div>계좌번호 <strong>복사</strong></div></div>
+      <div class="step"><span class="num">2</span><div>사용하는 <strong>은행앱 선택</strong></div></div>
+      <div class="step"><span class="num">3</span><div>계좌번호를 <strong>붙여넣고 송금</strong></div></div>
+    </section>
+
+    <footer class="foot">이 페이지는 계좌번호를 편리하게 전달하고 은행앱 실행을 돕는 안내 페이지입니다.<br>실제 송금은 사용자가 선택한 금융기관 앱에서 직접 진행됩니다.</footer>
+  </main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const ACCOUNT_DISPLAY = '01080136639';
+    const ACCOUNT_COPY = ACCOUNT_DISPLAY.replace(/\D/g, '');
+
+    function showToast(message){
+      const el = document.getElementById('toast');
+      el.textContent = message;
+      el.classList.add('show');
+      clearTimeout(window.__toastTimer);
+      window.__toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
+    }
+
+    async function copyAccount(showMessage = true){
+      let copied = false;
+      try{
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(ACCOUNT_COPY);
+          copied = true;
+        }
+      }catch(e){}
+
+      if(!copied){
+        const ta = document.createElement('textarea');
+        ta.value = ACCOUNT_COPY;
+        ta.setAttribute('readonly','');
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        ta.setSelectionRange(0, ta.value.length);
+        try { copied = document.execCommand('copy'); } catch(e) {}
+        ta.remove();
+      }
+
+      if(showMessage){
+        showToast(copied ? '계좌번호 ' + ACCOUNT_COPY + ' 복사 완료' : '계좌번호를 길게 눌러 복사해 주세요');
+      }
+      return copied;
+    }
+
+    const BANKS = {
+      cu:      { name:'신협 온뱅크',  android:'kr.co.cu.onbank',              iosSearch:'신협 온뱅크' },
+      kb:      { name:'KB국민은행',   android:'com.kbstar.kbbank',           iosSearch:'KB스타뱅킹' },
+      shinhan: { name:'신한은행',     android:'com.shinhan.sbanking',        iosSearch:'신한 슈퍼SOL' },
+      woori:   { name:'우리은행',     android:'com.wooribank.smart.npib',    iosSearch:'우리WON뱅킹' },
+      hana:    { name:'하나은행',     android:'com.hanabank.oqf',            iosSearch:'하나원큐' },
+      nh:      { name:'NH농협은행',   android:'nh.smart.banking',            iosSearch:'NH스마트뱅킹' },
+      ibk:     { name:'IBK기업은행',  android:'com.ibk.android.ionebank',    iosSearch:'i-ONE Bank 개인고객용' },
+      kakao:   { name:'카카오뱅크',   android:'com.kakaobank.channel',       iosSearch:'카카오뱅크' },
+      toss:    { name:'토스',         android:'viva.republica.toss',         iosSearch:'토스' }
+    };
+
+    function isAndroid(){
+      return /Android/i.test(navigator.userAgent);
+    }
+
+    function isIOS(){
+      return /iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+             (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    }
+
+    function playStoreUrl(packageName){
+      return 'https://play.google.com/store/apps/details?id=' + encodeURIComponent(packageName);
+    }
+
+    function appStoreSearchUrl(term){
+      return 'https://apps.apple.com/kr/search?term=' + encodeURIComponent(term);
+    }, 250);
+    }, 250);
+    }
+
+
+    async function openShinhyup(){
+      await copyAccount(false);
+      showToast('계좌번호 복사 완료 · 신협 온뱅크로 이동합니다');
+      setTimeout(() => {
+        window.location.href = 'https://ajou9770.github.io/notice/onbank_run.html';
+      }, 250);
+    }
+
+    async function openBank(key){
+      const bank = BANKS[key];
+      if(!bank) return;
+
+      await copyAccount(false);
+
+      if(isAndroid()){
+        showToast('계좌번호 복사 완료 · ' + bank.name + ' 실행');
+
+        // 설치되어 있으면 앱 실행, 설치되어 있지 않으면 Google Play로 이동합니다.
+        const fallback = encodeURIComponent(playStoreUrl(bank.android));
+        const intentUrl = 'intent://#Intent;scheme=https;package=' + bank.android +
+                          ';S.browser_fallback_url=' + fallback + ';end';
+        setTimeout(() => { window.location.href = intentUrl; }, 180);
+        return;
+      }
+
+      if(isIOS()){
+        // iOS Safari는 웹페이지에서 임의 은행앱의 설치 여부를 안정적으로 확인할 수 없습니다.
+        // 계좌번호를 먼저 복사한 뒤 해당 앱의 App Store 검색 화면으로 연결합니다.
+        showToast('계좌번호 복사 완료 · App Store로 이동합니다');
+        setTimeout(() => { window.location.href = appStoreSearchUrl(bank.iosSearch); }, 350);
+        return;
+      }
+
+      // PC/기타 기기
+      showToast('계좌번호 복사 완료 · 모바일에서 은행앱을 이용해 주세요');
+    }
+
+    async function otherBank(){
+      await copyAccount(false);
+      showToast('계좌번호 복사 완료 · 사용 중인 은행앱을 열어주세요');
+    }
+  </script>
+<!-- Code injected by live-server -->
+<script>
+	// <![CDATA[  <-- For SVG support
+	if ('WebSocket' in window) {
+		(function () {
+			function refreshCSS() {
+				var sheets = [].slice.call(document.getElementsByTagName("link"));
+				var head = document.getElementsByTagName("head")[0];
+				for (var i = 0; i < sheets.length; ++i) {
+					var elem = sheets[i];
+					var parent = elem.parentElement || head;
+					parent.removeChild(elem);
+					var rel = elem.rel;
+					if (elem.href && typeof rel != "string" || rel.length == 0 || rel.toLowerCase() == "stylesheet") {
+						var url = elem.href.replace(/(&|\?)_cacheOverride=\d+/, '');
+						elem.href = url + (url.indexOf('?') >= 0 ? '&' : '?') + '_cacheOverride=' + (new Date().valueOf());
+					}
+					parent.appendChild(elem);
+				}
+			}
+			var protocol = window.location.protocol === 'http:' ? 'ws://' : 'wss://';
+			var address = protocol + window.location.host + window.location.pathname + '/ws';
+			var socket = new WebSocket(address);
+			socket.onmessage = function (msg) {
+				if (msg.data == 'reload') window.location.reload();
+				else if (msg.data == 'refreshcss') refreshCSS();
+			};
+			if (sessionStorage && !sessionStorage.getItem('IsThisFirstTime_Log_From_LiveServer')) {
+				console.log('Live reload enabled.');
+				sessionStorage.setItem('IsThisFirstTime_Log_From_LiveServer', true);
+			}
+		})();
+	}
+	else {
+		console.error('Upgrade your browser. This Browser is NOT supported WebSocket for Live-Reloading.');
+	}
+	// ]]>
+</script>
