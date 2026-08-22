@@ -1,0 +1,4 @@
+const STOCK_BRIEF_URL='https://seolhopro.mycafe24.com/stock_brief/api/morning_brief.php?mode=send&key=YOUR_GAS_KEY';
+function runMorningStockBrief(){const r=UrlFetchApp.fetch(STOCK_BRIEF_URL,{method:'get',muteHttpExceptions:true,followRedirects:true});const code=r.getResponseCode();const body=r.getContentText('UTF-8');console.log('HTTP '+code);console.log(body);if(code!==200)throw new Error('호출 실패: '+body);const j=JSON.parse(body);if(!j.ok)throw new Error(body);}
+function createMorningStockTrigger(){ScriptApp.getProjectTriggers().forEach(t=>{if(t.getHandlerFunction()==='runMorningStockBrief')ScriptApp.deleteTrigger(t);});ScriptApp.newTrigger('runMorningStockBrief').timeBased().everyDays(1).atHour(8).create();console.log('매일 오전 8시 전후 트리거 생성 완료');}
+function deleteMorningStockTrigger(){ScriptApp.getProjectTriggers().forEach(t=>{if(t.getHandlerFunction()==='runMorningStockBrief')ScriptApp.deleteTrigger(t);});}
