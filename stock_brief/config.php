@@ -1,7 +1,7 @@
 <?php
 return [
     'app_name' => '주식 포트폴리오 아침 브리핑',
-    'base_url' => 'https://seolhopor.mycafe24.com/stock_brief',
+    'base_url' => 'https://seolhopro.mycafe24.com/stock_brief',
     'timezone' => 'Asia/Seoul',
     'db' => ['host'=>'localhost','port'=>3306,'name'=>'seolhopro','user'=>'seolhopro','pass'=>'ajou2130--','charset'=>'utf8mb4'],
     'admin' => ['id'=>'admin','password_hash'=>'$2y$12$Yzg0.lI2EbNss20lHIs1J.4EEWUN4KoMZXK0Xh6AQdD7PZLitnMcC'],
