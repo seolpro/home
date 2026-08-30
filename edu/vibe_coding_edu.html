@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>바이브코딩 실무교육 | 명절 선물 배송지 수집 웹앱 만들기</title>
+<meta name="theme-color" content="#3157d5">
+<script src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+<style>
+:root{
+  --bg:#f5f7fb; --surface:#ffffff; --ink:#15203b; --muted:#667085;
+  --line:#e6eaf2; --brand:#3157d5; --brand2:#6c5ce7; --good:#138a63;
+  --warn:#b76e00; --danger:#c63d4f; --soft:#eef3ff; --shadow:0 18px 50px rgba(29,42,77,.10);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--bg);color:var(--ink);
+  font-family:Pretendard,"Noto Sans KR","Apple SD Gothic Neo",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  line-height:1.65;
+}
+button,input,textarea{font:inherit}
+a{color:inherit;text-decoration:none}
+.topbar{
+  position:fixed;top:0;left:0;right:0;height:66px;background:rgba(255,255,255,.93);
+  backdrop-filter:blur(12px);border-bottom:1px solid var(--line);z-index:50;
+  display:flex;align-items:center;gap:16px;padding:0 22px;
+}
+.brand{font-weight:900;white-space:nowrap}
+.progress-wrap{height:8px;background:#edf0f6;border-radius:999px;overflow:hidden;flex:1}
+.progress{height:100%;width:0;background:linear-gradient(90deg,var(--brand),var(--brand2));transition:.2s}
+.top-actions{display:flex;gap:8px}
+.btn{
+  border:0;border-radius:12px;padding:10px 14px;font-weight:800;cursor:pointer;
+  background:#eef2ff;color:#2946a9;
+}
+.btn.primary{background:var(--brand);color:white}
+.btn.dark{background:#18233d;color:white}
+.layout{display:grid;grid-template-columns:280px minmax(0,1fr);padding-top:66px}
+.sidebar{
+  position:sticky;top:66px;height:calc(100vh - 66px);overflow:auto;background:#fff;
+  border-right:1px solid var(--line);padding:24px 18px;
+}
+.side-title{font-size:13px;font-weight:900;color:var(--muted);letter-spacing:.04em;margin-bottom:8px}
+.nav a{
+  display:flex;gap:10px;align-items:center;padding:10px 12px;border-radius:12px;
+  font-size:14px;color:#475467;margin:3px 0
+}
+.nav a:hover,.nav a.active{background:var(--soft);color:var(--brand);font-weight:800}
+.dot{width:8px;height:8px;border-radius:50%;background:#cdd5e6;flex:0 0 auto}
+.nav a.active .dot{background:var(--brand)}
+.main{min-width:0}
+.section{
+  min-height:92vh;padding:72px clamp(28px,6vw,86px);display:flex;align-items:center;
+  border-bottom:1px solid var(--line);
+}
+.section-inner{max-width:1120px;width:100%;margin:auto}
+.hero{
+  background:
+    radial-gradient(circle at 10% 10%, rgba(108,92,231,.14), transparent 30%),
+    radial-gradient(circle at 90% 10%, rgba(49,87,213,.16), transparent 26%),
+    linear-gradient(180deg,#fff,#f6f8fe);
+}
+.kicker{
+  display:inline-flex;gap:8px;align-items:center;background:#edf2ff;color:#2946a9;
+  padding:8px 12px;border-radius:999px;font-weight:900;font-size:14px
+}
+h1{font-size:clamp(38px,6vw,72px);line-height:1.08;margin:20px 0 18px;letter-spacing:-.04em}
+h2{font-size:clamp(30px,4vw,48px);line-height:1.18;margin:0 0 14px;letter-spacing:-.03em}
+h3{font-size:23px;margin:0 0 12px}
+.lead{font-size:clamp(18px,2vw,23px);color:#4e5b77;max-width:900px}
+.grid{display:grid;gap:18px}
+.grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.grid.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+.card{
+  background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:24px;
+  box-shadow:var(--shadow)
+}
+.card.soft{box-shadow:none;background:#f8faff}
+.card.good{background:#f2fbf7;border-color:#cfeee0}
+.card.warn{background:#fff9ed;border-color:#f5dfb2}
+.card.danger{background:#fff4f5;border-color:#f2c9cf}
+.big-number{font-size:38px;font-weight:950;line-height:1}
+.muted{color:var(--muted)}
+.time{
+  display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:900;
+  color:#44506d;background:#f2f4f8;padding:7px 10px;border-radius:999px;margin-bottom:12px
+}
+.flow{
+  display:flex;align-items:stretch;gap:10px;flex-wrap:wrap;margin-top:26px
+}
+.flow .step{
+  flex:1;min-width:135px;background:white;border:1px solid var(--line);
+  border-radius:18px;padding:18px;font-weight:900;text-align:center;box-shadow:0 10px 28px rgba(29,42,77,.07)
+}
+.arrow{display:flex;align-items:center;font-size:24px;color:#98a2b3}
+.code{
+  background:#111827;color:#e5e7eb;border-radius:18px;padding:18px 20px;overflow:auto;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:14px;line-height:1.6;
+  border:1px solid #27354f;white-space:pre-wrap
+}
+.prompt{
+  position:relative;background:#fbfcff;border:1px solid #dfe6f5;border-radius:18px;padding:20px 54px 20px 20px
+}
+.copy{
+  position:absolute;right:12px;top:12px;border:0;border-radius:10px;padding:7px 9px;cursor:pointer;
+  background:#edf2ff;color:#3157d5;font-weight:900
+}
+.chiprow{display:flex;flex-wrap:wrap;gap:9px;margin-top:18px}
+.chip{padding:8px 11px;border-radius:999px;background:white;border:1px solid var(--line);font-size:14px;font-weight:800}
+.demo-shell{
+  border:1px solid var(--line);border-radius:28px;background:white;box-shadow:var(--shadow);overflow:hidden
+}
+.demo-head{
+  padding:22px 24px;background:linear-gradient(135deg,#2e4ec4,#6c5ce7);color:white
+}
+.demo-body{padding:24px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.field{display:flex;flex-direction:column;gap:7px}
+.field.full{grid-column:1/-1}
+label{font-weight:850;font-size:14px}
+input,textarea{
+  width:100%;border:1px solid #d8deea;border-radius:13px;padding:12px 13px;background:#fff;outline:none
+}
+input:focus,textarea:focus{border-color:#6d8cf5;box-shadow:0 0 0 4px rgba(49,87,213,.09)}
+.address-row{display:grid;grid-template-columns:1fr auto;gap:9px}
+.submit{
+  width:100%;border:0;border-radius:14px;background:linear-gradient(90deg,var(--brand),var(--brand2));
+  color:white;padding:14px;font-weight:900;cursor:pointer;margin-top:4px
+}
+.notice{
+  border-left:4px solid var(--brand);background:#f5f8ff;border-radius:12px;padding:15px 17px;color:#40506e
+}
+.timeline{display:grid;gap:13px}
+.timeline-item{display:grid;grid-template-columns:95px 1fr;gap:18px;align-items:start}
+.timeline-time{font-weight:950;color:var(--brand)}
+.timeline-box{padding:16px 18px;border-radius:16px;background:white;border:1px solid var(--line)}
+.security-list{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.security-item{display:flex;gap:10px;padding:14px;background:white;border:1px solid var(--line);border-radius:14px}
+.footer-note{font-size:13px;color:#7b8499;margin-top:20px}
+.presenter .sidebar{display:none}
+.presenter .layout{grid-template-columns:1fr}
+.presenter .section{min-height:calc(100vh - 66px);padding-left:8vw;padding-right:8vw}
+.presenter .topbar .brand{display:none}
+.break-section{background:linear-gradient(135deg,#18233d,#354266);color:white;text-align:center}
+.break-section .muted{color:#d0d5dd}
+kbd{background:#1f2937;color:white;border-radius:7px;padding:3px 7px;font-size:12px}
+@media(max-width:900px){
+  .layout{grid-template-columns:1fr}
+  .sidebar{display:none}
+  .section{min-height:auto;padding:52px 18px}
+  .grid.two,.grid.three,.form-grid,.security-list{grid-template-columns:1fr}
+  .field.full{grid-column:auto}
+  .topbar{padding:0 10px}
+  .brand{font-size:13px}
+  .top-actions .btn:not(.primary){display:none}
+  h1{font-size:40px}
+  .timeline-item{grid-template-columns:72px 1fr}
+}
+@media print{
+  .topbar,.sidebar{display:none!important}
+  .layout{display:block;padding:0}
+  .section{min-height:auto;page-break-after:always;padding:22mm 16mm;border:0}
+  .card{box-shadow:none}
+}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">🎁 바이브코딩 실무교육</div>
+  <div class="progress-wrap" aria-label="진행률"><div class="progress" id="progress"></div></div>
+  <div class="top-actions">
+    <button class="btn" onclick="togglePresenter()">발표 모드</button>
+    <button class="btn primary" onclick="document.getElementById('demo').scrollIntoView()">실습폼 보기</button>
+  </div>
+</header>
+
+<div class="layout">
+<aside class="sidebar">
+  <div class="side-title">교육 목차</div>
+  <nav class="nav" id="nav">
+    <a href="#s0"><span class="dot"></span>오늘의 목표</a>
+    <a href="#s1"><span class="dot"></span>전체 150분 구성</a>
+    <a href="#s2"><span class="dot"></span>바이브코딩이란?</a>
+    <a href="#s3"><span class="dot"></span>웹앱 구조 이해</a>
+    <a href="#s4"><span class="dot"></span>좋은 프롬프트</a>
+    <a href="#demo"><span class="dot"></span>실습: 배송지 수집</a>
+    <a href="#s6"><span class="dot"></span>오류 수정 방법</a>
+    <a href="#break"><span class="dot"></span>10분 휴식</a>
+    <a href="#s8"><span class="dot"></span>Cafe24 배포</a>
+    <a href="#s9"><span class="dot"></span>MySQL 저장</a>
+    <a href="#s10"><span class="dot"></span>관리자 화면</a>
+    <a href="#s11"><span class="dot"></span>보안 체크</a>
+    <a href="#s12"><span class="dot"></span>최종 미션</a>
+  </nav>
+  <div class="footer-note">팁: 발표 모드에서 <kbd>↓</kbd> / <kbd>↑</kbd> 키로 섹션을 이동할 수 있습니다.</div>
+</aside>
+
+<main class="main">
+
+<section class="section hero" id="s0">
+  <div class="section-inner">
+    <span class="kicker">AI × PHP × Cafe24 × MySQL</span>
+    <h1>코드를 외우지 않고<br>업무용 웹앱 만들기</h1>
+    <p class="lead">오늘의 실습 프로젝트는 <b>“조합원 명절 선물 배송지 수집 웹앱”</b>입니다. 아이디어를 AI에게 설명하고, PHP 파일을 만들고, Cafe24에 올리고, MySQL에 저장하고, 관리자 화면으로 확인하는 전체 과정을 경험합니다.</p>
+    <div class="grid three" style="margin-top:30px">
+      <div class="card"><div class="big-number">①</div><h3>만들기</h3><p class="muted">AI에게 요구사항을 설명하고 화면과 PHP 코드를 생성합니다.</p></div>
+      <div class="card"><div class="big-number">②</div><h3>배포하기</h3><p class="muted">Cafe24 서버에 파일을 올려 휴대폰에서 실제로 접속합니다.</p></div>
+      <div class="card"><div class="big-number">③</div><h3>개선하기</h3><p class="muted">오류·불편사항을 AI와 대화하며 반복 개선합니다.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="s1">
+  <div class="section-inner">
+    <div class="time">⏱ 전체 150분</div>
+    <h2>교육 흐름부터 한눈에 보기</h2>
+    <p class="lead">이론보다 “직접 만들어 보는 경험”에 시간을 더 배분합니다.</p>
+    <div class="grid three" style="margin-top:26px">
+      <div class="card">
+        <div class="big-number">70</div><h3>1교시</h3>
+        <p>바이브코딩 이해 → 요구사항 → 프롬프트 → 실제 배송지 수집 화면 만들기 → 오류 해결</p>
+      </div>
+      <div class="card warn">
+        <div class="big-number">10</div><h3>휴식</h3>
+        <p>잠깐 쉬고, 내가 만들고 싶은 업무 앱 한 가지를 생각합니다.</p>
+      </div>
+      <div class="card">
+        <div class="big-number">70</div><h3>2교시</h3>
+        <p>Cafe24 업로드 → PHP 처리 → MySQL 저장 → 관리자 조회 → 보안 → 배포</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="s2">
+  <div class="section-inner">
+    <div class="time">1교시 · 0~10분</div>
+    <h2>바이브코딩은 “코딩”보다<br>“업무 설명”이 먼저입니다</h2>
+    <div class="grid two" style="margin-top:28px">
+      <div class="card soft">
+        <h3>기존 방식</h3>
+        <div class="flow">
+          <div class="step">업무 아이디어</div><div class="arrow">→</div>
+          <div class="step">개발자에게 전달</div><div class="arrow">→</div>
+          <div class="step">개발·수정</div>
+        </div>
+      </div>
+      <div class="card good">
+        <h3>바이브코딩 방식</h3>
+        <div class="flow">
+          <div class="step">업무 아이디어</div><div class="arrow">→</div>
+          <div class="step">AI와 대화</div><div class="arrow">→</div>
+          <div class="step">바로 실행·수정</div>
+        </div>
+      </div>
+    </div>
+    <div class="notice" style="margin-top:24px"><b>오늘 기억할 한 문장:</b> 코드를 잘 쓰는 것보다, “무엇을 만들고 싶은지” 정확히 설명하는 능력이 중요합니다.</div>
+  </div>
+</section>
+
+<section class="section" id="s3">
+  <div class="section-inner">
+    <div class="time">1교시 · 10~20분</div>
+    <h2>웹앱은 네 가지만 이해하면 됩니다</h2>
+    <div class="flow">
+      <div class="step">👤 조합원<br><span class="muted">휴대폰 입력</span></div>
+      <div class="arrow">→</div>
+      <div class="step">🖥 HTML<br><span class="muted">화면</span></div>
+      <div class="arrow">→</div>
+      <div class="step">⚙️ PHP<br><span class="muted">처리</span></div>
+      <div class="arrow">→</div>
+      <div class="step">🗄 MySQL<br><span class="muted">저장</span></div>
+      <div class="arrow">→</div>
+      <div class="step">☁️ Cafe24<br><span class="muted">서비스</span></div>
+    </div>
+    <div class="grid two" style="margin-top:26px">
+      <div class="card"><h3>HTML</h3><p>사용자가 보는 화면을 만듭니다. 입력창, 버튼, 안내문 등이 여기에 해당합니다.</p></div>
+      <div class="card"><h3>PHP</h3><p>입력값 검사, DB 저장, 관리자 조회처럼 “업무 처리”를 담당합니다.</p></div>
+      <div class="card"><h3>MySQL</h3><p>성명, 연락처, 주소, 상세주소, 비고 같은 신청자료를 보관합니다.</p></div>
+      <div class="card"><h3>Cafe24</h3><p>PHP가 실행되고 사용자가 URL로 접속할 수 있는 실제 서버입니다.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="s4">
+  <div class="section-inner">
+    <div class="time">1교시 · 20~30분</div>
+    <h2>AI에게 이렇게 요구하면 됩니다</h2>
+    <p class="lead">좋은 프롬프트는 <b>목적 + 사용자 + 입력항목 + 기능 + 환경 + 디자인 + 결과</b>로 구성합니다.</p>
+    <div class="prompt" style="margin-top:24px">
+      <button class="copy" onclick="copyPrompt(this)">복사</button>
+      <div class="prompt-text">Cafe24 PHP 8 환경에서 사용할 “조합원 명절 선물 배송지 수집 웹앱”을 만들어줘.
+
+사용자는 휴대폰으로 접속한다.
+입력항목은 성명, 연락처, 주소, 상세주소, 비고이다.
+주소는 Daum/Kakao 우편번호 서비스를 이용해 검색하도록 해줘.
+모바일 중심의 깔끔한 UI로 구성하고, 필수값 검증을 넣어줘.
+신청 버튼을 누르면 추후 MySQL DB에 저장할 수 있도록 PHP 구조로 만들어줘.
+관리자 화면에서는 신청자 목록을 검색하고 CSV로 내려받을 수 있도록 확장 가능한 구조로 설계해줘.</div>
+    </div>
+    <div class="chiprow">
+      <span class="chip">목적: 명절 선물 발송</span><span class="chip">사용자: 조합원</span>
+      <span class="chip">입력: 성명·연락처·주소</span><span class="chip">환경: Cafe24 PHP</span>
+      <span class="chip">UI: 모바일 중심</span><span class="chip">확장: DB·관리자·CSV</span>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="demo">
+  <div class="section-inner">
+    <div class="time">1교시 · 30~55분</div>
+    <h2>실습: 명절 선물 배송지 수집 화면</h2>
+    <p class="lead">아래 폼은 교육페이지 안에서 실제로 입력해 볼 수 있습니다. 주소검색 버튼도 작동합니다. 제출은 교육용 데모이므로 서버로 전송하지 않습니다.</p>
+
+    <div class="grid two" style="margin-top:26px;align-items:start">
+      <div class="demo-shell">
+        <div class="demo-head">
+          <div style="font-size:13px;opacity:.85">조합원 안내</div>
+          <div style="font-size:24px;font-weight:950">🎁 명절 선물 배송지 입력</div>
+          <div style="opacity:.88;margin-top:5px">정확한 배송을 위해 정보를 확인해 주세요.</div>
+        </div>
+        <div class="demo-body">
+          <form id="giftForm" onsubmit="demoSubmit(event)">
+            <div class="form-grid">
+              <div class="field">
+                <label>성명 *</label>
+                <input required name="name" placeholder="홍길동">
+              </div>
+              <div class="field">
+                <label>연락처 *</label>
+                <input required name="phone" inputmode="tel" placeholder="010-0000-0000">
+              </div>
+              <div class="field full">
+                <label>주소 *</label>
+                <div class="address-row">
+                  <input required id="address" name="address" readonly placeholder="주소검색 버튼을 눌러주세요">
+                  <button type="button" class="btn dark" onclick="findAddress()">주소검색</button>
+                </div>
+              </div>
+              <div class="field full">
+                <label>상세주소 *</label>
+                <input required id="detailAddress" name="detail_address" placeholder="동·호수 등 상세주소">
+              </div>
+              <div class="field full">
+                <label>비고</label>
+                <textarea name="memo" rows="3" placeholder="배송 시 참고사항이 있으면 입력"></textarea>
+              </div>
+            </div>
+            <button class="submit">배송지 제출하기</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="grid">
+        <div class="card">
+          <h3>AI에게 첫 수정 요청</h3>
+          <div class="prompt">
+            <button class="copy" onclick="copyPrompt(this)">복사</button>
+            <div class="prompt-text">지금 만든 신청화면을 모바일에서 한 손으로 입력하기 편하게 개선해줘. 입력창 높이를 충분히 키우고, 주소검색 버튼을 명확하게 보이도록 해줘. 제출 전에 필수값을 검사하고, 제출 완료 메시지도 보여줘.</div>
+          </div>
+        </div>
+        <div class="card">
+          <h3>두 번째 수정 요청</h3>
+          <div class="prompt">
+            <button class="copy" onclick="copyPrompt(this)">복사</button>
+            <div class="prompt-text">연락처는 숫자 입력에 맞게 처리하고, 주소는 사용자가 직접 수정하기보다 주소검색으로 선택하게 해줘. 상세주소는 별도로 입력받고, 개인정보 수집 안내 문구를 제출 버튼 위에 추가해줘.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="s6">
+  <div class="section-inner">
+    <div class="time">1교시 · 55~70분</div>
+    <h2>오류가 나면, 오류도 AI에게 보여줍니다</h2>
+    <div class="grid two" style="margin-top:26px">
+      <div class="card danger">
+        <h3>예: 500 Internal Server Error</h3>
+        <p>“안 된다”라고만 말하지 말고, 화면의 오류 문구나 서버 오류 로그를 함께 전달합니다.</p>
+      </div>
+      <div class="card good">
+        <h3>좋은 오류 수정 요청</h3>
+        <div class="prompt">
+          <button class="copy" onclick="copyPrompt(this)">복사</button>
+          <div class="prompt-text">Cafe24 서버에 PHP 파일을 올렸는데 500 오류가 발생한다. 아래 오류 메시지와 코드를 보고 원인을 찾아줘. 수정 이유를 간단히 설명하고, 수정된 전체 파일을 다시 작성해줘.</div>
+        </div>
+      </div>
+    </div>
+    <div class="flow">
+      <div class="step">오류 발생</div><div class="arrow">→</div>
+      <div class="step">오류 문구·화면 확보</div><div class="arrow">→</div>
+      <div class="step">AI에게 전달</div><div class="arrow">→</div>
+      <div class="step">수정 후 재시험</div>
+    </div>
+  </div>
+</section>
+
+<section class="section break-section" id="break">
+  <div class="section-inner">
+    <div style="font-size:72px">☕</div>
+    <h2>10분 휴식</h2>
+    <p class="lead muted" style="margin-left:auto;margin-right:auto">쉬는 동안 “내가 매번 엑셀·카톡·종이로 반복하는 업무 중 웹으로 바꾸고 싶은 것” 하나를 생각해 보세요.</p>
+  </div>
+</section>
+
+<section class="section" id="s8">
+  <div class="section-inner">
+    <div class="time">2교시 · 0~20분</div>
+    <h2>이제 Cafe24 서버에 올립니다</h2>
+    <div class="flow">
+      <div class="step">내 PC<br><span class="muted">완성 파일</span></div>
+      <div class="arrow">→</div>
+      <div class="step">FileZilla / FTP</div>
+      <div class="arrow">→</div>
+      <div class="step">Cafe24 폴더</div>
+      <div class="arrow">→</div>
+      <div class="step">URL 접속</div>
+    </div>
+    <div class="grid two" style="margin-top:26px">
+      <div class="card">
+        <h3>예상 파일 구조</h3>
+        <div class="code">gift_address/
+├─ index.php       # 조합원 입력화면
+├─ submit.php      # 신청 저장처리
+├─ admin.php       # 관리자 조회
+├─ export.php      # CSV 다운로드
+├─ config.php      # 앱 설정
+└─ assets/
+   └─ style.css</div>
+      </div>
+      <div class="card">
+        <h3>강의 포인트</h3>
+        <p>서버는 어렵게 생각할 필요가 없습니다. “폴더 안에 PHP 파일을 올리고, 그 폴더의 URL로 접속한다”는 개념부터 이해하면 됩니다.</p>
+        <div class="notice">처음에는 별도 테스트 폴더에 올려 확인한 뒤 운영에 사용하는 습관을 들입니다.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="s9">
+  <div class="section-inner">
+    <div class="time">2교시 · 20~40분</div>
+    <h2>MySQL이 붙으면 ‘진짜 업무 시스템’이 됩니다</h2>
+    <div class="flow">
+      <div class="step">조합원 입력</div><div class="arrow">→</div>
+      <div class="step">submit.php</div><div class="arrow">→</div>
+      <div class="step">MySQL 저장</div><div class="arrow">→</div>
+      <div class="step">admin.php 조회</div>
+    </div>
+    <div class="grid two" style="margin-top:26px">
+      <div class="card">
+        <h3>예시 데이터 구조</h3>
+        <div class="code">id
+name
+phone
+address
+detail_address
+memo
+created_at</div>
+      </div>
+      <div class="card">
+        <h3>AI에게 요청</h3>
+        <div class="prompt">
+          <button class="copy" onclick="copyPrompt(this)">복사</button>
+          <div class="prompt-text">지금 만든 배송지 입력 페이지를 MySQL DB와 연결해줘. PDO와 prepared statement를 사용하고, UTF-8(utf8mb4)로 저장해줘. 입력값 검증을 하고 성공 시 완료 화면으로 이동하도록 해줘. 필요한 CREATE TABLE SQL도 함께 만들어줘.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="s10">
+  <div class="section-inner">
+    <div class="time">2교시 · 40~55분</div>
+    <h2>관리자 화면은 업무에 맞게 계속 확장합니다</h2>
+    <div class="grid three" style="margin-top:26px">
+      <div class="card"><h3>🔎 검색</h3><p>성명·연락처로 빠르게 조회</p></div>
+      <div class="card"><h3>📊 현황</h3><p>총 제출건수와 최근 제출 표시</p></div>
+      <div class="card"><h3>⬇ CSV</h3><p>배송업무용 자료로 일괄 다운로드</p></div>
+    </div>
+    <div class="prompt" style="margin-top:22px">
+      <button class="copy" onclick="copyPrompt(this)">복사</button>
+      <div class="prompt-text">관리자 페이지를 만들어줘. 로그인한 관리자만 접근할 수 있게 하고, 전체 제출자 목록을 최신순으로 보여줘. 성명과 연락처로 검색할 수 있게 하고, CSV 다운로드 기능을 추가해줘. 모바일과 PC에서 모두 보기 좋은 UI로 구성해줘.</div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="s11">
+  <div class="section-inner">
+    <div class="time">2교시 · 55~65분</div>
+    <h2>바이브코딩에서 가장 중요한 마지막 단계: 보안</h2>
+    <p class="lead">AI가 만들어 준 코드라고 해서 곧바로 안전한 것은 아닙니다. 개인정보를 다루는 업무라면 특히 아래 기준을 반드시 확인합니다.</p>
+    <div class="security-list" style="margin-top:24px">
+      <div class="security-item"><span>🔐</span><div><b>DB 비밀번호 보호</b><br><span class="muted">공개 GitHub나 HTML에 넣지 않습니다.</span></div></div>
+      <div class="security-item"><span>🛡️</span><div><b>관리자 인증</b><br><span class="muted">admin.php를 로그인 없이 공개하지 않습니다.</span></div></div>
+      <div class="security-item"><span>🧹</span><div><b>최소 정보만 수집</b><br><span class="muted">업무에 필요하지 않은 개인정보는 받지 않습니다.</span></div></div>
+      <div class="security-item"><span>🤖</span><div><b>실제 개인정보를 AI에 붙이지 않기</b><br><span class="muted">오류 해결 시 테스트 데이터로 바꿔 전달합니다.</span></div></div>
+      <div class="security-item"><span>🧪</span><div><b>테스트 후 운영</b><br><span class="muted">운영 서버 적용 전에 별도 폴더에서 확인합니다.</span></div></div>
+      <div class="security-item"><span>💾</span><div><b>백업</b><br><span class="muted">수정 전 파일과 DB를 백업합니다.</span></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="s12">
+  <div class="section-inner">
+    <div class="time">2교시 · 65~70분</div>
+    <h2>오늘의 최종 미션</h2>
+    <p class="lead">내 업무에서 “엑셀 + 카톡 + 종이 + 반복 전화”로 처리하는 일을 하나 골라 웹앱으로 바꿔보세요.</p>
+    <div class="grid two" style="margin-top:26px">
+      <div class="card danger">
+        <h3>현재</h3>
+        <div class="flow">
+          <div class="step">카톡 조사</div><div class="arrow">→</div>
+          <div class="step">엑셀 정리</div><div class="arrow">→</div>
+          <div class="step">누락 확인</div>
+        </div>
+      </div>
+      <div class="card good">
+        <h3>웹앱으로 전환</h3>
+        <div class="flow">
+          <div class="step">모바일 입력</div><div class="arrow">→</div>
+          <div class="step">DB 자동저장</div><div class="arrow">→</div>
+          <div class="step">관리자 조회·CSV</div>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:24px;text-align:center">
+      <h3 style="font-size:30px">아이디어 → AI와 대화 → 실행 → 오류 수정 → 배포</h3>
+      <p class="lead" style="margin:8px auto 0">이 흐름을 기억하면, 다음 업무용 웹앱은 여러분이 직접 시작할 수 있습니다.</p>
+    </div>
+  </div>
+</section>
+
+</main>
+</div>
+
+<script>
+const sections=[...document.querySelectorAll('.section')];
+const navLinks=[...document.querySelectorAll('.nav a')];
+
+function updateProgress(){
+  const max=document.documentElement.scrollHeight-window.innerHeight;
+  const pct=max>0 ? (window.scrollY/max)*100 : 0;
+  document.getElementById('progress').style.width=pct+'%';
+}
+function updateActive(){
+  let current=sections[0].id;
+  for(const s of sections){
+    if(s.getBoundingClientRect().top < 160) current=s.id;
+  }
+  navLinks.forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+current));
+}
+addEventListener('scroll',()=>{updateProgress();updateActive()},{passive:true});
+updateProgress();updateActive();
+
+function togglePresenter(){ document.body.classList.toggle('presenter'); }
+
+document.addEventListener('keydown',e=>{
+  if(!document.body.classList.contains('presenter')) return;
+  if(['INPUT','TEXTAREA'].includes(document.activeElement.tagName)) return;
+  if(e.key!=='ArrowDown' && e.key!=='ArrowUp') return;
+  e.preventDefault();
+  let idx=sections.findIndex(s=>s.getBoundingClientRect().top>=-10 && s.getBoundingClientRect().top<window.innerHeight/2);
+  if(idx<0) idx=0;
+  idx += e.key==='ArrowDown'?1:-1;
+  idx=Math.max(0,Math.min(sections.length-1,idx));
+  sections[idx].scrollIntoView({behavior:'smooth'});
+});
+
+function copyPrompt(btn){
+  const text=btn.parentElement.querySelector('.prompt-text').innerText;
+  navigator.clipboard.writeText(text).then(()=>{
+    const old=btn.textContent; btn.textContent='완료';
+    setTimeout(()=>btn.textContent=old,1200);
+  });
+}
+
+function findAddress(){
+  if(typeof daum==='undefined' || !daum.Postcode){
+    alert('주소검색 서비스를 불러오지 못했습니다. 인터넷 연결을 확인해 주세요.');
+    return;
+  }
+  new daum.Postcode({
+    oncomplete:function(data){
+      const addr = data.userSelectedType === 'R' ? data.roadAddress : data.jibunAddress;
+      document.getElementById('address').value=addr;
+      document.getElementById('detailAddress').focus();
+    }
+  }).open();
+}
+function demoSubmit(e){
+  e.preventDefault();
+  alert('교육용 데모입니다. 실제 서버 저장은 2교시에서 PHP + MySQL로 구현합니다.');
+}
+</script>
+</body>
+</html>
