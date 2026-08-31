@@ -208,18 +208,179 @@
       .steps{grid-template-columns:1fr}
       .guide{margin-bottom:38px}
     }
+/* =========================
+   BRAND
+========================= */
+
+.brand{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:8px;
+}
+
+/* 타운카 로고 - 최상단 */
+.towncar-logo{
+  display:flex;
+  align-items:center;
+  height:30px;
+}
+
+.towncar-logo img{
+  display:block;
+  width:auto;
+  height:28px;
+  max-width:145px;
+  object-fit:contain;
+}
+
+/* 로고 아래 정보 */
+.brand-bottom{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+/* 등록차주 */
+.brand-guide{
+  display:flex;
+  align-items:center;
+  gap:6px;
+
+  color:#f1f3f7;
+  font-size:13px;
+  font-weight:750;
+  white-space:nowrap;
+}
+
+.brand-guide .check{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+
+  width:19px;
+  height:19px;
+
+  border-radius:50%;
+  background:#fff;
+  color:#111;
+
+  font-size:12px;
+  font-weight:900;
+}
+
+/* 구분선 */
+.brand-divider{
+  display:block;
+  width:1px;
+  height:24px;
+  background:rgba(255,255,255,.18);
+}
+
+/* CAR SHARE */
+.brand-name{
+  color:#fff;
+  font-size:14px;
+  font-weight:850;
+  letter-spacing:.08em;
+  line-height:1.05;
+}
+
+.brand-name small{
+  display:block;
+  margin-top:4px;
+
+  color:#8e96a5;
+  font-size:9px;
+  font-weight:700;
+  letter-spacing:.12em;
+}
+
+
+/* =========================
+   MOBILE
+========================= */
+
+@media(max-width:620px){
+
+  .brand{
+    gap:6px;
+  }
+
+  .towncar-logo{
+    height:25px;
+  }
+
+  .towncar-logo img{
+    height:23px;
+    max-width:120px;
+  }
+
+  .brand-bottom{
+    gap:8px;
+  }
+
+  .brand-guide{
+    font-size:11px;
+  }
+
+  .brand-guide .check{
+    width:17px;
+    height:17px;
+    font-size:10px;
+  }
+
+  .brand-divider{
+    height:20px;
+  }
+
+  .brand-name{
+    font-size:11px;
+  }
+
+  .brand-name small{
+    font-size:8px;
+  }
+}
   </style>
 </head>
 <body>
   <header class="topbar">
-    <div class="wrap topbar-inner">
-      <div class="brand">
-        <div class="brand-mark">EV</div>
-        <div class="brand-name">타운카 CAR SHARE <small>TESLA COLLECTION</small></div>
-      </div>
-      <div class="status-pill">2 VEHICLES · 1 AVAILABLE</div>
+    <header class="topbar">
+  <div class="wrap topbar-inner">
+
+    <div class="brand">
+
+  <!-- 1단 : 타운카 로고 -->
+  <div class="towncar-logo">
+    <img
+      src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQWU3fIJ6suvGIVh8KQf9X86QPTSp5iVIiyF9rxCih7Mg&s=10"
+      alt="타운카"
+    >
+  </div>
+
+  <!-- 2단 : 차량공유 안내 -->
+  <div class="brand-bottom">
+
+    <div class="brand-guide">
+      <span class="check">✓</span>
+      타운카 등록차주
     </div>
-  </header>
+
+    <span class="brand-divider"></span>
+
+    <div class="brand-name">
+      CAR SHARE
+      <small>TESLA COLLECTION</small>
+    </div>
+
+  </div>
+
+</div>
+
+    </div>
+  </div>
+</header>
 
   <main class="wrap">
     <section class="hero">
