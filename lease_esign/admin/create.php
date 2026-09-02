@@ -366,10 +366,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </label>
 
             <label>
-                대리인(중개인) 성명
+                대리인(중개인)명칭(성명)
                 <input
                     name="agent_name"
-                    value="<?= form_value('agent_name', '김설호(공인중개사)') ?>"
+                    value="<?= form_value('agent_name', '타운카_김설호(공인중개사)') ?>"
                 >
             </label>
 
