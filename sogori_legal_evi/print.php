@@ -3,6 +3,18 @@ declare(strict_types=1);
 require __DIR__.'/config.php';
 
 $data = load_data();
+
+function evidence_web_file(string $file): string {
+    $file = ltrim(str_replace('\\', '/', $file), '/');
+    if ($file === '' || strpos($file, '..') !== false) return $file;
+    if (strpos($file, 'uploads/') === 0) {
+        $rel = substr($file, strlen('uploads/'));
+        $web = 'uploads/web/' . $rel;
+        if (is_file(__DIR__ . '/' . $web)) return $web;
+    }
+    return $file;
+}
+
 $spots = [
   1=>['title'=>'350번지 ↔ 336번지 경계','claim'=>'별지 1 도면 표시 ㄴ 부분 지상 약 9㎡ 그물망 펜스 제거 및 ㄱ 부분 지상 약 40㎡ 수로 제거 관련','point'=>'현재 경계부 시설의 실제 존치 여부와 현장 상태를 사진으로 확인'],
   2=>['title'=>'336번지 ↔ 334번지 인접부','claim'=>'별지 5 도면 표시 지상 약 5㎡ 그물망 펜스 제거 관련','point'=>'해당 위치의 현존 시설 및 경계부 상태 확인'],
@@ -101,7 +113,7 @@ h2{font-size:18px;margin:0}
     <?php $seq=1; foreach($by[$n] as $it): ?>
       <article class="photo-sheet">
         <div class="photo-head"><?=h($it['title'] ?: ('사진 '.$n.'-'.$seq))?></div>
-        <img src="<?=h($it['file'])?>" alt="<?=h($it['title'] ?: ('SPOT '.$n.' 현장사진'))?>">
+        <img src="<?=h(evidence_web_file((string)$it['file']))?>" alt="<?=h($it['title'] ?: ('SPOT '.$n.' 현장사진'))?>" loading="lazy" decoding="async">
         <table class="info">
           <tr><th>사진번호</th><td>SPOT <?=$n?>-<?=$seq?></td><th>촬영일시</th><td><?=h($it['taken_at']??'-')?></td></tr>
           <tr><th>촬영방향</th><td colspan="3"><?=h($it['direction']??'-')?></td></tr>
