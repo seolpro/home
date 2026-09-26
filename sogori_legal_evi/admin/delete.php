@@ -1,0 +1,1 @@
+<?php require dirname(__DIR__).'/config.php'; admin_required(); check_csrf(); $id=(string)($_POST['id']??''); $d=load_data(); $new=[]; foreach($d['items']??[] as $it){if(($it['id']??'')===$id){$p=dirname(__DIR__).'/'.$it['file']; if(is_file($p)) @unlink($p);}else{$new[]=$it;}} $d['items']=$new; save_data($d); header('Location:index.php?m='.urlencode('삭제했습니다.')); exit;
