@@ -4,7 +4,7 @@ date_default_timezone_set('Asia/Seoul');
 
 const APP_TITLE = '소고리 350·334번지 경계·유수 현장증거 정리';
 // 반드시 변경하세요. 가능하면 영문/숫자/특수문자를 섞은 긴 비밀번호를 사용하세요.
-const ADMIN_PASSWORD = '2130';
+const ADMIN_PASSWORD = '2026';
 const MAX_UPLOAD_MB = 20;
 const DATA_FILE = __DIR__ . '/data/evidence.json';
 const UPLOAD_DIR = __DIR__ . '/uploads';
