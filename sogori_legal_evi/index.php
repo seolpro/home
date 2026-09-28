@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 require __DIR__.'/config.php';
+require_once __DIR__.'/lib/traffic.php';
+traffic_track_page('index.php');
 
 
 $data=load_data();
@@ -207,4 +209,5 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.getElement
 
 </script>
 
+<script src="assets/traffic.js?v=1" defer></script>
 </body></html>

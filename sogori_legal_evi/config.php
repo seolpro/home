@@ -40,3 +40,24 @@ function admin_required(): void {
     if (session_status() !== PHP_SESSION_ACTIVE) session_start();
     if (empty($_SESSION['legal_admin'])) { header('Location: login.php'); exit; }
 }
+
+// ===== 방문자 / 트래픽 MySQL =====
+const TRAFFIC_DB_HOST = 'localhost';
+const TRAFFIC_DB_PORT = 3306;
+const TRAFFIC_DB_NAME = 'seolhopro';
+const TRAFFIC_DB_USER = 'seolhopro';
+const TRAFFIC_DB_PASS = 'ajou2130--';
+
+const TRAFFIC_MONITOR_ENABLED = true;
+const TRAFFIC_LIMIT_BYTES = 1717986918; // 1.6 GiB
+const TRAFFIC_ALERT_LEVELS = [80, 90];
+const TRAFFIC_RETENTION_DAYS = 90;
+
+// ===== 뿌리오 SMS/LMS 경보 =====
+const TRAFFIC_SMS_ENABLED = false; // 설치/통계 확인 후 true
+const TRAFFIC_PPURIO_ACCOUNT = 'aj9770';
+const TRAFFIC_PPURIO_AUTH_KEY = '08868d27d42a13b10954f7c9705063152e03d948b824bf336ff611be225957b9';
+const TRAFFIC_PPURIO_SENDER = '01071186639';
+const TRAFFIC_ADMIN_PHONE = '01071186639';
+const TRAFFIC_ADMIN_NAME = '관리자';
+
