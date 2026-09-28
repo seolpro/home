@@ -35,7 +35,32 @@ function traffic_collect_resource(int $bytes,array $resources=[]): void {
         traffic_maybe_alert();
     }catch(Throwable $e){ error_log('[traffic] resource: '.$e->getMessage()); }
 }
-function traffic_today_bytes(): int {$q=traffic_db()->query('SELECT COALESCE(SUM(transferred_bytes),0) b FROM traffic_resource_events WHERE created_at>=CURDATE() AND created_at<CURDATE()+INTERVAL 1 DAY');return (int)$q->fetchColumn();}
+function traffic_today_observed_bytes(): int {
+    $q=traffic_db()->query('SELECT COALESCE(SUM(transferred_bytes),0) b FROM traffic_resource_events WHERE created_at>=CURDATE() AND created_at<CURDATE()+INTERVAL 1 DAY');
+    return (int)$q->fetchColumn();
+}
+function traffic_today_sync(): ?array {
+    try{
+        $q=traffic_db()->query('SELECT * FROM traffic_daily_sync WHERE sync_date=CURDATE() LIMIT 1');
+        $r=$q->fetch(); return $r?:null;
+    }catch(Throwable $e){ return null; }
+}
+function traffic_today_bytes(): int {
+    $observed=traffic_today_observed_bytes();
+    $sync=traffic_today_sync();
+    if(!$sync) return $observed;
+    return max(0,$observed+(int)$sync['offset_bytes']);
+}
+function traffic_sync_today_bytes(int $actualBytes): array {
+    $actualBytes=max(0,$actualBytes);
+    $observed=traffic_today_observed_bytes();
+    $offset=$actualBytes-$observed;
+    $pdo=traffic_db();
+    $q=$pdo->prepare('INSERT INTO traffic_daily_sync(sync_date,actual_bytes_at_sync,observed_bytes_at_sync,offset_bytes,synced_at) VALUES(CURDATE(),?,?,?,NOW()) ON DUPLICATE KEY UPDATE actual_bytes_at_sync=VALUES(actual_bytes_at_sync),observed_bytes_at_sync=VALUES(observed_bytes_at_sync),offset_bytes=VALUES(offset_bytes),synced_at=NOW()');
+    $q->execute([$actualBytes,$observed,$offset]);
+    traffic_maybe_alert();
+    return ['actual_bytes'=>$actualBytes,'observed_bytes'=>$observed,'offset_bytes'=>$offset,'effective_bytes'=>traffic_today_bytes()];
+}
 function traffic_stats(int $days=31): array {
     $days=max(1,min(365,$days));$from=date('Y-m-d',strtotime('-'.($days-1).' days'));$pdo=traffic_db();
     $q=$pdo->prepare('SELECT COUNT(*) pv,COUNT(DISTINCT ip_address) uv FROM traffic_visits WHERE visited_at>=?');$q->execute([$from]);$a=$q->fetch()?:[];
