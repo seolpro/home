@@ -1,0 +1,10 @@
+<?php
+declare(strict_types=1); require_once __DIR__.'/lib.php'; ensure_v2_tables();
+$date=(string)($_GET['date']??'');
+if($date && preg_match('/^\d{4}-\d{2}-\d{2}$/',$date)){$q=db()->prepare('SELECT * FROM stock_briefs WHERE brief_date=?');$q->execute([$date]);$row=$q->fetch();}
+else{$row=db()->query('SELECT * FROM stock_briefs ORDER BY brief_date DESC LIMIT 1')->fetch();}
+$recent=db()->query('SELECT brief_date,title FROM stock_briefs ORDER BY brief_date DESC LIMIT 14')->fetchAll();
+?><!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title><?=e($row['title']??'주식시황 아침 브리핑')?></title><link rel="stylesheet" href="assets/app.css"><style>
+body{background:#f4f7fb}.brief-shell{max-width:900px;margin:0 auto;padding:22px 14px 50px}.hero{background:#111827;color:#fff;border-radius:22px;padding:26px;margin-bottom:16px}.hero h1{margin:0 0 8px;font-size:clamp(24px,5vw,38px)}.hero p{margin:0;opacity:.75}.brief-card{background:#fff;border-radius:18px;padding:22px;box-shadow:0 8px 28px rgba(15,23,42,.07)}.brief-text{white-space:pre-wrap;line-height:1.75;font-size:16px}.dates{display:flex;gap:8px;overflow:auto;margin:14px 0;padding-bottom:4px}.dates a{white-space:nowrap;text-decoration:none;background:#fff;border:1px solid #dbe2ea;border-radius:999px;padding:8px 12px;color:#334155}.foot{color:#64748b;font-size:13px;margin-top:18px;line-height:1.6}</style></head><body><main class="brief-shell"><section class="hero"><h1>📈 주식시황 아침 브리핑</h1><p><?=e($row?date('Y년 m월 d일',strtotime($row['brief_date'])):'아직 생성된 브리핑이 없습니다.')?></p></section>
+<?php if($recent):?><div class="dates"><?php foreach($recent as $r):?><a href="?date=<?=e($r['brief_date'])?>"><?=e(date('m/d',strtotime($r['brief_date'])))?></a><?php endforeach;?></div><?php endif;?>
+<section class="brief-card"><?php if($row):?><div class="brief-text"><?=e($row['content'])?></div><div class="foot">최종 업데이트 <?=e($row['updated_at'])?><br>본 자료는 시장정보 확인을 위한 참고자료이며 특정 금융상품의 매수·매도를 권유하지 않습니다.</div><?php else:?><p>오늘 브리핑이 아직 생성되지 않았습니다.</p><?php endif;?></section></main></body></html>
