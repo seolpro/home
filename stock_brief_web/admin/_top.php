@@ -1,0 +1,1 @@
+<nav class="top"><a href="index.php">📊 포트폴리오</a><a href="briefs.php">📰 웹 브리핑</a><a href="logs.php">📨 기존 문자로그</a><a href="../api/morning_brief.php?mode=preview&key=<?=e((string)cfg('security.cron_key'))?>" target="_blank">👀 브리핑 미리보기</a><a href="../brief.php" target="_blank">🌐 공개 브리핑</a><a href="logout.php">로그아웃</a></nav>
