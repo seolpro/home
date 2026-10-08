@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="ko">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>웹앱 표준 개발 요청서</title>
+    <style>
+        :root {
+            font-family: system-ui, 'Malgun Gothic', sans-serif;
+            color: #18263b;
+            background: #f3f6fb
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        body {
+            margin: 0
+        }
+
+        .wrap {
+            max-width: 850px;
+            margin: 30px auto;
+            padding: 0 15px
+        }
+
+        .head {
+            background: linear-gradient(120deg, #123c75, #2674c9);
+            color: white;
+            padding: 26px;
+            border-radius: 16px
+        }
+
+        .head h1 {
+            margin: 0 0 8px;
+            font-size: 26px
+        }
+
+        .head p {
+            margin: 0;
+            line-height: 1.6
+        }
+
+        .panel {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            margin-top: 18px;
+            padding: 24px;
+            box-shadow: 0 5px 18px #203f6910
+        }
+
+        label {
+            display: block;
+            font-weight: 700;
+            margin: 17px 0 7px
+        }
+
+        input,
+        textarea,
+        select {
+            width: 100%;
+            font: inherit;
+            border: 1px solid #cbd5e1;
+            border-radius: 9px;
+            padding: 11px;
+            background: white
+        }
+
+        textarea {
+            min-height: 85px;
+            resize: vertical
+        }
+
+        .hint {
+            color: #66758b;
+            font-size: 13px;
+            margin: 5px 0
+        }
+
+        .checks {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 9px
+        }
+
+        .checks label {
+            margin: 0;
+            font-weight: 400;
+            display: flex;
+            align-items: center;
+            gap: 7px
+        }
+
+        .checks input {
+            width: auto
+        }
+
+        .buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 24px
+        }
+
+        button {
+            font: inherit;
+            border: 0;
+            border-radius: 10px;
+            padding: 12px 16px;
+            background: #175db0;
+            color: white;
+            font-weight: 700;
+            cursor: pointer
+        }
+
+        button.secondary {
+            background: #e7edf6;
+            color: #234267
+        }
+
+        button:focus-visible,
+        input:focus-visible,
+        textarea:focus-visible,
+        select:focus-visible {
+            outline: 3px solid #8ec5ff
+        }
+
+        #output {
+            min-height: 180px;
+            white-space: pre-wrap
+        }
+
+        #status {
+            font-size: 14px;
+            color: #24643a;
+            min-height: 24px;
+            margin-top: 8px
+        }
+
+        .footer {
+            font-size: 13px;
+            color: #607086;
+            margin: 18px 0 30px;
+            line-height: 1.6
+        }
+
+        @media(max-width:560px) {
+            .checks {
+                grid-template-columns: 1fr
+            }
+
+            .panel {
+                padding: 17px
+            }
+
+            .head {
+                padding: 20px
+            }
+
+            .head h1 {
+                font-size: 22px
+            }
+
+            button {
+                flex: 1
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <main class="wrap">
+        <header class="head">
+            <h1>📝 웹앱 표준 개발 요청서 By AI</h1>
+            <p>Cafe24 · PHP · MySQL 업무시스템 개발용<br>양식을 작성하고 <b>요청서 복사</b>를 누른 뒤 AI 프롬프트창에 붙여넣으세요.</p>
+        </header>
+        <section class="panel">
+            <form id="form"><label for="name">1. 앱 이름 *</label><input id="name" placeholder="예: 입주민 QR 주차증 관리"
+                    required><label for="goal">2. 개발 목적 *</label><textarea id="goal" required
+                    placeholder="현재 불편한 업무와 개선하고 싶은 목표"></textarea><label for="audience">3. 이용 대상</label><select
+                    id="audience">
+                    <option>관리자 및 일반 사용자</option>
+                    <option>관리자 전용</option>
+                    <option>일반 사용자 전용</option>
+                    <option>기타 (아래 업무 규칙에 기재)</option>
+                </select><label for="flow">4. 업무 처리 순서</label><textarea id="flow"
+                    placeholder="예: 신청 → 관리자 검토 → 승인 → QR 발급 → 현장 조회"></textarea><label for="data">5. 수집·관리할
+                    데이터</label><textarea id="data" placeholder="예: 이름, 연락처, 차량번호, 동·호수, 승인상태"></textarea><label>6. 필요한
+                    기능</label>
+                <div class="checks" id="features"></div><label for="rules">7. 업무 규칙 및 예외 상황</label><textarea id="rules"
+                    placeholder="예: 중복 등록 제한, 관리자만 수정, 유효기간 만료, 오류 시 처리"></textarea><label for="privacy">8. 개인정보 및 보안
+                    요구사항</label><textarea id="privacy"
+                    placeholder="예: 최소 수집, 권한별 조회 제한, 접속 로그, 보존·삭제 기간"></textarea><label for="environment">9. 개발
+                    환경</label><input id="environment" value="Cafe24 / PHP / MySQL / Bootstrap 5 / 공통 DB 설정"><label
+                    for="mode">10. 개발 방식</label><select id="mode">
+                    <option>설계 검토 후 개발 (추천)</option>
+                    <option>최소 기능 MVP 우선 개발</option>
+                    <option>기존 운영 시스템 개선 패치</option>
+                </select><label for="reference">11. 참고자료·기존 시스템·추가 요청</label><textarea id="reference"
+                    placeholder="참고 URL, 기존 PHP 파일, UI 이미지, 설치 경로 등 (비밀번호·API 키 입력 금지)"></textarea>
+                <div class="buttons"><button type="button" id="copy">📋 요청서 복사</button><button type="button"
+                        id="download" class="secondary">⬇ TXT 저장</button><button type="button" id="preview"
+                        class="secondary">미리보기</button><button type="reset" class="secondary">초기화</button></div>
+                <div id="status" role="status" aria-live="polite"></div>
+            </form>
+        </section>
+        <section class="panel"><label for="output" style="margin-top:0">ChatGPT 전달용 요청서</label><textarea id="output"
+                readonly placeholder="미리보기를 누르면 요청서가 여기에 표시됩니다."></textarea>
+            <p class="hint">이 파일은 브라우저에서만 실행됩니다. 서버 전송이나 자동 저장은 하지 않습니다. 브라우저를 닫기 전에 복사 또는 TXT 저장하세요.</p>
+        </section>
+        <p class="footer">작성 팁: 처음에는 핵심 업무만 작성해도 됩니다. 설계안을 검토한 후 개발을 시작하는 방식이 수정 비용을 줄입니다. 개인정보 실데이터·계정 비밀번호·API 키는 입력하지
+            마세요.</p>
+    </main>
+    <script>const opts = ['모바일 최적화', '관리자 권한 관리', '공통 DB 사용', '알림톡 발송', 'QR코드 생성·인식', '엑셀·CSV 업로드', '전자서명', '통계 대시보드', '인쇄·PDF', '접속·변경 이력']; const selected = new Set(['모바일 최적화', '관리자 권한 관리', '공통 DB 사용']); const featureBox = document.getElementById('features'); opts.forEach((name, i) => { const l = document.createElement('label'), c = document.createElement('input'); c.type = 'checkbox'; c.value = name; c.checked = selected.has(name); l.append(c, document.createTextNode(name)); featureBox.append(l) }); function val(id) { return document.getElementById(id).value.trim() || '(미작성)' } function generate() { const features = [...featureBox.querySelectorAll('input:checked')].map(x => x.value).join(', ') || '(미정)'; return `# 웹앱 표준 개발 요청서\n\n1. 앱 이름: ${val('name')}\n2. 개발 목적: ${val('goal')}\n3. 이용 대상: ${val('audience')}\n4. 업무 처리 순서:\n${val('flow')}\n5. 수집·관리할 데이터:\n${val('data')}\n6. 필요한 기능: ${features}\n7. 업무 규칙 및 예외 상황:\n${val('rules')}\n8. 개인정보 및 보안 요구사항:\n${val('privacy')}\n9. 개발 환경: ${val('environment')}\n10. 개발 방식: ${val('mode')}\n11. 참고자료·기존 시스템·추가 요청:\n${val('reference')}\n\n[ChatGPT 요청]\n먼저 ①업무 프로세스 ②사용자·관리자 화면 설계 ③DB 테이블 설계 ④보안·예외 처리 ⑤MVP 범위 ⑥테스트 및 배포 계획을 제안해 주세요. 설계 확정 전에는 전체 코드를 작성하지 마세요. 확정 후 설치 가능한 ZIP을 제공하고, 기존 운영 시스템이 있다면 데이터·설정 보존 및 최소 패치·롤백 방안을 포함해 주세요.` } function update() { const s = generate(); document.getElementById('output').value = s; return s } function status(s) { document.getElementById('status').textContent = s } document.getElementById('preview').onclick = () => { update(); status('요청서를 생성했습니다.') }; document.getElementById('copy').onclick = async () => { const s = update(); try { await navigator.clipboard.writeText(s); status('복사 완료! ChatGPT 대화창에 붙여넣으세요.') } catch (e) { const out = document.getElementById('output'); out.focus(); out.select(); try { document.execCommand('copy'); status('복사를 시도했습니다. ChatGPT 대화창에 붙여넣으세요.') } catch (_) { status('자동 복사가 제한되었습니다. 아래 텍스트를 선택해 수동 복사하세요.') } } }; document.getElementById('download').onclick = () => { const blob = new Blob(['\ufeff' + update()], { type: 'text/plain;charset=utf-8' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = '웹앱_개발_요청서.txt'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000); status('TXT 파일 저장을 요청했습니다.') }; document.getElementById('form').addEventListener('reset', () => { setTimeout(() => { document.getElementById('output').value = ''; status('초기화했습니다.') }, 0) });</script>
+</body>
+
+</html>

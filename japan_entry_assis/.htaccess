@@ -1,0 +1,4 @@
+Options -Indexes
+<FilesMatch "(?i)^(README\.txt)$">
+Require all denied
+</FilesMatch>
