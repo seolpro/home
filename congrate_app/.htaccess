@@ -1,0 +1,3 @@
+<FilesMatch "^(ppurio_config\.php|config\.php|schema\.sql|README.*)$">
+Require all denied
+</FilesMatch>
