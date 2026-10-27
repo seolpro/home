@@ -18,4 +18,14 @@ return [
   'holder'=>'',
  ],
  'max_quantity'=>50,
+ 'order_alimtalk'=>[
+  'enabled'=>true,
+  'account'=>'aj9770',
+  'auth_key'=>'08868d27d42a13b10954f7c9705063152e03d948b824bf336ff611be225957b9',
+  'sender_profile'=>'@타운카김설호',
+  'template_code'=>'ppur_2026102719295702342550815',
+  'recipients'=>[
+    '01071186639',
+  ],
+],
 ];
