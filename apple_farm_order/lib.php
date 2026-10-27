@@ -1,0 +1,16 @@
+<?php
+declare(strict_types=1);
+ini_set('display_errors','0');
+error_reporting(E_ALL);
+date_default_timezone_set('Asia/Seoul');
+$config=require __DIR__.'/config.php';
+if(session_status()!==PHP_SESSION_ACTIVE){session_set_cookie_params(['httponly'=>true,'secure'=>!empty($_SERVER['HTTPS'])&&$_SERVER['HTTPS']!=='off','samesite'=>'Lax']);session_start();}
+function cfg():array{global $config;return $config;}
+function db():PDO{static $pdo=null;if($pdo)return $pdo;$p=cfg()['db_config_path'];if(!is_file($p))throw new RuntimeException('DB 설정파일을 찾을 수 없습니다.');$c=require $p;$dsn='mysql:host='.$c['host'].';dbname='.$c['name'].';charset='.($c['charset']??'utf8mb4');$pdo=new PDO($dsn,$c['user'],$c['pass'],[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION,PDO::ATTR_DEFAULT_FETCH_MODE=>PDO::FETCH_ASSOC,PDO::ATTR_EMULATE_PREPARES=>false]);return $pdo;}
+function h($v):string{return htmlspecialchars((string)$v,ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8');}
+function csrf():string{return $_SESSION['csrf']??=bin2hex(random_bytes(32));}
+function check_csrf():void{if(!hash_equals(csrf(),(string)($_POST['csrf']??'')))throw new RuntimeException('요청이 만료되었습니다. 새로고침 후 다시 시도하세요.');}
+function admin_required():void{if(empty($_SESSION['apple_admin'])){header('Location: login.php');exit;}}
+function phone_clean(string $s):string{return preg_replace('/\D+/','',$s)??'';}
+function layout_start(string $title):void{echo '<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'.h($title).'</title><style>body{margin:0;background:#f5f7f3;color:#203026;font:16px system-ui,-apple-system,"Malgun Gothic",sans-serif}main{max-width:1050px;margin:30px auto;padding:0 16px}.card{background:#fff;border:1px solid #e0e7df;border-radius:18px;padding:24px;box-shadow:0 5px 22px #2030260a}h1{margin:0 0 10px;font-size:27px}p.muted,.muted{color:#69766c}label{display:block;margin:16px 0 6px;font-weight:650}input,select,textarea{box-sizing:border-box;width:100%;padding:13px;border:1px solid #cbd6cb;border-radius:10px;font:inherit;background:#fff}input:focus,select:focus,textarea:focus{outline:2px solid #76ae78}button,.btn{display:inline-block;background:#267342;color:#fff;border:0;border-radius:10px;padding:12px 18px;text-decoration:none;font:inherit;cursor:pointer}button.secondary,.btn.secondary{background:#e8efe9;color:#214b31}.grid{display:grid;grid-template-columns:1fr 1fr;gap:0 18px}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:20px}.tablewrap{overflow:auto}table{border-collapse:collapse;width:100%;font-size:14px}th,td{border-bottom:1px solid #e4e9e4;padding:11px;text-align:left;white-space:nowrap}th{background:#f1f5f0}a{color:#20683d}.notice{background:#eef8ed;padding:14px;border-radius:10px}.error{background:#fff0ee;color:#a02d24;padding:12px;border-radius:10px}small{color:#6c786e}@media(max-width:650px){.grid{grid-template-columns:1fr}.card{padding:17px}main{margin:16px auto}}@media print{.no-print{display:none!important}body{background:white}main{max-width:none;margin:0}.card{border:0;box-shadow:none;padding:0}th,td{font-size:11px;padding:6px;white-space:normal}}</style></head><body><main>';}
+function layout_end():void{echo '</main></body></html>';}
