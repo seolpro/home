@@ -72,8 +72,8 @@ if($notice)echo '<div class="alert alert-success">'.h($notice).'</div>';
 </div>
 <!-- <div class="alert alert-warning">
     [진단] 통계 영역 이후 PHP/HTML 출력 정상
-</div> -->
-<!-- <div class="card p-3 mb-3"><h5>CSV 일괄 업로드</h5><form method="post" enctype="multipart/form-data" class="d-flex gap-2 flex-wrap">
+ </div> -->
+<div class="card p-3 mb-3"><h5>CSV 일괄 업로드</h5><form method="post" enctype="multipart/form-data" class="d-flex gap-2 flex-wrap">
 <input type="hidden" name="csrf" value="<?=h(csrf())?>"><input type="hidden" name="action" value="import">
 <input type="file" name="csv" class="form-control" style="max-width:420px" accept=".csv" required><button class="btn btn-primary">CSV 업로드</button></form>
 <small class="text-muted mt-2">열 이름: 성명 / 수령금액(천원) / 비고. 동일 내용 재업로드는 중복 제외합니다. 단, 동일한 성명·금액·비고의 실제 별도 수령 건은 중복으로 판단되므로 수동 등록해 주세요.</small></div>
@@ -82,7 +82,7 @@ if($notice)echo '<div class="alert alert-success">'.h($notice).'</div>';
 <div class="col-md-4"><label class="form-label">성명</label><input name="name" class="form-control" required value="<?=h($edit['name']??'')?>"></div>
 <div class="col-md-3"><label class="form-label">수령금액(천원)</label><input name="amount" type="number" min="1" class="form-control" required value="<?=h($edit['amount_thousand']??'')?>"></div>
 <div class="col-md-5"><label class="form-label">비고</label><input name="memo" class="form-control" value="<?=h($edit['memo']??'')?>"></div>
-<div class="col-12"><button class="btn btn-primary">저장</button>  -->
+<div class="col-12"><button class="btn btn-primary">저장</button>  
 
 <?php if($edit):?><a href="mother_receipts.php" class="btn btn-outline-secondary">수정 취소</a><?php endif;?></div></form></div>
 <div class="card p-3"><form method="get" class="d-flex gap-2 mb-3"><input name="q" class="form-control" placeholder="이름 또는 비고 검색" value="<?=h($q)?>"><button class="btn btn-outline-primary">검색</button><a href="mother_receipts.php" class="btn btn-outline-secondary">전체</a></form>
