@@ -1,6 +1,16 @@
 <?php
 declare(strict_types=1);
 return [
+
+'as_alimtalk'=>[
+ 'enabled'=>true, // 템플릿 승인 후 true
+ 'account'=>'aj9770',
+ 'auth_key'=>'08868d27d42a13b10954f7c9705063152e03d948b824bf336ff611be225957b9',
+ 'sender_profile'=>'@타운카김설호',
+ 'template_code'=>'ppur_2026102817523602342937725',
+ 'recipient'=>'01050640027', // 장유진 농장주
+],
+
 'shipping_alimtalk'=>[
  'enabled'=>true, // 템플릿 승인 후 true
  'account'=>'aj9770',

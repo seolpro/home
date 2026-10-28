@@ -1,19 +1,28 @@
-사과농장 AS 접수 패치 v1.7
+사과농장 AS 관리자 알림톡 패치 v1.9
+1. 기존 as.php, config.php 백업
+2. upgrade_as_alimtalk_v1_9.sql 실행 (AS v1.7 테이블 설치 필요)
+3. as.php, as_alimtalk.php를 /apple_farm_order/에 업로드
+4. v1.5의 order_alimtalk.php가 같은 폴더에 있어야 함
+5. config_add_example.txt의 as_alimtalk 항목을 기존 config.php 배열에 추가
+6. 뿌리오 기본형 텍스트 템플릿 승인 후 enabled=true
+7. AS 접수 테스트, 관리자 수신 및 DB 로그 확인
 
-1. 기존 파일과 DB 백업.
-2. phpMyAdmin에서 upgrade_as_v1_7.sql 1회 실행.
-3. as.php -> /www/apple_farm_order/as.php
-   admin/as.php -> /www/apple_farm_order/admin/as.php
-4. 뿌리오 배송 알림톡 템플릿의 버튼명 "AS신청"으로 설정.
-   모바일/PC 버튼 URL(고정): https://seolhopro.mycafe24.com/apple_farm_order/as.php
-5. 관리자: https://seolhopro.mycafe24.com/apple_farm_order/admin/as.php
-   기존 관리자 로그인 세션을 사용합니다.
-6. 주문관리 화면에 메뉴를 추가하고 싶다면 admin/index.php 상단 actions 안에
-   <a class="btn secondary" href="as.php">AS 접수관리</a>
-   를 넣으세요. 기존 주문관리 파일은 이 패치에서 덮어쓰지 않습니다.
+템플릿 본문 (승인용):
+[진이네농장 AS 접수 알림]
 
-중요: AS신청 버튼은 고정 URL이므로 수령자는 주문번호와 수령자 전화번호를 입력하여 주문을 확인합니다.
-주문번호를 모르는 고객을 위한 별도 본인확인/조회 기능은 포함되지 않았습니다.
-AS 접수 알림톡 및 사진 첨부는 포함되지 않았습니다.
-관리자 페이지는 기존 세션 인증을 사용합니다. 공개 AS 페이지에는 10초 세션 간격 제한이 있지만
-실운영에서는 IP별 속도제한, CAPTCHA/WAF 및 개인정보 보존기간 정책을 추가로 적용하는 것이 좋습니다.
+새로운 AS 신청이 접수되었습니다.
+수령자: [*1*]
+상품: [*2*]
+AS 유형: [*3*]
+AS 접수번호: [*4*]
+
+관리자 페이지에서 신청 내용을 확인해 주세요.
+
+버튼명: AS 접수 확인
+버튼 종류: 웹링크
+모바일/PC 고정 URL: https://seolhopro.mycafe24.com/apple_farm_order/admin/as.php
+
+변수 매핑: var1=수령자, var2=상품명, var3=AS 유형, var4=AS 접수번호.
+승인 템플릿의 변수 형식이 위와 일치하는지 확인.
+접수 저장 성공 후 발송하며 API 실패 시에도 AS 접수 유지.
+동일 AS ID에 대한 자동 중복 발송은 차단. 실패 건은 로그 확인 후 수동 대응.

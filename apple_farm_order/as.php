@@ -22,7 +22,13 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
    if(!in_array($reason,['상품 파손','상품 품질','수량 누락','배송 문제','기타'],true))throw new RuntimeException('AS 유형을 선택해 주세요.');
    if(mb_strlen($detail)<5||mb_strlen($detail)>1000)throw new RuntimeException('상세내용을 5~1000자로 입력해 주세요.');
    $s=db()->prepare('INSERT INTO apple_as_requests (order_id,reason,detail,status,created_at) VALUES (?,?,?,"received",NOW())');
-   $s->execute([$orderId,$reason,$detail]);$success=true;
+   $s->execute([$orderId,$reason,$detail]);
+   $asId=(int)db()->lastInsertId();
+   $success=true;
+   // 접수 성공 후 관리자에게 발송. 발송 오류는 접수 결과에 영향 없음.
+   try { require_once __DIR__.'/as_alimtalk.php'; apple_notify_as($asId); }
+   catch(Throwable $notifyError){ error_log('[apple_as] notify error id='.$asId.' '.$notifyError->getMessage()); }
+
   }
  }catch(Throwable $e){$error=$e instanceof PDOException?'처리 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.':$e->getMessage();}
 }

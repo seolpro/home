@@ -1,12 +1,9 @@
-config.php의 return [ ... ] 배열 안에 아래 항목을 추가하세요. 기존 config.php는 덮어쓰지 마세요.
-
-'order_alimtalk'=>[
- 'enabled'=>false, // 템플릿 승인 및 테스트 후 true
+// config.php 반환 배열 내부에 추가 (기존 설정 유지)
+'as_alimtalk'=>[
+ 'enabled'=>false, // 템플릿 승인 후 true
  'account'=>'뿌리오계정',
- 'auth_key'=>'뿌리오API인증키',
- 'sender_profile'=>'@아주대의료원신협', // 실제 승인된 발신프로필로 변경
- 'template_code'=>'승인받은템플릿코드',
- 'recipients'=>['01012345678','01098765432'],
+ 'auth_key'=>'뿌리오API키',
+ 'sender_profile'=>'@아주대의료원신협',
+ 'template_code'=>'승인받은AS접수알림템플릿코드',
+ 'recipient'=>'01050640027', // 장유진 농장주
 ],
-
-주의: 운영 중인 실제 발신프로필과 템플릿을 확인하세요.
