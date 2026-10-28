@@ -1,0 +1,8 @@
+// config.php 최상위 반환 배열에 추가 (기존 order_alimtalk과 별도)
+'shipping_alimtalk'=>[
+ 'enabled'=>false, // 템플릿 승인 후 true
+ 'account'=>'뿌리오계정',
+ 'auth_key'=>'뿌리오API인증키',
+ 'sender_profile'=>'@아주대의료원신협',
+ 'template_code'=>'승인된배송템플릿코드',
+],
