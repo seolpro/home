@@ -14,7 +14,7 @@ try {
  if($status==='shipped'){
   if($order['status']==='shipped')throw new RuntimeException('이미 배송처리된 주문입니다.');
   $tracking=trim((string)($_POST['tracking_no']??''));
-  if(!preg_match('/^[0-9]{8,20}$/D',$tracking))throw new RuntimeException('송장번호는 숫자 8~20자리로 입력하세요.');
+  if(!preg_match('/^[0-9]{12}$/',$tracking))throw new RuntimeException('송장번호는 숫자 정확히 12자리로 입력하세요.');
   $st=$pdo->prepare('UPDATE apple_orders SET status="shipped",tracking_no=?,shipped_at=NOW() WHERE id=?');$st->execute([$tracking,$id]);
  }else{
   if($order['status']!=='shipped')throw new RuntimeException('배송대기 상태입니다.');
