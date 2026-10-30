@@ -28,7 +28,6 @@ return [
   'busa_10kg'=>['name'=>'가정용 부사 10kg','price'=>0],
   'busa_gift_5kg'=>['name'=>'선물용 부사 5kg','price'=>0],
   'busa_gift_10kg'=>['name'=>'선물용 부사 10kg','price'=>0],
-  'apple_5kg'=>['name'=>'가정용 양광 6kg내외','price'=>0],
   'kamhong_5kg'=>['name'=>'가정용 감홍 5kg','price'=>0],  
   'kamhong_10kg'=>['name'=>'가정용 감홍 10kg','price'=>0],
   'gift_5kg'=>['name'=>'선물용 감홍 5kg','price'=>0],
