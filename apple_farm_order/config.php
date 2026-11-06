@@ -24,7 +24,8 @@ return [
  'admin_password_hash'=>'$2y$12$tip3bsobe4ucX/kPcsqX1O4n6yLPq/vyKwoRiPdsvOG2Uepkz0ixe', // php password_hash() 결과 입력
  'kakao_js_key'=>'', // 카카오 JavaScript 키 (선택: 주소검색은 다음 우편번호 서비스 사용)
  'products'=>[
-   'busa_5kg'=>['name'=>'가정용 부사 5kg','price'=>0],
+  'hong_10kg'=>['name'=>'가정용 홍로 10kg(10개 한정)','price'=>0],
+  'busa_5kg'=>['name'=>'가정용 부사 5kg','price'=>0],
   'busa_10kg'=>['name'=>'가정용 부사 10kg','price'=>0],
   'busa_gift_5kg'=>['name'=>'선물용 부사 5kg','price'=>0],
   'busa_gift_10kg'=>['name'=>'선물용 부사 10kg','price'=>0],
