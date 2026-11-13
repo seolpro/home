@@ -29,6 +29,8 @@ return [
   'busa_10kg'=>['name'=>'가정용 부사 10kg','price'=>0],
   'busa_gift_5kg'=>['name'=>'선물용 부사 5kg','price'=>0],
   'busa_gift_10kg'=>['name'=>'선물용 부사 10kg','price'=>0],
+  'pear__5kg'=>['name'=>'상주 추황배 5kg','price'=>0],
+  'pear_10kg'=>['name'=>'상주 추황배 10kg','price'=>0],
 /*   'kamhong_5kg'=>['name'=>'가정용 감홍 5kg','price'=>0],  
   'kamhong_10kg'=>['name'=>'가정용 감홍 10kg','price'=>0],
   'gift_5kg'=>['name'=>'선물용 감홍 5kg','price'=>0],
