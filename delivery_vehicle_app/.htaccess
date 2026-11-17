@@ -1,0 +1,4 @@
+Options -Indexes
+<FilesMatch "^(config(\.example)?\.php|common\.php|install\.sql|README\.md|cleanup\.php)$">
+Require all denied
+</FilesMatch>

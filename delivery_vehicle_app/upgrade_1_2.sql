@@ -1,0 +1,1 @@
+ALTER TABLE dv_recipients ADD COLUMN short_url VARCHAR(255) DEFAULT NULL;
