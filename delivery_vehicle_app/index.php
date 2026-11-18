@@ -56,6 +56,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 layout_start('🅿️배송 차량 사전 출입 주차등록 요청');
 
+
+echo '<div style="
+    display:flex;
+    justify-content:flex-end;
+    margin:0 0 15px;
+">
+    <a href="admin.php" style="
+        display:inline-flex;
+        align-items:center;
+        gap:6px;
+        padding:9px 15px;
+        background:#f1f5f9;
+        color:#475569;
+        border:1px solid #cbd5e1;
+        border-radius:9px;
+        font-size:13px;
+        font-weight:600;
+        text-decoration:none;
+    ">
+        ⚙️ 관리자 페이지
+    </a>
+</div>';
+
 if ($success) {
     echo '<section class="card"><h2>신청이 접수되었습니다.</h2>';
     echo '<p>차량등록 요청이 저장되었습니다. 수신인에게 알림톡이 전달되는 데 시간이 걸릴 수 있으며, 실제 아파트 차량등록 완료를 의미하지 않습니다.</p>';
