@@ -41,6 +41,34 @@ layout_start('사과농장 주문관리');
 .payment-badge{font-size:12px;font-weight:700}
 .payment-badge.paid{color:#16703c}.payment-badge.unpaid{color:#b45309}
 @media print{main{max-width:none!important;width:auto!important}.tablewrap{overflow:visible}.tablewrap table{min-width:0!important;font-size:10px}.tablewrap th,.tablewrap td{padding:4px!important}.no-print{display:none!important}}
+.cj-tracking-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 7px 13px;
+  background: #2563eb;
+  color: #fff !important;
+  border: 1px solid #2563eb;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none !important;
+  white-space: nowrap;
+  transition: background 0.15s ease;
+}
+
+.cj-tracking-btn:hover {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+  color: #fff !important;
+}
+
+@media print {
+  .cj-tracking-btn {
+    display: none !important;
+  }
+}
 </style>
 <div class="card">
 <div class="no-print">
@@ -78,7 +106,24 @@ layout_start('사과농장 주문관리');
 <td>(<?=h($r['postcode'])?>) <?=h($r['road_address'])?> <?=h($r['detail_address'])?></td>
 <td><?=h($r['product_name'])?></td><td><?=number_format((int)$r['quantity'])?></td><td><?=h($r['referrer']??'')?></td>
 <td style="white-space:normal;min-width:120px"><?=nl2br(h($r['delivery_request']))?></td>
-<td><?=($r['status']==='shipped'?'배송처리':'배송대기')?><br><small><?=h($r['shipped_at']??'')?></small><?php if(!empty($r['tracking_no'])):?><br><small>CJ <?=h($r['tracking_no'])?></small><?php endif;?></td>
+<td><?=($r['status']==='shipped'?'배송처리':'배송대기')?><br><small><?=h($r['shipped_at']??'')?></small><?php if(!empty($r['tracking_no'])):?>
+  <br><small>CJ <?=h($r['tracking_no'])?></small>
+
+  <?php if(
+    $r['status']==='shipped' &&
+    preg_match('/^[0-9]{12}$/', (string)$r['tracking_no'])
+  ):?>
+    <div class="no-print" style="margin-top:7px;">
+      <a class="cj-tracking-btn"
+         href="https://trace.cjlogistics.com/next/tracking.html?wblNo=<?=h(rawurlencode((string)$r['tracking_no']))?>"
+         target="_blank"
+         rel="noopener noreferrer">
+        🚚 배송조회 ↗
+      </a>
+    </div>
+  <?php endif;?>
+
+<?php endif;?></td>
 <td class="no-print"><form method="post" action="update.php" onsubmit="return appleCheckShipping(this)"><input type="hidden" name="csrf" value="<?=h(csrf())?>"><input type="hidden" name="id" value="<?=(int)$r['id']?>"><input type="hidden" name="status" value="<?=$r['status']==='shipped'?'received':'shipped'?>">
 <?php if($r['status']!=='shipped'):?><input name="tracking_no" inputmode="numeric" pattern="[0-9]{12}" minlength="12" maxlength="12" title="CJ대한통운 송장번호 숫자 12자리를 입력하세요" required placeholder="CJ 송장번호 (숫자 12자리)" style="min-width:175px;margin-bottom:6px" oninput="appleTrackingInput(this)" onblur="appleTrackingBlur(this)"><small class="tracking-help" aria-live="polite" style="display:block;margin-bottom:6px;color:#64748b">숫자 12자리를 입력해 주세요 (0/12)</small><button type="submit">배송처리 + 알림톡</button>
 <?php else:?><button class="secondary" onclick="return confirm('배송처리를 취소하시겠습니까? 기존 발송 알림톡은 취소되지 않습니다.')">처리취소</button><?php endif;?></form></td>
