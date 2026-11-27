@@ -10,6 +10,7 @@ if (!isset($pageTitle)) {
         <a href="index.php?view=completed">완료 계약</a>　
         <a href="index.php">전체 계약</a>　
         <a href="create.php">새 계약</a>　
+        <a href="rent_reminders.php">월차임 납부 안내</a>　
         <a href="settings.php">문자설정</a>　
         <a href="logout.php">로그아웃</a>
     </nav>

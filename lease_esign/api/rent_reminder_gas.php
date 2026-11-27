@@ -53,12 +53,15 @@ function rr_already_sent(int $contractId, string $phone, string $todayYmd): bool
 try {
     $contracts = db()->query("SELECT * FROM contracts ORDER BY id ASC")->fetchAll();
 
+    $enrolled = [];
+    try { $enrolled = db()->query("SELECT contract_id FROM lease_rent_reminders WHERE contract_id IS NOT NULL AND active=1")->fetchAll(PDO::FETCH_COLUMN); } catch (Throwable $ignore) {}
     $checked = $targets = $sent = $skipped = $failed = 0;
     $details = [];
 
     foreach ($contracts as $c) {
         $checked++;
         $id = (int)($c['id'] ?? 0);
+        if (in_array($id, array_map('intval',$enrolled), true)) continue;
         $name = trim((string)($c['lessee_name'] ?? '')) ?: '임차인';
         $phone = rr_digits((string)($c['lessee_phone'] ?? ''));
         $rent = (int)($c['monthly_rent'] ?? 0);
